@@ -39,8 +39,9 @@
     #include <stdbool.h>
     #include <stdint.h>
 
+    typedef struct GuiApp GuiApp;
     typedef struct GuiColor GuiColor;
-    typedef struct Gui Gui;
+    typedef struct GuiWindow GuiWindow;
     typedef struct GuiPosition GuiPosition;
     typedef union GuiEvent GuiEvent;
     typedef struct GuiEventMouse GuiEventMouse;
@@ -56,6 +57,13 @@
 
     typedef void(*GuiEventHandler)(GuiWidget* widget, GuiEvent* event, void* user_data);
     typedef void(*GuiWidgetStateHandler)(GuiWidget* widget, GuiWidgetState state);
+
+    struct GuiApp {
+        uint16_t children_count;
+        int16_t current_child_index;
+        GuiWindow** children;
+        void* font;
+    };
 
     struct GuiColor {
         uint8_t r;
@@ -89,11 +97,10 @@
         } mouse;
     };
 
-    struct Gui {
-        bool should_quit;
+    struct GuiWindow {
         GuiColor background_color;  // it will be black if not set
+        GuiApp* app;
         void* renderer;
-        void* font;
         GuiEvent* event;
         GuiWidget* child;
         GuiWidget* brother;
@@ -172,7 +179,13 @@
     };
 
     void
-    gui_pre_init(void);
+    gui_app_init(GuiApp* app, size_t maximum_children);
+
+    void
+    gui_app_mainloop(GuiApp* self);
+
+    void
+    gui_app_deinit(GuiApp* self);
 
     /// @brief
     /// @param x if x < 0, then the system will determine the position
@@ -184,43 +197,37 @@
     /// @param flags
     /// @return
     void
-    gui_init(Gui* return_button, int x, int y, size_t width, size_t height, const char* title, size_t title_len, GuiWindowFlags flags);
+    gui_window_init(GuiApp* app, GuiWindow* return_window, int x, int y, size_t width, size_t height, const char* title, size_t title_len, GuiWindowFlags flags);
 
     void
-    gui_window_set_background(Gui* self, GuiColor bg_color);
+    gui_window_set_background(GuiWindow* self, GuiColor bg_color);
 
     void
-    gui_add_child(Gui* self, GuiWidget* child);
+    gui_window_add_child(GuiWindow* self, GuiWidget* child);
+
+    void
+    gui_window_deinit(GuiWindow* self);
 
     void
     gui_widget_add_child(GuiWidget* parent, GuiWidget* child);
 
     void
-    gui_button_init(Gui* self, GuiButton* return_button, const char* label, size_t label_len, size_t x, size_t y, GuiEventHandler event_handler, void* user_data);
+    gui_button_init(GuiWindow* self, GuiButton* return_button, const char* label, size_t label_len, size_t x, size_t y, GuiEventHandler event_handler, void* user_data);
 
     void
     gui_button_set_state(GuiButton* button, GuiWidgetState state);
 
     void
-    gui_button_remove(Gui* self, GuiButton* button);
+    gui_button_remove(GuiWindow* self, GuiButton* button);
 
     void
-    gui_label_init(Gui* self, GuiLabel* return_label, const char* label, size_t label_len, size_t x, size_t y, GuiEventHandler event_handler, void* user_data);
+    gui_label_init(GuiWindow* self, GuiLabel* return_label, const char* label, size_t label_len, size_t x, size_t y, GuiEventHandler event_handler, void* user_data);
 
     void
     gui_label_set_state(GuiLabel* label, GuiWidgetState state);
 
     void
-    gui_label_remove(Gui* self, GuiLabel* label);
-
-    void
-    gui_mainloop(Gui* self, GuiButton* draw_one_object);
-
-    void
-    gui_deinit(Gui* self);
-
-    void
-    gui_post_deinit(void);
+    gui_label_remove(GuiWindow* self, GuiLabel* label);
 #endif // CSTDLIB_GUI_H
 
 
@@ -238,22 +245,107 @@
 
     static int internal_gui_event_mouse_handler(void* widget, SDL_Event* event);
     static void internal_gui_event_update(GuiEvent* event, SDL_Event* sdl_event);
+    static void internal_gui_app_add_window(GuiApp* self, GuiWindow* window);
+    static void internal_gui_app_remove_window(GuiApp* self, GuiWindow* window);
 
     extern unsigned char assets_DejaVuSansMono_ttf[];
     extern unsigned int assets_DejaVuSansMono_ttf_len;
 
     void
-    gui_pre_init(void)
+    gui_app_init(GuiApp* app, size_t maximum_children)
     {
+        assert(app);
         assert(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) == 0);
         assert(TTF_Init() == 0);
+
+        SDL_RWops* font_raw = SDL_RWFromMem(assets_DejaVuSansMono_ttf, assets_DejaVuSansMono_ttf_len);
+        TTF_Font* font = TTF_OpenFontRW(font_raw, 1, 24);
+        assert(font);
+
+        GuiWindow** children = calloc(maximum_children, sizeof(GuiWindow*));
+        assert(children);
+
+        *app = (GuiApp){
+            .font = font,
+            .children = children,
+            .children_count = maximum_children,
+            .current_child_index = -1
+        };
     }
 
     void
-    gui_init(Gui* return_button, int x, int y, size_t width, size_t height, const char* title, size_t title_len, GuiWindowFlags flags)
+    gui_app_mainloop(GuiApp* self)
+    {
+        assert(self && self->children);
+
+        SDL_Event event;
+        bool should_quit = false;
+        while(!should_quit)
+        {
+            while (SDL_PollEvent(&event) != 0)
+            {
+                if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE)
+                {
+                    if (self->current_child_index > 0)
+                    {
+                        gui_window_deinit(self->children[self->current_child_index]);
+                        SDL_SetWindowInputFocus(SDL_RenderGetWindow(self->children[self->current_child_index]->renderer));
+                    }
+                }
+                else if (event.type == SDL_QUIT)
+                {
+                    should_quit = true;
+                }
+            }
+
+            for(size_t iii = 0; iii <= self->current_child_index; ++iii)
+            {
+                GuiWindow* current_window = self->children[iii];
+
+                SDL_SetRenderDrawColor(
+                    current_window->renderer,
+                    current_window->background_color.r,
+                    current_window->background_color.g,
+                    current_window->background_color.b,
+                    current_window->background_color.a);
+
+                SDL_RenderClear(current_window->renderer);
+
+                for(GuiWidget* current_child = current_window->child; current_child; current_child = current_child->child)
+                {
+                    for(GuiWidget* current_brother = current_child; current_brother; current_brother = current_brother->brother)
+                    {
+                        GuiWidgetTexture* widget_texture = &current_brother->textures.data[current_brother->textures.root_index];
+                        while(widget_texture)
+                        {
+                            assert(SDL_RenderCopy(current_window->renderer, widget_texture->texture, NULL, &(SDL_Rect){ widget_texture->x, widget_texture->y, widget_texture->width, widget_texture->height }) == 0);
+                            if(widget_texture->next_index < 0) break;
+                            widget_texture = &current_brother->textures.data[widget_texture->next_index];
+                        }
+                    }
+                }
+
+                SDL_RenderPresent(current_window->renderer);
+            }
+        }
+    }
+
+    void
+    gui_app_deinit(GuiApp* self)
+    {
+        assert(self && self->children);
+
+        TTF_CloseFont(self->font);
+        SDL_Quit();
+
+        free(self->children);
+    }
+
+    void
+    gui_window_init(GuiApp* app, GuiWindow* return_window, int x, int y, size_t width, size_t height, const char* title, size_t title_len, GuiWindowFlags flags)
     {
         assert(title && title_len > 0);
-        assert(return_button);
+        assert(return_window);
 
         SDL_Window* window = SDL_CreateWindow(
             title,
@@ -267,33 +359,31 @@
         SDL_Renderer* renderer = SDL_CreateRenderer(
             window,
             -1,
-            SDL_RENDERER_ACCELERATED);
+            SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
         assert(renderer);
-
-        SDL_RWops* font_raw = SDL_RWFromMem(assets_DejaVuSansMono_ttf, assets_DejaVuSansMono_ttf_len);
-        TTF_Font* font = TTF_OpenFontRW(font_raw, 1, 24);
-        assert(font);
 
         GuiEvent* event = malloc(sizeof(GuiEvent));
         assert(event);
 
-        *return_button = (Gui){
+        *return_window = (GuiWindow){
+            .app = app,
             .renderer = renderer,
-            .font = font,
             .event = event,
             .background_color = (GuiColor){ GUI_BUTTON_DEFAULT_BACKGROUND_COLOR }
         };
+
+        internal_gui_app_add_window(app, return_window);
     }
 
     void
-    gui_window_set_background(Gui* self, GuiColor bg_color)
+    gui_window_set_background(GuiWindow* self, GuiColor bg_color)
     {
         assert(self);
         self->background_color = bg_color;
     }
 
     void
-    gui_add_child(Gui* self, GuiWidget* child)
+    gui_window_add_child(GuiWindow* self, GuiWidget* child)
     {
         assert(self && self->renderer);
         assert(child && child->textures.data);
@@ -311,6 +401,24 @@
             }
 
             current_widget->brother = child;
+        }
+    }
+
+    void
+    gui_window_deinit(GuiWindow* self)
+    {
+        if(self && self->renderer)
+        {
+            internal_gui_app_remove_window(self->app, self);
+
+            SDL_Window* window = SDL_RenderGetWindow(self->renderer);
+            SDL_DestroyRenderer(self->renderer);
+            SDL_DestroyWindow(window);
+
+            free(self->event);
+
+            // clear
+            *self = (GuiWindow){ 0 };
         }
     }
 
@@ -336,13 +444,13 @@
     }
 
     void
-    gui_button_init(Gui* self, GuiButton* return_button, const char* label, size_t label_len, size_t x, size_t y, GuiEventHandler event_handler, void* user_data)
+    gui_button_init(GuiWindow* self, GuiButton* return_button, const char* label, size_t label_len, size_t x, size_t y, GuiEventHandler event_handler, void* user_data)
     {
         assert(self && self->renderer);
         assert(label && label_len > 0);
         assert(return_button);
 
-        SDL_Surface* font_surface = TTF_RenderText_Blended(self->font, label, (SDL_Color){ GUI_BUTTON_DEFAULT_FOREGROUND_COLOR });
+        SDL_Surface* font_surface = TTF_RenderText_Blended(self->app->font, label, (SDL_Color){ GUI_BUTTON_DEFAULT_FOREGROUND_COLOR });
         assert(font_surface);
         SDL_Texture *texture = SDL_CreateTextureFromSurface((SDL_Renderer *)self->renderer, font_surface);
         assert(texture);
@@ -374,8 +482,8 @@
         GuiWidgetTexture* textures = calloc(3, sizeof(GuiWidgetTexture));
         assert(textures);
         textures[0] = (GuiWidgetTexture){
-            .x = 12,
-            .y = 12,
+            .x = x + GUI_BUTTON_DEFAULT_BUTTON_HORIZONTAL_PADDING,
+            .y = y + GUI_BUTTON_DEFAULT_BUTTON_VERTICAL_PADDING,
             .width = font_surface->clip_rect.w,
             .height = font_surface->clip_rect.h,
             .next_index = -1,
@@ -445,7 +553,7 @@
     }
 
     void
-    gui_button_remove(Gui* self, GuiButton* button)
+    gui_button_remove(GuiWindow* self, GuiButton* button)
     {
         assert(self && self->renderer);
         assert(button);
@@ -462,13 +570,13 @@
     }
 
     void
-    gui_label_init(Gui* self, GuiLabel* return_label, const char* label, size_t label_len, size_t x, size_t y, GuiEventHandler event_handler, void* user_data)
+    gui_label_init(GuiWindow* self, GuiLabel* return_label, const char* label, size_t label_len, size_t x, size_t y, GuiEventHandler event_handler, void* user_data)
     {
         assert(self && self->renderer);
         assert(label && label_len > 0);
         assert(return_label);
 
-        SDL_Surface* font_surface = TTF_RenderText_Blended(self->font, label, (SDL_Color){ GUI_BUTTON_DEFAULT_FOREGROUND_COLOR });
+        SDL_Surface* font_surface = TTF_RenderText_Blended(self->app->font, label, (SDL_Color){ GUI_BUTTON_DEFAULT_FOREGROUND_COLOR });
         assert(font_surface);
         SDL_Texture *texture = SDL_CreateTextureFromSurface((SDL_Renderer *)self->renderer, font_surface);
         assert(texture);
@@ -509,7 +617,7 @@
     }
 
     void
-    gui_label_remove(Gui* self, GuiLabel* label)
+    gui_label_remove(GuiWindow* self, GuiLabel* label)
     {
         assert(self && self->renderer);
         assert(label);
@@ -523,80 +631,6 @@
         SDL_DelEventWatch(internal_gui_event_mouse_handler, label);
 
         *label = (GuiLabel){ 0 };
-    }
-
-    void
-    gui_mainloop(Gui* self, GuiButton* draw_one_object)
-    {
-        assert(self && self->renderer);
-
-        // GuiWidget* current_widget = self->child;
-        size_t desired_fps = 60; 
-        size_t last_ticks = SDL_GetTicks();
-        SDL_Event event;
-        while(!self->should_quit)
-        {
-            if ((SDL_GetTicks() - last_ticks) < (1000 / desired_fps)) continue;
-            last_ticks = SDL_GetTicks();
-
-            while (SDL_PollEvent(&event) != 0)
-            {
-                if(event.type == SDL_QUIT)
-                {
-                    self->should_quit = true;
-                }
-            }
-
-            SDL_SetRenderDrawColor(
-                self->renderer,
-                self->background_color.r,
-                self->background_color.g,
-                self->background_color.b,
-                self->background_color.a);
-
-            SDL_RenderClear(self->renderer);
-
-            for(GuiWidget* current_child = self->child; current_child; current_child = current_child->child)
-            {
-                for(GuiWidget* current_brother = current_child; current_brother; current_brother = current_brother->brother)
-                {
-                    GuiWidgetTexture* widget_texture = &current_brother->textures.data[current_brother->textures.root_index];
-                    while(widget_texture)
-                    {
-                        assert(SDL_RenderCopy(self->renderer, widget_texture->texture, NULL, &(SDL_Rect){ widget_texture->x, widget_texture->y, widget_texture->width, widget_texture->height }) == 0);
-                        if(widget_texture->next_index < 0) break;
-                        widget_texture = &current_brother->textures.data[widget_texture->next_index];
-                    }
-                }
-            }
-
-            SDL_RenderPresent(self->renderer);
-
-            SDL_Delay(100);
-        }
-    }
-
-    void
-    gui_deinit(Gui* self)
-    {
-        assert(self && self->renderer);
-
-        SDL_Window* window = SDL_RenderGetWindow(self->renderer);
-        SDL_DestroyRenderer(self->renderer);
-        SDL_DestroyWindow(window);
-
-        TTF_CloseFont(self->font);
-
-        free(self->event);
-
-        // clear
-        *self = (Gui){0};
-    }
-
-    void
-    gui_post_deinit(void)
-    {
-        SDL_Quit();
     }
 
     int
@@ -686,6 +720,30 @@
                 break;
         }
     }
+
+    void
+    internal_gui_app_add_window(GuiApp* self, GuiWindow* window)
+    {
+        assert(++self->current_child_index < self->children_count);
+        self->children[self->current_child_index] = window;
+    }
+
+    void
+    internal_gui_app_remove_window(GuiApp* self, GuiWindow* window)
+    {
+        size_t iii = 0;
+        for(; iii < self->children_count; ++iii)
+        {
+            if(window == self->children[iii]) break;
+        }
+
+        if((iii + 1) <= self->current_child_index)
+        {
+            memmove(&self->children[iii], self->children[iii + 1], (self->children_count - self->current_child_index) * sizeof(GuiWindow *));
+        }
+
+        self->current_child_index--;
+    }
 #endif // CSTDLIB_GUI_IMPLEMENTATION
 
 
@@ -704,33 +762,39 @@
 
     void gui_unit_tests(void)
     {
-        gui_pre_init();
+        GuiApp app = { 0 };
+        gui_app_init(&app, 2);
 
         // test: general
         {
-            Gui gui = { 0 };
-            gui_init(
-                &gui, -1, -1, 800, 600, STR("My title"), GUI_WINDOW_SHOWN | GUI_WINDOW_RESIZABLE);
+            GuiWindow window = { 0 };
+            gui_window_init(
+                &app, &window, -1, -1, 800, 600, STR("My title"), GUI_WINDOW_SHOWN | GUI_WINDOW_RESIZABLE);
 
             // gui_window_set_background(&gui, (GuiColor){ GUI_BUTTON_DEFAULT_BACKGROUND_COLOR });
 
             GuiButton button = { 0 };
-            gui_button_init(&gui, &button, STR("Ok"), 8, 10, gui_unit_tests_button_event_handler, NULL);
+            gui_button_init(&window, &button, STR("Ok"), 8, 10, gui_unit_tests_button_event_handler, NULL);
 
             GuiLabel label = { 0 };
-            gui_label_init(&gui, &label, STR("label"), 8, 70, NULL, NULL);
+            gui_label_init(&window, &label, STR("label"), 8, 70, NULL, NULL);
 
-            gui_add_child(&gui, &button.widget);
-            gui_add_child(&gui, &label.widget);
+            gui_window_add_child(&window, &button.widget);
+            gui_window_add_child(&window, &label.widget);
 
-            gui_mainloop(&gui, &button);
+            GuiWindow window2 = { 0 };
+            gui_window_init(
+                &app, &window2, -1, -1, 800, 600, STR("My title 2"), GUI_WINDOW_SHOWN | GUI_WINDOW_RESIZABLE);
 
-            gui_button_remove(&gui, &button);
-            gui_label_remove(&gui, &label);
-            gui_deinit(&gui);
+            gui_app_mainloop(&app);
+
+            gui_button_remove(&window, &button);
+            gui_label_remove(&window, &label);
+            gui_window_deinit(&window);
+            gui_window_deinit(&window2);
         }
 
-        gui_post_deinit();
+        gui_app_deinit(&app);
     }
 
     void
