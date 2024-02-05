@@ -33,5 +33,10 @@ else()
     add_link_options($<$<CONFIG:DEBUG>:-fsanitize=address,undefined>)
 endif()
 
+find_package(SDL2 REQUIRED)
+find_package(SDL2_ttf REQUIRED)
+
 FILE(GLOB_RECURSE modules *.h)
 add_executable(${PROJECT_NAME} main.c ${modules})
+target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2 SDL2_ttf::SDL2_ttf)
+target_compile_definitions(${PROJECT_NAME} PRIVATE CURRENT_DIR="${CMAKE_CURRENT_SOURCE_DIR}")

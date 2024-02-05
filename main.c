@@ -18,6 +18,10 @@
 #define CSTDLIB_STR_UNIT_TESTS
 #include "str.h"
 
+#define CSTDLIB_GUI_IMPLEMENTATION 1
+#define CSTDLIB_GUI_UNIT_TESTS 1
+#include "gui.h"
+
 int
 main(void)
 {
@@ -26,4 +30,16 @@ main(void)
     log_unit_tests();
     map_unit_tests();
     str_unit_tests();
+    gui_unit_tests();
 }
+
+#ifndef NDEBUG
+/// @brief Address sanitizer flags
+/// @return
+const char *
+__lsan_default_options (void)
+{
+    return "suppressions=" CURRENT_DIR "/.leak-ignore"
+           ":print_suppressions=0";
+}
+#endif // NDEBUG

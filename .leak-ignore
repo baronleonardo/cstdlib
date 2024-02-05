@@ -1,0 +1,3 @@
+leak:SDL*
+leak:gtk*
+leak:g_*
