@@ -2,12 +2,12 @@ cmake_minimum_required(VERSION 3.15)
 project(cstdlib)
 
 # compiler options
-set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD 99)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 if (MSVC)
     # warning level 4
     add_compile_options(
-        /W4
+        /W3
         /WX
         /utf-8
         /Zi
@@ -21,6 +21,7 @@ else()
     # additional warnings
     add_compile_options(
         -Wall
+        -Wextra
         -Wpedantic
         -Werror
         $<$<CONFIG:RELEASE>:-D_FORTIFY_SOURCE=2>
@@ -33,10 +34,10 @@ else()
     add_link_options($<$<CONFIG:DEBUG>:-fsanitize=address,undefined>)
 endif()
 
-find_package(SDL2 REQUIRED)
-find_package(SDL2_ttf REQUIRED)
+# find_package(PkgConfig REQUIRED)
+# pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2 SDL2_ttf SDL2_image SDL2_gfx)
 
 FILE(GLOB_RECURSE modules *.h)
 add_executable(${PROJECT_NAME} main.c ${modules})
-target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2 SDL2_ttf::SDL2_ttf)
+# target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::SDL2)
 target_compile_definitions(${PROJECT_NAME} PRIVATE CURRENT_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
