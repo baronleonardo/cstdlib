@@ -47,6 +47,8 @@ CStr c_str_create_unmanaged (const char *cstr,
                              size_t cstr_max_len,
                              int *err);
 
+CStr c_str_clone (CStr *self, int *err);
+
 char *c_str_search (CStr *self, const char cstr[], size_t cstr_max_len);
 
 void c_str_insert (CStr *self,
@@ -327,6 +329,12 @@ c_str_remove_at (CStr *self,
   *err = 0;
 
   return range;
+}
+
+CStr
+c_str_clone (CStr *self, int *err)
+{
+  return c_str_create (self->data, self->len, err);
 }
 
 char *
