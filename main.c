@@ -1,6 +1,6 @@
 /***** implementation *****/
-// #define CSTDLIB_ARRAY_IMPLEMENTATION
-// #include "array.h"
+#define CSTDLIB_ARRAY_IMPLEMENTATION
+#include "array.h"
 
 #define CSTDLIB_FS_IMPLEMENTATION
 #include "fs.h"
@@ -8,8 +8,8 @@
 #define CSTDLIB_LOG_IMPLEMENTATION
 #include "log.h"
 
-// #define CSTDLIB_MAP_IMPLEMENTATION
-// #include "map.h"
+#define CSTDLIB_MAP_IMPLEMENTATION
+#include "map.h"
 
 #define CSTDLIB_STR_IMPLEMENTATION
 #include "str.h"
@@ -18,8 +18,8 @@
 #include "gui.h" */
 
 /***** Tests *****/
-// #define CSTDLIB_ARRAY_UNIT_TESTS
-// #include "array.h"
+#define CSTDLIB_ARRAY_UNIT_TESTS
+#include "array.h"
 
 #define CSTDLIB_FS_UNIT_TESTS
 #include "fs.h"
@@ -27,8 +27,8 @@
 #define CSTDLIB_LOG_UNIT_TESTS
 #include "log.h"
 
-// #define CSTDLIB_MAP_UNIT_TESTS
-// #include "map.h"
+#define CSTDLIB_MAP_UNIT_TESTS
+#include "map.h"
 
 #define CSTDLIB_STR_UNIT_TESTS
 #include "str.h"
@@ -39,10 +39,10 @@
 int
 main (void)
 {
-  // array_unit_tests ();
+  c_array_unit_tests ();
   c_fs_unit_tests ();
   c_log_unit_tests ();
-  // map_unit_tests ();
+  // c_map_unit_tests ();
   c_str_unit_tests ();
   // gui_unit_tests ();
 
