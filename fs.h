@@ -228,7 +228,6 @@ c_fs_file_open (const char *path,
 #else
       *err = errno;
 #endif
-      perror (path);
       return cfile;
     }
 
@@ -248,7 +247,6 @@ c_fs_file_size (CFile *self,
   int fseek_state = fseek (self->data, 0, SEEK_END);
   if (fseek_state != 0)
     {
-      perror ("");
       *err = ferror (self->data);
       return 0;
     }
@@ -256,7 +254,6 @@ c_fs_file_size (CFile *self,
   fseek_state = fseek (self->data, 0, SEEK_SET); /* same as rewind(f); */
   if (fseek_state != 0)
     {
-      perror ("");
       *err = ferror (self->data);
       return 0;
     }
@@ -289,7 +286,6 @@ c_fs_file_read (CFile *self,
   size_t read_size = fread (buf, sizeof (buf[0]), read_amount, self->data);
   if (ferror (self->data) != 0)
     {
-      perror ("");
       *err = ferror (self->data);
       return 0;
     }
@@ -314,7 +310,6 @@ c_fs_file_write (CFile *self,
   size_t write_size = fwrite (buf, sizeof (buf[0]), buf_size, self->data);
   if (ferror (self->data) != 0)
     {
-      perror ("");
       *err = ferror (self->data);
       return 0;
     }
@@ -334,7 +329,6 @@ c_fs_file_close (CFile *self, int *err)
   int close_state = fclose (self->data);
   if (close_state != 0)
     {
-      perror ("");
       *err = ferror (self->data);
       return;
     }
@@ -454,7 +448,6 @@ c_fs_dir_create (const char *dir_path, size_t path_len, int *err)
   if (!dir_created)
     {
       *err = GetLastError ();
-      perror (dir_path);
       return;
     }
 #else
@@ -466,7 +459,6 @@ c_fs_dir_create (const char *dir_path, size_t path_len, int *err)
   if (dir_creation_status != 0)
     {
       *err = errno;
-      perror (dir_path);
       return;
     }
 #endif
@@ -488,7 +480,6 @@ c_fs_dir_exists (const char *dir_path, size_t path_len, int *err)
   if (path_attributes == INVALID_FILE_ATTRIBUTES)
     {
       *err = GetLastError ();
-      perror (dir_path);
       return false;
     }
 
@@ -507,7 +498,6 @@ c_fs_dir_exists (const char *dir_path, size_t path_len, int *err)
   if (path_attributes != 0)
     {
       *err = errno;
-      perror (dir_path);
       return false;
     }
 
@@ -564,7 +554,6 @@ c_fs_exists (const char *path, size_t path_len, int *err)
         }
       else
         {
-          perror (path);
           *err = last_error;
           return false;
         }
@@ -683,7 +672,6 @@ c_fs_foreach (CPathBuffer dir_path,
         {
           *err = GetLastError ();
           dir_path.buf[dir_path.len - 2] = L'\0';
-          perror (dir_path.buf);
           return;
         }
 
@@ -717,7 +705,6 @@ c_fs_foreach (CPathBuffer dir_path,
   if (!FindClose (find_handler))
     {
       dir_path.buf[orig_path_len] = '\0';
-      perror (dir_path.buf);
       *err = GetLastError ();
       return;
     }
@@ -758,7 +745,6 @@ c_fs_foreach (CPathBuffer dir_path,
       if (closedir (cur_dir) != 0)
         {
           dir_path.buf[orig_path_len] = '\0';
-          perror (dir_path.buf);
           *err = errno;
           return;
         }
@@ -954,12 +940,12 @@ c_fs_unit_tests (void)
     assert (err == 0);
 
     bool file_found = false;
-    bool handler (char *path, size_t path_len, void *extra_data, int *err);
+    bool c_fs_handler (char *path, size_t path_len, void *extra_data, int *err);
     assert (err == 0);
 
     c_fs_path_buffer_update (&path_buf, STR (test_playground), true, &err);
     assert (err == 0);
-    c_fs_foreach (path_buf, handler, &file_found, &err);
+    c_fs_foreach (path_buf, c_fs_handler, &file_found, &err);
     assert (err == 0);
     assert (file_found);
 
@@ -999,7 +985,7 @@ c_fs_unit_tests (void)
 }
 
 bool
-handler (char *path, size_t path_len, void *extra_data, int *err)
+c_fs_handler (char *path, size_t path_len, void *extra_data, int *err)
 {
   (void) path_len;
 
