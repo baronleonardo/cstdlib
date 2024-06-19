@@ -53,7 +53,7 @@ main (void)
 /* @brief Address sanitizer flags
  * @return
  */
-const char *
+char const*
 __lsan_default_options (void)
 {
   return "suppressions=" CURRENT_DIR "/.leak-ignore"

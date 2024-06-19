@@ -14,12 +14,12 @@
 
 typedef struct CFile
 {
-  FILE *data;
+  FILE* data;
 } CFile;
 
 typedef struct CPathBuffer
 {
-  char *buf;
+  char* buf;
   size_t len;
   size_t capacity;
 } CPathBuffer;
@@ -30,17 +30,17 @@ typedef struct CPathBuffer
 /// @param mode this is the same as mode in `fopen`
 /// @param err return error (any value but zero is treated as an error)
 /// @return
-CFile c_fs_file_open (const char *path,
+CFile c_fs_file_open (char const* path,
                       size_t path_len,
-                      const char mode[],
-                      int *err);
+                      char const mode[],
+                      int* err);
 
 /// @brief get file size
 /// @param self
 /// @param err return error (any value but zero is treated as an error)
 /// @return file size
-size_t c_fs_file_size (CFile *self,
-                       int *err);
+size_t c_fs_file_size (CFile* self,
+                       int* err);
 
 /// @brief read file content
 /// @param self
@@ -48,10 +48,10 @@ size_t c_fs_file_size (CFile *self,
 /// @param buf_size
 /// @param err return error (any value but zero is treated as an error)
 /// @return return the bytes read
-size_t c_fs_file_read (CFile *self,
+size_t c_fs_file_read (CFile* self,
                        char buf[],
                        size_t buf_size,
-                       int *err);
+                       int* err);
 
 /// @brief write to file
 /// @param self
@@ -59,15 +59,15 @@ size_t c_fs_file_read (CFile *self,
 /// @param buf_size
 /// @param err return error (any value but zero is treated as an error)
 /// @return return the bytes written
-size_t c_fs_file_write (CFile *self,
+size_t c_fs_file_write (CFile* self,
                         char buf[],
                         size_t buf_size,
-                        int *err);
+                        int* err);
 
 /// @brief close an alreay opend file
 /// @param self
-void c_fs_file_close (CFile *self,
-                      int *err);
+void c_fs_file_close (CFile* self,
+                      int* err);
 
 /// @brief
 /// @param path
@@ -75,17 +75,17 @@ void c_fs_file_close (CFile *self,
 /// @param path_capacity
 /// @param err return error (any value but zero is treated as an error)
 /// @return
-CPathBuffer c_fs_path_buffer_create (const char path[],
+CPathBuffer c_fs_path_buffer_create (char const path[],
                                      size_t path_len,
                                      size_t path_capacity,
-                                     int *err);
+                                     int* err);
 
 /// @brief
 /// @param path_capacity
 /// @param err
 /// @return
 CPathBuffer c_fs_path_buffer_create_empty (size_t path_capacity,
-                                           int *err);
+                                           int* err);
 
 /// @brief
 /// @param self
@@ -93,60 +93,60 @@ CPathBuffer c_fs_path_buffer_create_empty (size_t path_capacity,
 /// @param new_path_len
 /// @param could_realloc
 /// @param err return error (any value but zero is treated as an error)
-void c_fs_path_buffer_update (CPathBuffer *self,
-                              const char new_path[],
+void c_fs_path_buffer_update (CPathBuffer* self,
+                              char const new_path[],
                               size_t new_path_len,
                               bool could_realloc,
-                              int *err);
+                              int* err);
 
 /// @brief
 /// @param path
-void c_fs_path_buffer_destroy (CPathBuffer *self);
+void c_fs_path_buffer_destroy (CPathBuffer* self);
 
 /// @brief create a directory
 /// @param dir_path
 /// @param path_len
 /// @param err return error (any value but zero is treated as an error)
-void c_fs_dir_create (const char *dir_path,
+void c_fs_dir_create (char const* dir_path,
                       size_t path_len,
-                      int *err);
+                      int* err);
 
 /// @brief check if path is a directory
 /// @param dir_path
 /// @param path_len
 /// @return
-bool c_fs_dir_exists (const char *dir_path,
+bool c_fs_dir_exists (char const* dir_path,
                       size_t path_len,
-                      int *err);
+                      int* err);
 
 /// @brief check if the directory is empty
 /// @param dir_path
 /// @param err return error (any value but zero is treated as an error)
 /// @return
 bool c_fs_dir_is_empty (CPathBuffer dir_path,
-                        int *err);
+                        int* err);
 
 /// @brief check if file/directory exists
 /// @param path
 /// @param path_len
 /// @param err return error (any value but zero is treated as an error)
 /// @return
-bool c_fs_exists (const char *path,
+bool c_fs_exists (char const* path,
                   size_t path_len,
-                  int *err);
+                  int* err);
 
 /// @brief delete a file/directory (empty directory only)
 /// @param path
 /// @param path_len
-void c_fs_delete (const char *path,
+void c_fs_delete (char const* path,
                   size_t path_len,
-                  int *err);
+                  int* err);
 
 /// @brief delete a non-empty directory
 /// @param dir_path
 /// @param err return error (any value but zero is treated as an error)
 void c_fs_delete_recursively (CPathBuffer dir_path,
-                              int *err);
+                              int* err);
 
 /// @brief this will run `handler` on every file/directory inside `path`
 /// @param dir_path
@@ -154,9 +154,9 @@ void c_fs_delete_recursively (CPathBuffer dir_path,
 /// @param extra_data [optional] send/recieve extra data to the handler
 /// @param err return error (any value but zero is treated as an error)
 void c_fs_foreach (CPathBuffer dir_path,
-                   bool handler (char *path, size_t path_len, void *extra_data, int *err),
-                   void *extra_data,
-                   int *err);
+                   bool handler (char* path, size_t path_len, void* extra_data, int* err),
+                   void* extra_data,
+                   int* err);
 #endif // CSTDLIB_FS_H
 
 #ifdef CSTDLIB_FS_IMPLEMENTATION
@@ -173,20 +173,20 @@ void c_fs_foreach (CPathBuffer dir_path,
 #include <sys/stat.h>
 #endif
 
-static bool internal_c_fs_delete_recursively_handler (char *path,
+static bool internal_c_fs_delete_recursively_handler (char* path,
                                                       size_t path_len,
-                                                      void *extra_data,
-                                                      int *err);
-static bool internal_c_fs_dir_is_empty_handler (char *path,
+                                                      void* extra_data,
+                                                      int* err);
+static bool internal_c_fs_dir_is_empty_handler (char* path,
                                                 size_t path_len,
-                                                void *extra_data,
-                                                int *err);
+                                                void* extra_data,
+                                                int* err);
 
 CFile
-c_fs_file_open (const char *path,
+c_fs_file_open (char const* path,
                 size_t path_len,
-                const char mode[],
-                int *err)
+                char const mode[],
+                int* err)
 {
   assert (mode);
   assert (path);
@@ -216,9 +216,9 @@ c_fs_file_open (const char *path,
   memcpy (mode_, mode, MAX_MODE_LEN);
   memcpy (mode_ + mode_len, "b, ccs=UTF-8", MAX_FINAL_MODE_LEN - MAX_MODE_LEN);
 
-  FILE *opened_file = fopen (path, mode_);
+  FILE* opened_file = fopen (path, mode_);
 #else
-  FILE *opened_file = fopen (path, mode);
+  FILE* opened_file = fopen (path, mode);
 #endif
 
   if (!opened_file)
@@ -235,8 +235,8 @@ c_fs_file_open (const char *path,
 }
 
 size_t
-c_fs_file_size (CFile *self,
-                int *err)
+c_fs_file_size (CFile* self,
+                int* err)
 {
   assert (self && self->data);
 
@@ -262,10 +262,10 @@ c_fs_file_size (CFile *self,
 }
 
 size_t
-c_fs_file_read (CFile *self,
+c_fs_file_read (CFile* self,
                 char buf[],
                 size_t buf_size,
-                int *err)
+                int* err)
 {
   assert (self && self->data);
   assert (buf);
@@ -294,10 +294,10 @@ c_fs_file_read (CFile *self,
 }
 
 size_t
-c_fs_file_write (CFile *self,
+c_fs_file_write (CFile* self,
                  char buf[],
                  size_t buf_size,
-                 int *err)
+                 int* err)
 {
   assert (self && self->data);
   assert (buf);
@@ -318,7 +318,7 @@ c_fs_file_write (CFile *self,
 }
 
 void
-c_fs_file_close (CFile *self, int *err)
+c_fs_file_close (CFile* self, int* err)
 {
   assert (self && self->data);
 
@@ -337,10 +337,10 @@ c_fs_file_close (CFile *self, int *err)
 }
 
 CPathBuffer
-c_fs_path_buffer_create (const char path[],
+c_fs_path_buffer_create (char const path[],
                          size_t path_len,
                          size_t path_capacity,
-                         int *err)
+                         int* err)
 {
   assert (path);
   assert (path_len > 0);
@@ -360,7 +360,7 @@ c_fs_path_buffer_create (const char path[],
 
 CPathBuffer
 c_fs_path_buffer_create_empty (size_t path_capacity,
-                               int *err)
+                               int* err)
 {
   assert (path_capacity > 0);
 
@@ -385,11 +385,11 @@ c_fs_path_buffer_create_empty (size_t path_capacity,
 }
 
 void
-c_fs_path_buffer_update (CPathBuffer *self,
-                         const char new_path[],
+c_fs_path_buffer_update (CPathBuffer* self,
+                         char const new_path[],
                          size_t new_path_len,
                          bool could_realloc,
-                         int *err)
+                         int* err)
 {
   assert (self && self->buf);
   assert (new_path);
@@ -424,7 +424,7 @@ c_fs_path_buffer_update (CPathBuffer *self,
 }
 
 void
-c_fs_path_buffer_destroy (CPathBuffer *self)
+c_fs_path_buffer_destroy (CPathBuffer* self)
 {
   assert (self && self->buf);
 
@@ -433,7 +433,7 @@ c_fs_path_buffer_destroy (CPathBuffer *self)
 }
 
 void
-c_fs_dir_create (const char *dir_path, size_t path_len, int *err)
+c_fs_dir_create (char const* dir_path, size_t path_len, int* err)
 {
   assert (dir_path);
   assert (path_len > 0);
@@ -452,7 +452,7 @@ c_fs_dir_create (const char *dir_path, size_t path_len, int *err)
     }
 #else
   unsigned umask_default = umask (0);
-  const unsigned full_permission = 0777;
+  unsigned const full_permission = 0777;
   unsigned default_permission = full_permission & ~umask_default;
 
   int dir_creation_status = mkdir (dir_path, default_permission);
@@ -465,7 +465,7 @@ c_fs_dir_create (const char *dir_path, size_t path_len, int *err)
 }
 
 bool
-c_fs_dir_exists (const char *dir_path, size_t path_len, int *err)
+c_fs_dir_exists (char const* dir_path, size_t path_len, int* err)
 {
   assert (dir_path);
   assert (path_len > 0);
@@ -513,7 +513,7 @@ c_fs_dir_exists (const char *dir_path, size_t path_len, int *err)
 
 bool
 c_fs_dir_is_empty (CPathBuffer dir_path,
-                   int *err)
+                   int* err)
 {
   assert (dir_path.buf && dir_path.len > 0 && dir_path.capacity > 0);
   assert (dir_path.buf[dir_path.len] == '\0');
@@ -532,7 +532,7 @@ c_fs_dir_is_empty (CPathBuffer dir_path,
 }
 
 bool
-c_fs_exists (const char *path, size_t path_len, int *err)
+c_fs_exists (char const* path, size_t path_len, int* err)
 {
   assert (path);
   assert (path_len > 0);
@@ -581,7 +581,7 @@ c_fs_exists (const char *path, size_t path_len, int *err)
 }
 
 void
-c_fs_delete (const char *path, size_t path_len, int *err)
+c_fs_delete (char const* path, size_t path_len, int* err)
 {
   assert (path);
   assert (path_len > 0);
@@ -615,7 +615,7 @@ c_fs_delete (const char *path, size_t path_len, int *err)
 }
 
 void
-c_fs_delete_recursively (CPathBuffer dir_path, int *err)
+c_fs_delete_recursively (CPathBuffer dir_path, int* err)
 {
   assert (dir_path.buf && dir_path.len > 0 && dir_path.capacity > 0);
   assert (dir_path.buf[dir_path.len] == '\0');
@@ -638,9 +638,9 @@ c_fs_delete_recursively (CPathBuffer dir_path, int *err)
 
 void
 c_fs_foreach (CPathBuffer dir_path,
-              bool handler (char *path, size_t path_len, void *extra_data, int *err),
-              void *extra_data,
-              int *err)
+              bool handler (char* path, size_t path_len, void* extra_data, int* err),
+              void* extra_data,
+              int* err)
 {
   assert (dir_path.buf && dir_path.len > 0 && dir_path.capacity > 0);
   assert (dir_path.buf[dir_path.len] == '\0');
@@ -710,12 +710,12 @@ c_fs_foreach (CPathBuffer dir_path,
     }
 #else
 
-  DIR *cur_dir = opendir (dir_path.buf);
+  DIR* cur_dir = opendir (dir_path.buf);
   if (cur_dir)
     {
       errno = 0;
 
-      struct dirent *cur_dir_properties;
+      struct dirent* cur_dir_properties;
       while ((cur_dir_properties = readdir (cur_dir)) != NULL)
         {
           if ((strcmp (cur_dir_properties->d_name, ".") != 0) &&
@@ -756,10 +756,10 @@ c_fs_foreach (CPathBuffer dir_path,
 
 // ------------------------- internal ------------------------- //
 bool
-internal_c_fs_delete_recursively_handler (char *path,
+internal_c_fs_delete_recursively_handler (char* path,
                                           size_t path_len,
-                                          void *extra_data,
-                                          int *err)
+                                          void* extra_data,
+                                          int* err)
 {
   (void) extra_data;
 
@@ -771,7 +771,7 @@ internal_c_fs_delete_recursively_handler (char *path,
           (CPathBuffer){
               .buf = path,
               .len = path_len,
-              .capacity = *(size_t *) extra_data },
+              .capacity = *(size_t*) extra_data },
           err);
       if (*err != 0)
         {
@@ -791,15 +791,15 @@ internal_c_fs_delete_recursively_handler (char *path,
 }
 
 bool
-internal_c_fs_dir_is_empty_handler (char *path,
+internal_c_fs_dir_is_empty_handler (char* path,
                                     size_t path_len,
-                                    void *extra_data,
-                                    int *err)
+                                    void* extra_data,
+                                    int* err)
 {
   (void) path;
   (void) path_len;
 
-  *(bool *) extra_data = false; // This dir_path is not empty
+  *(bool*) extra_data = false; // This dir_path is not empty
   if (err)
     {
       *err = 0;
@@ -940,7 +940,7 @@ c_fs_unit_tests (void)
     assert (err == 0);
 
     bool file_found = false;
-    bool c_fs_handler (char *path, size_t path_len, void *extra_data, int *err);
+    bool c_fs_handler (char* path, size_t path_len, void* extra_data, int* err);
     assert (err == 0);
 
     c_fs_path_buffer_update (&path_buf, STR (test_playground), true, &err);
@@ -985,13 +985,13 @@ c_fs_unit_tests (void)
 }
 
 bool
-c_fs_handler (char *path, size_t path_len, void *extra_data, int *err)
+c_fs_handler (char* path, size_t path_len, void* extra_data, int* err)
 {
   (void) path_len;
 
   if (strstr (path, "1.txt"))
     {
-      *(bool *) extra_data = true;
+      *(bool*) extra_data = true;
     }
 
   *err = 0;

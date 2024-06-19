@@ -16,7 +16,7 @@
 ///        and use it as oridinary heap allocated array
 typedef struct CArray
 {
-  void *data;
+  void* data;
   size_t capacity;     /// maximum data that can be hold, note: this unit based
                        /// not bytes based
   size_t len;          /// current length, note: this unit based not bytes based
@@ -36,17 +36,17 @@ enum
 
 CArray c_array_create (size_t element_size,
                        size_t initial_capacity,
-                       int *err);
+                       int* err);
 CArray c_array_create_unmanaged (size_t element_size,
                                  size_t initial_capacity,
-                                 void *c_array_calloc (size_t, size_t),
-                                 int *err);
+                                 void* c_array_calloc (size_t, size_t),
+                                 int* err);
 /// @brief create an array with capacity of 1
 /// @param element_size
 /// @param err return error (any value but zero is treated as an error)
 /// @return
 CArray c_array_create_empty (size_t element_size,
-                             int *err);
+                             int* err);
 
 /// @brief same as `c_array_create` but with allocating capacity
 /// @param element_size
@@ -58,23 +58,23 @@ CArray c_array_create_empty (size_t element_size,
 /// @return
 CArray c_array_create_with_capacity (size_t element_size,
                                      size_t capacity,
-                                     int *err);
+                                     int* err);
 CArray
 c_array_create_with_capacity_unmanaged (size_t element_size,
                                         size_t capacity,
-                                        void *c_array_calloc (size_t, size_t),
-                                        int *err);
+                                        void* c_array_calloc (size_t, size_t),
+                                        int* err);
 
 /// @brief check wether the array is empty
 /// @param self
 /// @param err return error (any value but zero is treated as an error)
 /// @return
-bool c_array_is_empty (CArray *self);
+bool c_array_is_empty (CArray* self);
 
 /// @brief get array length
 /// @param self
 /// @return array length
-size_t c_array_len (CArray *self);
+size_t c_array_len (CArray* self);
 
 /// @brief set array length
 ///        [beware this is DANGEROUS]
@@ -83,9 +83,9 @@ size_t c_array_len (CArray *self);
 /// @param self
 /// @param new_len
 /// @param err return error (any value but zero is treated as an error)
-void c_array_set_len (CArray *self,
+void c_array_set_len (CArray* self,
                       size_t new_len,
-                      int *err);
+                      int* err);
 
 /// @brief get array capacity
 ///        this will return the capacity in 'element_size' wise
@@ -93,7 +93,7 @@ void c_array_set_len (CArray *self,
 ///                 we can have up to '10 * element_size' bytes
 /// @param self
 /// @return the capacity of the array
-size_t c_array_capacity (CArray *self);
+size_t c_array_capacity (CArray* self);
 
 /// @brief set capacity
 ///        [beware this is DANGEROUS]
@@ -102,39 +102,39 @@ size_t c_array_capacity (CArray *self);
 /// @param self address of self
 /// @param new_capacity
 /// @param err return error (any value but zero is treated as an error)
-void c_array_set_capacity (CArray *self,
+void c_array_set_capacity (CArray* self,
                            size_t new_capacity,
-                           int *err);
-void c_array_set_capacity_unmanaged (CArray *self,
+                           int* err);
+void c_array_set_capacity_unmanaged (CArray* self,
                                      size_t new_capacity,
-                                     void *c_array_realloc (void *, size_t),
-                                     int *err);
+                                     void* c_array_realloc (void*, size_t),
+                                     int* err);
 
 /// @brief get elemet_size in bytes
 /// @param self
 /// @return elemet_size in bytes
-size_t c_array_element_size (CArray *self);
+size_t c_array_element_size (CArray* self);
 
 /// @brief push one element at the end
 /// @param self pointer to self
 /// @param element if you want to push literals (example: 3, 5 or 10 ...)
 ///                c_array_push(array, &(int){3});
 /// @param err return error (any value but zero is treated as an error)
-void c_array_push (CArray *self,
-                   const void *element,
-                   int *err);
-void c_array_push_unmanaged (CArray *self,
-                             const void *element,
-                             void *c_array_realloc (void *, size_t),
-                             int *err);
+void c_array_push (CArray* self,
+                   void const* element,
+                   int* err);
+void c_array_push_unmanaged (CArray* self,
+                             void const* element,
+                             void* c_array_realloc (void*, size_t),
+                             int* err);
 
 /// @brief pop one element from the end
 ///        [this will NOT resize the array]
 /// @param self
 /// @param err return error (any value but zero is treated as an error)
 /// @return pointer of the popped element
-void *c_array_pop (CArray *self,
-                   int *err);
+void* c_array_pop (CArray* self,
+                   int* err);
 
 /// @brief insert 1 element at index
 /// @param self pointer to self
@@ -143,15 +143,15 @@ void *c_array_pop (CArray *self,
 /// @param c_array_realloc optional: pass a realloc function to be used for
 ///                                memory re-allocation
 /// @param err return error (any value but zero is treated as an error)
-void c_array_insert (CArray *self,
-                     const void *element,
+void c_array_insert (CArray* self,
+                     void const* element,
                      size_t index,
-                     int *err);
-void c_array_insert_unmanaged (CArray *self,
-                               const void *element,
+                     int* err);
+void c_array_insert_unmanaged (CArray* self,
+                               void const* element,
                                size_t index,
-                               void *c_array_realloc (void *, size_t),
-                               int *err);
+                               void* c_array_realloc (void*, size_t),
+                               int* err);
 
 /// @brief insert multiple elements at index
 /// @param self
@@ -159,45 +159,45 @@ void c_array_insert_unmanaged (CArray *self,
 /// @param data
 /// @param data_len
 /// @param err return error (any value but zero is treated as an error)
-void c_array_insert_range (CArray *self,
+void c_array_insert_range (CArray* self,
                            size_t index,
-                           const void *data,
+                           void const* data,
                            size_t data_len,
-                           int *err);
-void c_array_insert_range_unmanaged (CArray *self,
+                           int* err);
+void c_array_insert_range_unmanaged (CArray* self,
                                      size_t index,
-                                     const void *data,
+                                     void const* data,
                                      size_t data_len,
-                                     void *c_array_realloc (void *, size_t),
-                                     int *err);
+                                     void* c_array_realloc (void*, size_t),
+                                     int* err);
 
 /// @brief remove element from CArray
 ///        [beware this function is costy]
 /// @param self
 /// @param index index to be removed
 /// @param err return error (any value but zero is treated as an error)
-void c_array_remove (CArray *self,
+void c_array_remove (CArray* self,
                      size_t index,
-                     int *err);
+                     int* err);
 
 /// @brief remove a range of elements from CArray
 /// @param self
 /// @param start_index
 /// @param range_len range length
 /// @param err return error (any value but zero is treated as an error)
-void c_array_remove_range (CArray *self,
+void c_array_remove_range (CArray* self,
                            size_t start_index,
                            size_t range_len,
-                           int *err);
+                           int* err);
 
 /// @brief destroy the array from the memory
 /// @param self
 /// @param c_array_free optional: pass a free function to be used for memory
 ///                               freeing
 /// @param err return error (any value but zero is treated as an error)
-void c_array_destroy (CArray *self);
-void c_array_destroy_unmanaged (CArray *self,
-                                void c_array_free (void *));
+void c_array_destroy (CArray* self);
+void c_array_destroy_unmanaged (CArray* self,
+                                void c_array_free (void*));
 #endif // CSTDLIB_ARRAY_H
 
 #ifdef CSTDLIB_ARRAY_IMPLEMENTATION
@@ -209,7 +209,7 @@ void c_array_destroy_unmanaged (CArray *self,
 CArray
 c_array_create (size_t element_size,
                 size_t initial_capacity,
-                int *err)
+                int* err)
 {
   return c_array_create_with_capacity_unmanaged (element_size, initial_capacity, calloc, err);
 }
@@ -217,8 +217,8 @@ c_array_create (size_t element_size,
 CArray
 c_array_create_unmanaged (size_t element_size,
                           size_t initial_capacity,
-                          void *c_array_calloc (size_t, size_t),
-                          int *err)
+                          void* c_array_calloc (size_t, size_t),
+                          int* err)
 {
   return c_array_create_with_capacity_unmanaged (element_size,
                                                  initial_capacity,
@@ -228,7 +228,7 @@ c_array_create_unmanaged (size_t element_size,
 
 CArray
 c_array_create_empty (size_t element_size,
-                      int *err)
+                      int* err)
 {
   return c_array_create_with_capacity_unmanaged (element_size,
                                                  1U,
@@ -239,7 +239,7 @@ c_array_create_empty (size_t element_size,
 CArray
 c_array_create_with_capacity (size_t element_size,
                               size_t capacity,
-                              int *err)
+                              int* err)
 {
   return c_array_create_with_capacity_unmanaged (element_size,
                                                  capacity,
@@ -250,8 +250,8 @@ c_array_create_with_capacity (size_t element_size,
 CArray
 c_array_create_with_capacity_unmanaged (size_t element_size,
                                         size_t capacity,
-                                        void *c_array_calloc (size_t, size_t),
-                                        int *err)
+                                        void* c_array_calloc (size_t, size_t),
+                                        int* err)
 {
   assert (element_size > 0);
   assert (capacity > 0);
@@ -276,13 +276,13 @@ c_array_create_with_capacity_unmanaged (size_t element_size,
 }
 
 bool
-c_array_is_empty (CArray *self)
+c_array_is_empty (CArray* self)
 {
   return c_array_len (self) == 0;
 }
 
 size_t
-c_array_len (CArray *self)
+c_array_len (CArray* self)
 {
   assert (self && self->data);
 
@@ -290,9 +290,9 @@ c_array_len (CArray *self)
 }
 
 void
-c_array_set_len (CArray *self,
+c_array_set_len (CArray* self,
                  size_t new_len,
-                 int *err)
+                 int* err)
 {
   assert (self && self->data);
   assert (new_len > 0);
@@ -312,7 +312,7 @@ c_array_set_len (CArray *self,
 }
 
 size_t
-c_array_capacity (CArray *self)
+c_array_capacity (CArray* self)
 {
   assert (self && self->data);
 
@@ -320,18 +320,18 @@ c_array_capacity (CArray *self)
 }
 
 void
-c_array_set_capacity (CArray *self,
+c_array_set_capacity (CArray* self,
                       size_t new_capacity,
-                      int *err)
+                      int* err)
 {
   c_array_set_capacity_unmanaged (self, new_capacity, realloc, err);
 }
 
 void
-c_array_set_capacity_unmanaged (CArray *self,
+c_array_set_capacity_unmanaged (CArray* self,
                                 size_t new_capacity,
-                                void *c_array_realloc (void *, size_t),
-                                int *err)
+                                void* c_array_realloc (void*, size_t),
+                                int* err)
 {
   assert (self && self->data);
   assert (new_capacity > 0);
@@ -352,7 +352,7 @@ c_array_set_capacity_unmanaged (CArray *self,
 }
 
 size_t
-c_array_element_size (CArray *self)
+c_array_element_size (CArray* self)
 {
   assert (self && self->data);
 
@@ -360,18 +360,18 @@ c_array_element_size (CArray *self)
 }
 
 void
-c_array_push (CArray *self,
-              const void *element,
-              int *err)
+c_array_push (CArray* self,
+              void const* element,
+              int* err)
 {
   c_array_push_unmanaged (self, element, realloc, err);
 }
 
 void
-c_array_push_unmanaged (CArray *self,
-                        const void *element,
-                        void *c_array_realloc (void *, size_t),
-                        int *err)
+c_array_push_unmanaged (CArray* self,
+                        void const* element,
+                        void* c_array_realloc (void*, size_t),
+                        int* err)
 {
   assert (self && self->data);
   assert (element);
@@ -392,21 +392,21 @@ c_array_push_unmanaged (CArray *self,
         }
     }
 
-  memcpy ((uint8_t *) self->data + (self->len * self->element_size),
+  memcpy ((uint8_t*) self->data + (self->len * self->element_size),
           element,
           self->element_size);
   self->len++;
 }
 
-void *
-c_array_pop (CArray *self,
-             int *err)
+void*
+c_array_pop (CArray* self,
+             int* err)
 {
   assert (self && self->data);
 
   if (self->len > 0)
     {
-      uint8_t *element = (uint8_t *) self->data + ((self->len - 1U) * self->element_size);
+      uint8_t* element = (uint8_t*) self->data + ((self->len - 1U) * self->element_size);
       self->len--;
 
       return element;
@@ -420,20 +420,20 @@ c_array_pop (CArray *self,
 }
 
 void
-c_array_insert (CArray *self,
-                const void *element,
+c_array_insert (CArray* self,
+                void const* element,
                 size_t index,
-                int *err)
+                int* err)
 {
   c_array_insert_unmanaged (self, element, index, realloc, err);
 }
 
 void
-c_array_insert_unmanaged (CArray *self,
-                          const void *element,
+c_array_insert_unmanaged (CArray* self,
+                          void const* element,
                           size_t index,
-                          void *c_array_realloc (void *, size_t),
-                          int *err)
+                          void* c_array_realloc (void*, size_t),
+                          int* err)
 {
   assert (self && self->data);
 
@@ -455,12 +455,12 @@ c_array_insert_unmanaged (CArray *self,
 
       if (index < self->len)
         {
-          memmove ((uint8_t *) self->data + ((index + 1) * self->element_size),
-                   (uint8_t *) self->data + (index * self->element_size),
+          memmove ((uint8_t*) self->data + ((index + 1) * self->element_size),
+                   (uint8_t*) self->data + (index * self->element_size),
                    (self->len - index) * self->element_size);
         }
 
-      memcpy ((uint8_t *) self->data + (index * self->element_size),
+      memcpy ((uint8_t*) self->data + (index * self->element_size),
               element,
               self->element_size);
       self->len++;
@@ -472,22 +472,22 @@ c_array_insert_unmanaged (CArray *self,
 }
 
 void
-c_array_insert_range (CArray *self,
+c_array_insert_range (CArray* self,
                       size_t index,
-                      const void *data,
+                      void const* data,
                       size_t data_len,
-                      int *err)
+                      int* err)
 {
   c_array_insert_range_unmanaged (self, index, data, data_len, realloc, err);
 }
 
 void
-c_array_insert_range_unmanaged (CArray *self,
+c_array_insert_range_unmanaged (CArray* self,
                                 size_t index,
-                                const void *data,
+                                void const* data,
                                 size_t data_len,
-                                void *c_array_realloc (void *, size_t),
-                                int *err)
+                                void* c_array_realloc (void*, size_t),
+                                int* err)
 {
   assert (self && self->data);
   assert (data);
@@ -511,12 +511,12 @@ c_array_insert_range_unmanaged (CArray *self,
 
       if (index < self->len)
         {
-          memmove ((uint8_t *) self->data + ((index + data_len) * self->element_size),
-                   (uint8_t *) self->data + (index * self->element_size),
+          memmove ((uint8_t*) self->data + ((index + data_len) * self->element_size),
+                   (uint8_t*) self->data + (index * self->element_size),
                    (self->len - index) * self->element_size);
         }
 
-      memcpy ((uint8_t *) self->data + (index * self->element_size),
+      memcpy ((uint8_t*) self->data + (index * self->element_size),
               data, data_len * self->element_size);
 
       self->len += data_len;
@@ -528,9 +528,9 @@ c_array_insert_range_unmanaged (CArray *self,
 }
 
 void
-c_array_remove (CArray *self,
+c_array_remove (CArray* self,
                 size_t index,
-                int *err)
+                int* err)
 {
   assert (self && self->data);
 
@@ -542,7 +542,7 @@ c_array_remove (CArray *self,
     {
       if (self->len > index)
         {
-          uint8_t *element = (uint8_t *) self->data + (index * self->element_size);
+          uint8_t* element = (uint8_t*) self->data + (index * self->element_size);
 
           memmove (element,
                    element + self->element_size,
@@ -562,10 +562,10 @@ c_array_remove (CArray *self,
 }
 
 void
-c_array_remove_range (CArray *self,
+c_array_remove_range (CArray* self,
                       size_t start_index,
                       size_t range_len,
-                      int *err)
+                      int* err)
 {
   assert (self && self->data);
 
@@ -588,7 +588,7 @@ c_array_remove_range (CArray *self,
       *err = CARRAY_ERROR_wrong_range_len;
     }
 
-  uint8_t *start_ptr = (uint8_t *) self->data + (start_index * self->element_size);
+  uint8_t* start_ptr = (uint8_t*) self->data + (start_index * self->element_size);
 
   if (self->len > 0U)
     {
@@ -596,7 +596,7 @@ c_array_remove_range (CArray *self,
         {
           if ((start_index + range_len) <= self->len)
             {
-              const uint8_t *end_ptr = (uint8_t *) self->data + ((start_index + range_len) * self->element_size);
+              uint8_t const* end_ptr = (uint8_t*) self->data + ((start_index + range_len) * self->element_size);
               size_t right_range_size = (self->len - (start_index + range_len)) * self->element_size;
 
               memmove (start_ptr, end_ptr, right_range_size);
@@ -620,14 +620,14 @@ c_array_remove_range (CArray *self,
 }
 
 void
-c_array_destroy (CArray *self)
+c_array_destroy (CArray* self)
 {
   c_array_destroy_unmanaged (self, free);
 }
 
 void
-c_array_destroy_unmanaged (CArray *self,
-                           void c_array_free (void *))
+c_array_destroy_unmanaged (CArray* self,
+                           void c_array_free (void*))
 {
   assert (self && self->data);
   assert (c_array_free);
@@ -672,7 +672,7 @@ c_array_unit_tests (void)
     assert (c_array_len (&array) == 5);
 
     // test c_array_pop
-    const int *data = c_array_pop (&array, &err);
+    int const* data = c_array_pop (&array, &err);
     assert (err == 0);
     assert (*data == 16);
 
@@ -680,22 +680,22 @@ c_array_unit_tests (void)
     c_array_remove_range (&array, 1, 3, &err);
     assert (err == 0);
     assert (c_array_len (&array) == 1);
-    assert (((int *) array.data)[0] == 12);
+    assert (((int*) array.data)[0] == 12);
 
     // test c_array_insert
     c_array_insert (&array, &(int){ 20 }, 0, &err);
     assert (err == 0);
-    assert (((int *) array.data)[0] == 20);
-    assert (((int *) array.data)[1] == 12);
+    assert (((int*) array.data)[0] == 20);
+    assert (((int*) array.data)[1] == 12);
 
     // test c_array_insert
     c_array_insert_range (&array, 1, &(int[]){ 1, 2, 3 }, 3, &err);
     assert (err == 0);
-    assert (((int *) array.data)[0] == 20);
-    assert (((int *) array.data)[1] == 1);
-    assert (((int *) array.data)[2] == 2);
-    assert (((int *) array.data)[3] == 3);
-    assert (((int *) array.data)[4] == 12);
+    assert (((int*) array.data)[0] == 20);
+    assert (((int*) array.data)[1] == 1);
+    assert (((int*) array.data)[2] == 2);
+    assert (((int*) array.data)[3] == 3);
+    assert (((int*) array.data)[4] == 12);
 
     c_array_destroy (&array);
   }
@@ -708,8 +708,8 @@ c_array_unit_tests (void)
     assert (err == 0);
     c_array_insert (&array2, &(char){ 'a' }, 0, &err);
     assert (err == 0);
-    assert (((char *) array2.data)[0] == 'a');
-    assert (((char *) array2.data)[1] == '\0');
+    assert (((char*) array2.data)[0] == 'a');
+    assert (((char*) array2.data)[1] == '\0');
 
     c_array_destroy (&array2);
   }

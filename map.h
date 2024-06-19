@@ -15,7 +15,7 @@
 
 typedef struct CMap
 {
-  void *data;
+  void* data;
   size_t capacity;
   size_t len;
   size_t key_size;
@@ -32,31 +32,31 @@ typedef struct CMap
 CMap c_map_create (size_t max_capacity,
                    size_t max_key_size,
                    size_t max_value_size,
-                   int *err);
+                   int* err);
 
-void c_map_insert (CMap *self,
-                   void *key,
+void c_map_insert (CMap* self,
+                   void* key,
                    size_t key_size,
-                   void *value,
+                   void* value,
                    size_t value_size,
-                   int *err);
+                   int* err);
 
-void *c_map_get (const CMap *self,
-                 void *key,
+void* c_map_get (CMap const* self,
+                 void* key,
                  size_t key_size);
 
-void *c_map_remove (CMap *self,
-                    void *key,
+void* c_map_remove (CMap* self,
+                    void* key,
                     size_t key_size,
-                    int *err);
+                    int* err);
 
-size_t c_map_len (const CMap *self);
+size_t c_map_len (CMap const* self);
 
-void c_map_foreach (CMap *self,
-                    void handler (void *key, void *value, void *extra_data),
-                    void *extra_data);
+void c_map_foreach (CMap* self,
+                    void handler (void* key, void* value, void* extra_data),
+                    void* extra_data);
 
-void c_map_destroy (CMap *self);
+void c_map_destroy (CMap* self);
 
 #endif // CSTDLIB_MAP_H
 
@@ -66,31 +66,31 @@ void c_map_destroy (CMap *self);
 
 typedef struct CMapElement
 {
-  bool *is_filled;
-  void *key;
-  void *value;
+  bool* is_filled;
+  void* key;
+  void* value;
 } CMapElement;
 
 typedef struct CMapElement_
 {
   bool is_filled;
-  void *data;
+  void* data;
 } CMapElement_;
 
-static size_t internal_c_map_hasing_algo (void *key,
+static size_t internal_c_map_hasing_algo (void* key,
                                           size_t key_size,
                                           size_t capacity);
-static CMapElement internal_c_map_get_element (const CMap *self,
+static CMapElement internal_c_map_get_element (CMap const* self,
                                                size_t index);
-static CMapElement internal_c_map_search_and_get (const CMap *self,
-                                                  void *key,
+static CMapElement internal_c_map_search_and_get (CMap const* self,
+                                                  void* key,
                                                   size_t key_size);
 
 CMap
 c_map_create (size_t max_capacity,
               size_t max_key_size,
               size_t max_value_size,
-              int *err)
+              int* err)
 {
   assert (max_key_size > 0);
   assert (max_value_size > 0);
@@ -102,7 +102,7 @@ c_map_create (size_t max_capacity,
 
   CMap map = {
     .data = calloc (
-        1, sizeof (CMap) + (max_capacity * (max_key_size + max_value_size + sizeof (bool) + sizeof (void *)))),
+        1, sizeof (CMap) + (max_capacity * (max_key_size + max_value_size + sizeof (bool) + sizeof (void*)))),
     .capacity = max_capacity,
     .key_size = max_key_size,
     .value_size = max_value_size,
@@ -118,12 +118,12 @@ c_map_create (size_t max_capacity,
 }
 
 void
-c_map_insert (CMap *self,
-              void *key,
+c_map_insert (CMap* self,
+              void* key,
               size_t key_size,
-              void *value,
+              void* value,
               size_t value_size,
-              int *err)
+              int* err)
 {
   assert (self && self->data);
   assert (key_size > 0);
@@ -163,9 +163,9 @@ c_map_insert (CMap *self,
   self->len++;
 }
 
-void *
-c_map_get (const CMap *self,
-           void *key,
+void*
+c_map_get (CMap const* self,
+           void* key,
            size_t key_size)
 {
   assert (self && self->data);
@@ -175,7 +175,7 @@ c_map_get (const CMap *self,
   CMapElement element = internal_c_map_search_and_get (self, key, key_size);
   if (element.key != NULL)
     {
-      return (uint8_t *) (element.value);
+      return (uint8_t*) (element.value);
     }
   else
     {
@@ -183,11 +183,11 @@ c_map_get (const CMap *self,
     }
 }
 
-void *
-c_map_remove (CMap *self,
-              void *key,
+void*
+c_map_remove (CMap* self,
+              void* key,
               size_t key_size,
-              int *err)
+              int* err)
 {
   assert (self && self->data);
   assert (key);
@@ -219,7 +219,7 @@ c_map_remove (CMap *self,
 }
 
 size_t
-c_map_len (const CMap *self)
+c_map_len (CMap const* self)
 {
   assert (self && self->data);
 
@@ -227,9 +227,9 @@ c_map_len (const CMap *self)
 }
 
 void
-c_map_foreach (CMap *self,
-               void handler (void *key, void *value, void *extra_data),
-               void *extra_data)
+c_map_foreach (CMap* self,
+               void handler (void* key, void* value, void* extra_data),
+               void* extra_data)
 {
   assert (self && self->data);
   assert (handler);
@@ -242,7 +242,7 @@ c_map_foreach (CMap *self,
 }
 
 void
-c_map_destroy (CMap *self)
+c_map_destroy (CMap* self)
 {
   assert (self && self->data);
 
@@ -253,23 +253,23 @@ c_map_destroy (CMap *self)
 
 // ------------------------- internal ------------------------- //
 static inline size_t
-internal_c_map_hasing_algo (void *key, size_t key_size, size_t capacity)
+internal_c_map_hasing_algo (void* key, size_t key_size, size_t capacity)
 {
   size_t sum = 0;
   for (size_t iii = 0; iii < key_size; ++iii)
     {
-      sum += ((uint8_t *) key)[iii];
+      sum += ((uint8_t*) key)[iii];
     }
 
   return sum % capacity;
 }
 
 static inline CMapElement
-internal_c_map_get_element (const CMap *self, size_t index)
+internal_c_map_get_element (CMap const* self, size_t index)
 {
-  bool *is_filled_addr = (bool *) self->data + (index * (self->key_size + self->value_size + sizeof (bool)));
-  uint8_t *key_addr = (uint8_t *) is_filled_addr + sizeof (bool);
-  uint8_t *value_addr = key_addr + self->key_size;
+  bool* is_filled_addr = (bool*) self->data + (index * (self->key_size + self->value_size + sizeof (bool)));
+  uint8_t* key_addr = (uint8_t*) is_filled_addr + sizeof (bool);
+  uint8_t* value_addr = key_addr + self->key_size;
 
   CMapElement element = { .is_filled = is_filled_addr,
                           .key = key_addr,
@@ -279,7 +279,7 @@ internal_c_map_get_element (const CMap *self, size_t index)
 }
 
 static inline CMapElement
-internal_c_map_search_and_get (const CMap *self, void *key, size_t key_size)
+internal_c_map_search_and_get (CMap const* self, void* key, size_t key_size)
 {
   assert (self);
 
@@ -290,7 +290,7 @@ internal_c_map_search_and_get (const CMap *self, void *key, size_t key_size)
 
       if (*element.is_filled)
         {
-          void *element_key = element.key;
+          void* element_key = element.key;
 
           // check for collision `Quadratic Probing`
           for (size_t iii = 0; memcmp (key, element_key, key_size) != 0;
@@ -346,8 +346,8 @@ c_map_unit_tests (void)
     c_map_insert (&map, STR_W_LEN ("abc"), INT_W_LEN (4), &err); // test override
     assert (err == 0);
 
-    assert (*(int *) c_map_get (&map, STR_W_LEN ("abcd")) == 3);
-    assert (*(int *) c_map_get (&map, STR_W_LEN ("abc")) == 4);
+    assert (*(int*) c_map_get (&map, STR_W_LEN ("abcd")) == 3);
+    assert (*(int*) c_map_get (&map, STR_W_LEN ("abc")) == 4);
     assert (c_map_get (&map, STR_W_LEN ("xyz")) == NULL); // test not exist
   }
 
@@ -357,7 +357,7 @@ c_map_unit_tests (void)
     ///        this will loop on first map->len elements,
     ///        instead of the occupied ones
     int sum = 0;
-    void c_map_handler (void *key, void *value, void *extra_data);
+    void c_map_handler (void* key, void* value, void* extra_data);
     c_map_foreach (&map, c_map_handler, &sum);
     assert (sum == 10);
   }
@@ -366,10 +366,10 @@ c_map_unit_tests (void)
 }
 
 void
-c_map_handler (void *key, void *value, void *extra_data)
+c_map_handler (void* key, void* value, void* extra_data)
 {
   (void) key;
-  *(int *) extra_data += *(int *) value;
+  *(int*) extra_data += *(int*) value;
 }
 
 #ifdef NDEBUG_

@@ -8,1056 +8,1155 @@
  */
 
 #ifndef GUI_DEFAULT_FOREGROUND_COLOR
-#define GUI_DEFAULT_FOREGROUND_COLOR   0x00, 0x00, 0x00, 0xcc
+#define GUI_DEFAULT_FOREGROUND_COLOR 0x00, 0x00, 0x00, 0xcc
 #endif
 
 // -- button
 #ifndef GUI_BUTTON_DEFAULT_WIDTH
-#define GUI_BUTTON_DEFAULT_WIDTH    150
+#define GUI_BUTTON_DEFAULT_WIDTH 150
 #endif
 #ifndef GUI_BUTTON_DEFAULT_HEIGHT
-#define GUI_BUTTON_DEFAULT_HEIGHT   40
+#define GUI_BUTTON_DEFAULT_HEIGHT 40
 #endif
 #ifndef GUI_BUTTON_DEFAULT_HOVER_BACKGROUND_COLOR
-#define GUI_BUTTON_DEFAULT_HOVER_BACKGROUND_COLOR   0xdc, 0xdc, 0xdc, 0xff
+#define GUI_BUTTON_DEFAULT_HOVER_BACKGROUND_COLOR 0xdc, 0xdc, 0xdc, 0xff
 #endif
 #ifndef GUI_BUTTON_DEFAULT_BACKGROUND_COLOR
-#define GUI_BUTTON_DEFAULT_BACKGROUND_COLOR  0xe6, 0xe6, 0xe6, 0xff
+#define GUI_BUTTON_DEFAULT_BACKGROUND_COLOR 0xe6, 0xe6, 0xe6, 0xff
 #endif
 #ifndef GUI_BUTTON_DEFAULT_HORIZONTAL_PADDING
-#define GUI_BUTTON_DEFAULT_HORIZONTAL_PADDING    4
+#define GUI_BUTTON_DEFAULT_HORIZONTAL_PADDING 4
 #endif
 #ifndef GUI_BUTTON_DEFAULT_VERTICAL_PADDING
-#define GUI_BUTTON_DEFAULT_VERTICAL_PADDING    2
+#define GUI_BUTTON_DEFAULT_VERTICAL_PADDING 2
 #endif
 
 // -- text input
 #ifndef GUI_TEXT_INPUT_DEFAULT_WIDTH
-#define GUI_TEXT_INPUT_DEFAULT_WIDTH    300
+#define GUI_TEXT_INPUT_DEFAULT_WIDTH 300
 #endif
 #ifndef GUI_TEXT_INPUT_DEFAULT_HEIGHT
-#define GUI_TEXT_INPUT_DEFAULT_HEIGHT    50
+#define GUI_TEXT_INPUT_DEFAULT_HEIGHT 50
 #endif
 #ifndef GUI_TEXT_INPUT_DEFAULT_BACKGROUND_COLOR
-#define GUI_TEXT_INPUT_DEFAULT_BACKGROUND_COLOR    0xff, 0xff, 0xff, 0xf0
+#define GUI_TEXT_INPUT_DEFAULT_BACKGROUND_COLOR 0xff, 0xff, 0xff, 0xf0
 #endif
 #ifndef GUI_TEXT_INPUT_DEFAULT_HORIZONTAL_PADDING
-#define GUI_TEXT_INPUT_DEFAULT_HORIZONTAL_PADDING    4
+#define GUI_TEXT_INPUT_DEFAULT_HORIZONTAL_PADDING 4
 #endif
 #ifndef GUI_TEXT_INPUT_DEFAULT_VERTICAL_PADDING
-#define GUI_TEXT_INPUT_DEFAULT_VERTICAL_PADDING    2
+#define GUI_TEXT_INPUT_DEFAULT_VERTICAL_PADDING 2
 #endif
 #ifndef GUI_TEXT_INPUT_DEFAULT_BORDER_WIDTH
-#define GUI_TEXT_INPUT_DEFAULT_BORDER_WIDTH    2
+#define GUI_TEXT_INPUT_DEFAULT_BORDER_WIDTH 2
 #endif
 #ifndef GUI_TEXT_INPUT_DEFAULT_BORDER_COLOR
-#define GUI_TEXT_INPUT_DEFAULT_BORDER_COLOR    0xe6, 0xe6, 0xe6, 0xff
+#define GUI_TEXT_INPUT_DEFAULT_BORDER_COLOR 0xe6, 0xe6, 0xe6, 0xff
 #endif
 #ifndef GUI_TEXT_INPUT_DEFAULT_CURSOR_WIDTH
-#define GUI_TEXT_INPUT_DEFAULT_CURSOR_WIDTH    2
+#define GUI_TEXT_INPUT_DEFAULT_CURSOR_WIDTH 2
 #endif
 #ifndef GUI_TEXT_INPUT_DEFAULT_CURSOR_HEIGHT
-#define GUI_TEXT_INPUT_DEFAULT_CURSOR_HEIGHT    48
+#define GUI_TEXT_INPUT_DEFAULT_CURSOR_HEIGHT 48
 #endif
 #ifndef GUI_TEXT_INPUT_DEFAULT_CURSOR_COLOR
-#define GUI_TEXT_INPUT_DEFAULT_CURSOR_COLOR    0xe6, 0xe6, 0xe6, 0xff
+#define GUI_TEXT_INPUT_DEFAULT_CURSOR_COLOR 0xe6, 0xe6, 0xe6, 0xff
 #endif
 
 #ifndef CSTDLIB_GUI_H
 #define CSTDLIB_GUI_H
-    #include <stddef.h>
-    #include <stdbool.h>
-    #include <stdint.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 
-    typedef struct GuiApp GuiApp;
-    typedef struct GuiColor GuiColor;
-    typedef struct GuiWindow GuiWindow;
-    typedef struct GuiPosition GuiPosition;
-    typedef union  GuiEvent GuiEvent;
-    typedef struct GuiEventMouse GuiEventMouse;
-    typedef struct GuiWidgetTexture GuiWidgetTexture;
-    typedef struct GuiWidget GuiWidget;
-    typedef struct GuiButton GuiButton;
-    typedef struct GuiLabel GuiLabel;
-    typedef struct GuiTextInput GuiTextInput;
-    typedef enum GuiWidgetState {
-        GUI_WIDGET_STATE_NORMAL,
-        GUI_WIDGET_STATE_HOVER,
-        GUI_WIDGET_STATE_CLICK,
-    } GuiWidgetState;
+typedef struct GuiApp GuiApp;
+typedef struct GuiColor GuiColor;
+typedef struct GuiWindow GuiWindow;
+typedef struct GuiPosition GuiPosition;
+typedef union GuiEvent GuiEvent;
+typedef struct GuiEventMouse GuiEventMouse;
+typedef struct GuiWidgetTexture GuiWidgetTexture;
+typedef struct GuiWidget GuiWidget;
+typedef struct GuiButton GuiButton;
+typedef struct GuiLabel GuiLabel;
+typedef struct GuiTextInput GuiTextInput;
+typedef enum GuiWidgetState
+{
+    GUI_WIDGET_STATE_NORMAL,
+    GUI_WIDGET_STATE_HOVER,
+    GUI_WIDGET_STATE_CLICK,
+} GuiWidgetState;
 
-    typedef void(*GuiEventHandler)(GuiWidget* widget, GuiEvent* event, void* user_data);
-    typedef void(*GuiWidgetStateHandler)(GuiWidget* widget, GuiWidgetState state);
-    typedef void(*GuiWidgetRemoveHandler)(GuiWindow* window, GuiWidget* widget);
+typedef void (*GuiEventHandler) (GuiWidget *widget, GuiEvent *event,
+                                 void *user_data);
+typedef void (*GuiWidgetStateHandler) (GuiWidget *widget,
+                                       GuiWidgetState state);
+typedef void (*GuiWidgetRemoveHandler) (GuiWindow *window, GuiWidget *widget);
 
-    struct GuiApp {
-        uint16_t children_max_count;
-        int16_t current_child_index;
-        GuiWindow** children;
-        void* font;
-    };
+struct GuiApp
+{
+    uint16_t children_max_count;
+    int16_t current_child_index;
+    GuiWindow **children;
+    void *font;
+};
 
-    struct GuiColor {
-        uint8_t r;
-        uint8_t g;
-        uint8_t b;
-        uint8_t a;
-    };
+struct GuiColor
+{
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+    uint8_t a;
+};
 
-    typedef enum GuiEventType {
-        GUI_EVENT_TYPE_NONE,
-        GUI_EVENT_TYPE_MOUSE_MOTION,
-        GUI_EVENT_TYPE_MOUSE_BUTTON_DOWN,
-        GUI_EVENT_TYPE_MOUSE_BUTTON_UP,
-        GUI_EVENT_TYPE_MOUSE_WHEEL,
-    } GuiEventType;
+typedef enum GuiEventType
+{
+    GUI_EVENT_TYPE_NONE,
+    GUI_EVENT_TYPE_MOUSE_MOTION,
+    GUI_EVENT_TYPE_MOUSE_BUTTON_DOWN,
+    GUI_EVENT_TYPE_MOUSE_BUTTON_UP,
+    GUI_EVENT_TYPE_MOUSE_WHEEL,
+} GuiEventType;
 
-    union GuiEvent {
-        GuiEventType type;
-        struct GuiEventMouse {
-            GuiEventType type;
-            uint16_t x;
-            uint16_t y;
-            uint16_t wheel_x;
-            uint16_t wheel_y;
-            enum GuiEventMouseClick {
-                GUI_EVENT_MOUSE_CLICK_NONE,
-                GUI_EVENT_MOUSE_CLICK_LEFT,
-                GUI_EVENT_MOUSE_CLICK_MIDDLE,
-                GUI_EVENT_MOUSE_CLICK_RIGHT,
-            } click_type;
-        } mouse;
-    };
-
-    struct GuiWindow {
-        GuiColor background_color;  // it will be black if not set
-        uint32_t id;
-        GuiApp* app;
-        void* renderer;
-        GuiEvent* event;
-        GuiWidget* child;
-        GuiWidget* brother;
-    };
-
-    typedef enum GuiWindowFlags
+union GuiEvent
+{
+    GuiEventType type;
+    struct GuiEventMouse
     {
-        GUI_WINDOW_FULLSCREEN       = 0x00000001,   /**< fullscreen window */
-        GUI_WINDOW_OPENGL           = 0x00000002,   /**< window usable with OpenGL context */
-        GUI_WINDOW_SHOWN            = 0x00000004,   /**< window is visible */
-        GUI_WINDOW_HIDDEN           = 0x00000008,   /**< window is not visible */
-        GUI_WINDOW_BORDERLESS       = 0x00000010,   /**< no window decoration */
-        GUI_WINDOW_RESIZABLE        = 0x00000020,   /**< window can be resized */
-        GUI_WINDOW_MINIMIZED        = 0x00000040,   /**< window is minimized */
-        GUI_WINDOW_MAXIMIZED        = 0x00000080,   /**< window is maximized */
-        GUI_WINDOW_MOUSE_GRABBED    = 0x00000100,   /**< window has grabbed mouse input */
-        GUI_WINDOW_INPUT_FOCUS      = 0x00000200,   /**< window has input focus */
-        GUI_WINDOW_MOUSE_FOCUS      = 0x00000400,   /**< window has mouse focus */
-        GUI_WINDOW_FULLSCREEN_DESKTOP = ( GUI_WINDOW_FULLSCREEN | 0x00001000 ),
-        GUI_WINDOW_FOREIGN          = 0x00000800,   /**< window not created by SDL */
-        GUI_WINDOW_ALLOW_HIGHDPI    = 0x00002000,   /**< window should be created in high-DPI mode if supported.
-                                                         On macOS NSHighResolutionCapable must be set true in the
-                                                         application's Info.plist for this to have any effect. */
-        GUI_WINDOW_MOUSE_CAPTURE    = 0x00004000,   /**< window has mouse captured (unrelated to MOUSE_GRABBED) */
-        GUI_WINDOW_ALWAYS_ON_TOP    = 0x00008000,   /**< window should always be above others */
-        GUI_WINDOW_SKIP_TASKBAR     = 0x00010000,   /**< window should not be added to the taskbar */
-        GUI_WINDOW_UTILITY          = 0x00020000,   /**< window should be treated as a utility window */
-        GUI_WINDOW_TOOLTIP          = 0x00040000,   /**< window should be treated as a tooltip */
-        GUI_WINDOW_POPUP_MENU       = 0x00080000,   /**< window should be treated as a popup menu */
-        GUI_WINDOW_KEYBOARD_GRABBED = 0x00100000,   /**< window has grabbed keyboard input */
-        GUI_WINDOW_VULKAN           = 0x10000000,   /**< window usable for Vulkan surface */
-        GUI_WINDOW_METAL            = 0x20000000,   /**< window usable for Metal view */
-
-        GUI_WINDOW_INPUT_GRABBED    = GUI_WINDOW_MOUSE_GRABBED /**< equivalent to SDL_WINDOW_MOUSE_GRABBED for compatibility */
-    } GuiWindowFlags;
-
-    struct GuiPosition {
+        GuiEventType type;
         uint16_t x;
         uint16_t y;
-    };
+        uint16_t wheel_x;
+        uint16_t wheel_y;
+        enum GuiEventMouseClick
+        {
+            GUI_EVENT_MOUSE_CLICK_NONE,
+            GUI_EVENT_MOUSE_CLICK_LEFT,
+            GUI_EVENT_MOUSE_CLICK_MIDDLE,
+            GUI_EVENT_MOUSE_CLICK_RIGHT,
+        } click_type;
+    } mouse;
+};
 
-    struct GuiWidgetTexture {
-        uint16_t x;
-        uint16_t y;
-        uint16_t width;
-        uint16_t height;
-        int16_t next_index;
-        void* texture;
-    };
+struct GuiWindow
+{
+    GuiColor background_color; // it will be black if not set
+    uint32_t id;
+    GuiApp *app;
+    void *renderer;
+    GuiEvent *event;
+    GuiWidget *child;
+    GuiWidget *brother;
+};
 
-    struct GuiWidget {
-        GuiEventHandler event_handler;
-        GuiWidgetRemoveHandler widget_remove_handler;
-        GuiWidgetState state;
-        GuiWidgetStateHandler state_handler;
-        void* user_data;
-        GuiEvent* event;
-        GuiWidget* child;
-        GuiWidget* brother;
-        struct {
-            size_t count;
-            size_t root_index;
-            GuiWidgetTexture* data;
-        } textures;
-    };
+typedef enum GuiWindowFlags
+{
+    GUI_WINDOW_FULLSCREEN = 0x00000001, /**< fullscreen window */
+    GUI_WINDOW_OPENGL = 0x00000002, /**< window usable with OpenGL context */
+    GUI_WINDOW_SHOWN = 0x00000004,  /**< window is visible */
+    GUI_WINDOW_HIDDEN = 0x00000008, /**< window is not visible */
+    GUI_WINDOW_BORDERLESS = 0x00000010, /**< no window decoration */
+    GUI_WINDOW_RESIZABLE = 0x00000020,  /**< window can be resized */
+    GUI_WINDOW_MINIMIZED = 0x00000040,  /**< window is minimized */
+    GUI_WINDOW_MAXIMIZED = 0x00000080,  /**< window is maximized */
+    GUI_WINDOW_MOUSE_GRABBED
+    = 0x00000100,                        /**< window has grabbed mouse input */
+    GUI_WINDOW_INPUT_FOCUS = 0x00000200, /**< window has input focus */
+    GUI_WINDOW_MOUSE_FOCUS = 0x00000400, /**< window has mouse focus */
+    GUI_WINDOW_FULLSCREEN_DESKTOP = (GUI_WINDOW_FULLSCREEN | 0x00001000),
+    GUI_WINDOW_FOREIGN = 0x00000800, /**< window not created by SDL */
+    GUI_WINDOW_ALLOW_HIGHDPI
+    = 0x00002000, /**< window should be created in high-DPI mode if supported.
+                       On macOS NSHighResolutionCapable must be set true in the
+                       application's Info.plist for this to have any effect. */
+    GUI_WINDOW_MOUSE_CAPTURE = 0x00004000, /**< window has mouse captured
+                                              (unrelated to MOUSE_GRABBED) */
+    GUI_WINDOW_ALWAYS_ON_TOP
+    = 0x00008000, /**< window should always be above others */
+    GUI_WINDOW_SKIP_TASKBAR
+    = 0x00010000, /**< window should not be added to the taskbar */
+    GUI_WINDOW_UTILITY
+    = 0x00020000, /**< window should be treated as a utility window */
+    GUI_WINDOW_TOOLTIP
+    = 0x00040000, /**< window should be treated as a tooltip */
+    GUI_WINDOW_POPUP_MENU
+    = 0x00080000, /**< window should be treated as a popup menu */
+    GUI_WINDOW_KEYBOARD_GRABBED
+    = 0x00100000,                   /**< window has grabbed keyboard input */
+    GUI_WINDOW_VULKAN = 0x10000000, /**< window usable for Vulkan surface */
+    GUI_WINDOW_METAL = 0x20000000,  /**< window usable for Metal view */
 
-    struct GuiButton {
-        GuiWidget widget;
-        size_t label_len;
-        char* label;
-    };
+    GUI_WINDOW_INPUT_GRABBED
+    = GUI_WINDOW_MOUSE_GRABBED /**< equivalent to SDL_WINDOW_MOUSE_GRABBED for
+                                  compatibility */
+} GuiWindowFlags;
 
-    struct GuiLabel {
-        GuiWidget widget;
-        size_t label_len;
-        char* label;
-    };
+struct GuiPosition
+{
+    uint16_t x;
+    uint16_t y;
+};
 
-    struct GuiTextInput {
-        GuiWidget widget;
-        char* buffer;
-        size_t buffer_len;
-        size_t buffer_current_len;
-    };
+struct GuiWidgetTexture
+{
+    uint16_t x;
+    uint16_t y;
+    uint16_t width;
+    uint16_t height;
+    int16_t next_index;
+    void *texture;
+};
 
-    void
-    gui_app_init(GuiApp* app, size_t maximum_children);
+struct GuiWidget
+{
+    GuiEventHandler event_handler;
+    GuiWidgetRemoveHandler widget_remove_handler;
+    GuiWidgetState state;
+    GuiWidgetStateHandler state_handler;
+    void *user_data;
+    GuiEvent *event;
+    GuiWidget *child;
+    GuiWidget *brother;
+    struct
+    {
+        size_t count;
+        size_t root_index;
+        GuiWidgetTexture *data;
+    } textures;
+};
 
-    void
-    gui_app_mainloop(GuiApp* self);
+struct GuiButton
+{
+    GuiWidget widget;
+    size_t label_len;
+    char *label;
+};
 
-    void
-    gui_app_deinit(GuiApp* self);
+struct GuiLabel
+{
+    GuiWidget widget;
+    size_t label_len;
+    char *label;
+};
 
-    /// @brief
-    /// @param x if x < 0, then the system will determine the position
-    /// @param y if y < 0, then the system will determine the position
-    /// @param width
-    /// @param height
-    /// @param title
-    /// @param title_len
-    /// @param flags
-    /// @return
-    void
-    gui_window_init(GuiApp* app, GuiWindow* return_window, int x, int y, size_t width, size_t height, const char* title, size_t title_len, GuiWindowFlags flags);
+struct GuiTextInput
+{
+    GuiWidget widget;
+    char *buffer;
+    size_t buffer_len;
+    size_t buffer_current_len;
+};
 
-    void
-    gui_window_set_background(GuiWindow* self, GuiColor bg_color);
+void gui_app_init (GuiApp *app, size_t maximum_children);
 
-    void
-    gui_window_add_child(GuiWindow* self, GuiWidget* child);
+void gui_app_mainloop (GuiApp *self);
 
-    void
-    gui_window_remove_children(GuiWindow* self);
+void gui_app_deinit (GuiApp *self);
 
-    void
-    gui_window_deinit(GuiWindow* self);
+/// @brief
+/// @param x if x < 0, then the system will determine the position
+/// @param y if y < 0, then the system will determine the position
+/// @param width
+/// @param height
+/// @param title
+/// @param title_len
+/// @param flags
+/// @return
+void gui_window_init (GuiApp *app, GuiWindow *return_window, int x, int y,
+                      size_t width, size_t height, const char *title,
+                      size_t title_len, GuiWindowFlags flags);
 
-    void
-    gui_widget_add_child(GuiWidget* parent, GuiWidget* child);
+void gui_window_set_background (GuiWindow *self, GuiColor bg_color);
 
-    void
-    gui_button_init(GuiWindow* self, GuiButton* return_button, const char* label, size_t label_len, size_t x, size_t y, GuiEventHandler event_handler, void* user_data);
+void gui_window_add_child (GuiWindow *self, GuiWidget *child);
 
-    void
-    gui_button_set_state(GuiButton* button, GuiWidgetState state);
+void gui_window_remove_child (GuiWindow *self, GuiWidget *widget);
 
-    void
-    gui_button_remove(GuiWindow* self, GuiButton* button);
+void gui_window_remove_children (GuiWindow *self);
 
-    void
-    gui_label_init(GuiWindow* self, GuiLabel* return_label, const char* label, size_t label_len, size_t x, size_t y, GuiEventHandler event_handler, void* user_data);
+void gui_window_deinit (GuiWindow *self);
 
-    void
-    gui_label_set_state(GuiLabel* label, GuiWidgetState state);
+void gui_widget_add_child (GuiWidget *parent, GuiWidget *child);
 
-    void
-    gui_label_remove(GuiWindow* self, GuiLabel* label);
+void gui_button_init (GuiWindow *self, GuiButton *return_button,
+                      const char *label, size_t label_len, size_t x, size_t y,
+                      GuiEventHandler event_handler, void *user_data);
 
-    void
-    gui_text_input_init(GuiWindow* self, GuiTextInput* return_text_input, char* buffer, size_t buffer_len, size_t x, size_t y, GuiEventHandler event_handler, void* user_data);
+void gui_button_set_state (GuiButton *button, GuiWidgetState state);
 
-    void
-    gui_text_input_set_state(GuiTextInput* text_input, GuiWidgetState state);
+void gui_button_remove (GuiWindow *self, GuiButton *button);
 
-    void
-    gui_text_input_remove(GuiWindow* self, GuiTextInput* text_input);
+void gui_label_init (GuiWindow *self, GuiLabel *return_label,
+                     const char *label, size_t label_len, size_t x, size_t y,
+                     GuiEventHandler event_handler, void *user_data);
+
+void gui_label_set_state (GuiLabel *label, GuiWidgetState state);
+
+void gui_label_remove (GuiWindow *self, GuiLabel *label);
+
+void gui_text_input_init (GuiWindow *self, GuiTextInput *return_text_input,
+                          char *buffer, size_t buffer_len, size_t x, size_t y,
+                          GuiEventHandler event_handler, void *user_data);
+
+void gui_text_input_set_state (GuiTextInput *text_input, GuiWidgetState state);
+
+void gui_text_input_remove (GuiWindow *self, GuiTextInput *text_input);
 #endif // CSTDLIB_GUI_H
 
-
 #ifdef CSTDLIB_GUI_IMPLEMENTATION
-    #include <SDL2/SDL.h>
-    #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
 
-    #include <stdio.h>
+#include <stdio.h>
 
-    #ifdef NDEBUG
-    #define assert(expr) ((void)(expr))
-    #else
-    #include <assert.h>
-    #endif
+#if defined(NDEBUG) && !defined(assert)
+#define assert(expr) ((void)(expr))
+#else
+#include <assert.h>
+#endif
 
-    static int internal_gui_event_mouse_handler(void* widget, SDL_Event* event);
-    static void internal_gui_event_update(GuiEvent* event, SDL_Event* sdl_event);
-    static void internal_gui_app_add_window(GuiApp* self, GuiWindow* window);
-    static void internal_gui_app_remove_window(GuiApp* self, GuiWindow* window);
-    static GuiWindow* internal_gui_app_get_window_from_id(GuiApp* app, uint32_t id);
-    static void internal_gui_window_remove_children(GuiWindow* window, GuiWidget* widget);
+static int internal_gui_event_mouse_handler (void *widget, SDL_Event *event);
+static void internal_gui_event_update (GuiEvent *event, SDL_Event *sdl_event);
+static void internal_gui_app_add_window (GuiApp *self, GuiWindow *window);
+static void internal_gui_app_remove_window (GuiApp *self, GuiWindow *window);
+static GuiWindow *internal_gui_app_get_window_from_id (GuiApp *app,
+                                                       uint32_t id);
+static void internal_gui_window_remove_children (GuiWindow *window,
+                                                 GuiWidget *widget);
 
-    extern unsigned char assets_DejaVuSansMono_ttf[];
-    extern unsigned int assets_DejaVuSansMono_ttf_len;
+extern unsigned char assets_DejaVuSansMono_ttf[];
+extern unsigned int assets_DejaVuSansMono_ttf_len;
 
-    void
-    gui_app_init(GuiApp* app, size_t maximum_children)
+void
+gui_app_init (GuiApp *app, size_t maximum_children)
+{
+    assert (app);
+    assert (SDL_Init (SDL_INIT_VIDEO | SDL_INIT_TIMER) == 0);
+    assert (TTF_Init () == 0);
+
+    SDL_RWops *font_raw = SDL_RWFromMem (assets_DejaVuSansMono_ttf,
+                                         assets_DejaVuSansMono_ttf_len);
+    TTF_Font *font = TTF_OpenFontRW (font_raw, 1, 24);
+    assert (font);
+
+    GuiWindow **children = calloc (maximum_children, sizeof (GuiWindow *));
+    assert (children);
+
+    *app = (GuiApp){ .font = font,
+                     .children = children,
+                     .children_max_count = maximum_children,
+                     .current_child_index = -1 };
+}
+
+void
+gui_app_mainloop (GuiApp *self)
+{
+    assert (self && self->children);
+
+    SDL_Event event;
+    bool should_quit = false;
+    while (!should_quit)
     {
-        assert(app);
-        assert(SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER) == 0);
-        assert(TTF_Init() == 0);
-
-        SDL_RWops* font_raw = SDL_RWFromMem(assets_DejaVuSansMono_ttf, assets_DejaVuSansMono_ttf_len);
-        TTF_Font* font = TTF_OpenFontRW(font_raw, 1, 24);
-        assert(font);
-
-        GuiWindow** children = calloc(maximum_children, sizeof(GuiWindow*));
-        assert(children);
-
-        *app = (GuiApp){
-            .font = font,
-            .children = children,
-            .children_max_count = maximum_children,
-            .current_child_index = -1
-        };
-    }
-
-    void
-    gui_app_mainloop(GuiApp* self)
-    {
-        assert(self && self->children);
-
-        SDL_Event event;
-        bool should_quit = false;
-        while(!should_quit)
+        while (SDL_PollEvent (&event) != 0)
         {
-            while (SDL_PollEvent(&event) != 0)
+            if ((event.type == SDL_WINDOWEVENT)
+                && (event.window.event == SDL_WINDOWEVENT_CLOSE))
             {
-                if ((event.type == SDL_WINDOWEVENT) && (event.window.event == SDL_WINDOWEVENT_CLOSE))
+                if (self->current_child_index > 0)
                 {
-                    if (self->current_child_index > 0)
+                    GuiWindow *window = internal_gui_app_get_window_from_id (
+                        self, event.window.windowID);
+                    gui_window_deinit (window);
+                    SDL_SetWindowInputFocus (
+                        SDL_RenderGetWindow (window->renderer));
+                }
+            }
+            else if (event.type == SDL_QUIT)
+            {
+                should_quit = true;
+            }
+        }
+
+        for (size_t iii = 0; iii <= self->current_child_index; ++iii)
+        {
+            GuiWindow *current_window = self->children[iii];
+
+            SDL_SetRenderDrawColor (current_window->renderer,
+                                    current_window->background_color.r,
+                                    current_window->background_color.g,
+                                    current_window->background_color.b,
+                                    current_window->background_color.a);
+
+            SDL_RenderClear (current_window->renderer);
+
+            for (GuiWidget *current_child = current_window->child;
+                 current_child; current_child = current_child->child)
+            {
+                for (GuiWidget *current_brother = current_child;
+                     current_brother;
+                     current_brother = current_brother->brother)
+                {
+                    GuiWidgetTexture *widget_texture
+                        = &current_brother->textures
+                               .data[current_brother->textures.root_index];
+                    while (widget_texture)
                     {
-                        GuiWindow* window = internal_gui_app_get_window_from_id(self, event.window.windowID);
-                        gui_window_deinit(window);
-                        SDL_SetWindowInputFocus(SDL_RenderGetWindow(window->renderer));
+                        assert (SDL_RenderCopy (
+                                    current_window->renderer,
+                                    widget_texture->texture, NULL,
+                                    &(SDL_Rect){ widget_texture->x,
+                                                 widget_texture->y,
+                                                 widget_texture->width,
+                                                 widget_texture->height })
+                                == 0);
+                        if (widget_texture->next_index < 0)
+                            break;
+                        widget_texture
+                            = &current_brother->textures
+                                   .data[widget_texture->next_index];
                     }
                 }
-                else if (event.type == SDL_QUIT)
-                {
-                    should_quit = true;
-                }
             }
 
-            for(size_t iii = 0; iii <= self->current_child_index; ++iii)
-            {
-                GuiWindow* current_window = self->children[iii];
-
-                SDL_SetRenderDrawColor(
-                    current_window->renderer,
-                    current_window->background_color.r,
-                    current_window->background_color.g,
-                    current_window->background_color.b,
-                    current_window->background_color.a);
-
-                SDL_RenderClear(current_window->renderer);
-
-                for(GuiWidget* current_child = current_window->child; current_child; current_child = current_child->child)
-                {
-                    for(GuiWidget* current_brother = current_child; current_brother; current_brother = current_brother->brother)
-                    {
-                        GuiWidgetTexture* widget_texture = &current_brother->textures.data[current_brother->textures.root_index];
-                        while(widget_texture)
-                        {
-                            assert(SDL_RenderCopy(current_window->renderer, widget_texture->texture, NULL, &(SDL_Rect){ widget_texture->x, widget_texture->y, widget_texture->width, widget_texture->height }) == 0);
-                            if(widget_texture->next_index < 0) break;
-                            widget_texture = &current_brother->textures.data[widget_texture->next_index];
-                        }
-                    }
-                }
-
-                SDL_RenderPresent(current_window->renderer);
-            }
+            SDL_RenderPresent (current_window->renderer);
         }
     }
+}
 
-    void
-    gui_app_deinit(GuiApp* self)
+void
+gui_app_deinit (GuiApp *self)
+{
+    assert (self && self->children);
+
+    TTF_CloseFont (self->font);
+    SDL_Quit ();
+
+    free (self->children);
+
+    *self = (GuiApp){ 0 };
+}
+
+void
+gui_window_init (GuiApp *app, GuiWindow *return_window, int x, int y,
+                 size_t width, size_t height, const char *title,
+                 size_t title_len, GuiWindowFlags flags)
+{
+    assert (title && title_len > 0);
+    assert (return_window);
+
+    SDL_Window *window
+        = SDL_CreateWindow (title, ((x < 0) ? SDL_WINDOWPOS_UNDEFINED : x),
+                            ((y < 0) ? SDL_WINDOWPOS_UNDEFINED : y), width,
+                            height, (SDL_WindowFlags)flags);
+    assert (window);
+
+    SDL_Renderer *renderer = SDL_CreateRenderer (
+        window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    assert (renderer);
+
+    GuiEvent *event = malloc (sizeof (GuiEvent));
+    assert (event);
+
+    *return_window = (GuiWindow){ .app = app,
+                                  .id = SDL_GetWindowID (window),
+                                  .renderer = renderer,
+                                  .event = event,
+                                  .background_color = (GuiColor){
+                                      GUI_BUTTON_DEFAULT_BACKGROUND_COLOR } };
+
+    internal_gui_app_add_window (app, return_window);
+}
+
+void
+gui_window_set_background (GuiWindow *self, GuiColor bg_color)
+{
+    assert (self);
+    self->background_color = bg_color;
+}
+
+void
+gui_window_add_child (GuiWindow *self, GuiWidget *child)
+{
+    assert (self && self->renderer);
+    assert (child && child->textures.data);
+
+    if (!self->child)
     {
-        assert(self && self->children);
-
-        TTF_CloseFont(self->font);
-        SDL_Quit();
-
-        free(self->children);
-
-        *self = (GuiApp){ 0 };
+        self->child = child;
     }
-
-    void
-    gui_window_init(GuiApp* app, GuiWindow* return_window, int x, int y, size_t width, size_t height, const char* title, size_t title_len, GuiWindowFlags flags)
+    else
     {
-        assert(title && title_len > 0);
-        assert(return_window);
-
-        SDL_Window* window = SDL_CreateWindow(
-            title,
-            ((x < 0) ? SDL_WINDOWPOS_UNDEFINED : x),
-            ((y < 0) ? SDL_WINDOWPOS_UNDEFINED : y),
-            width,
-            height,
-            (SDL_WindowFlags)flags);
-        assert(window);
-
-        SDL_Renderer* renderer = SDL_CreateRenderer(
-            window,
-            -1,
-            SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
-        assert(renderer);
-
-        GuiEvent* event = malloc(sizeof(GuiEvent));
-        assert(event);
-
-        *return_window = (GuiWindow){
-            .app = app,
-            .id = SDL_GetWindowID(window),
-            .renderer = renderer,
-            .event = event,
-            .background_color = (GuiColor){ GUI_BUTTON_DEFAULT_BACKGROUND_COLOR }
-        };
-
-        internal_gui_app_add_window(app, return_window);
-    }
-
-    void
-    gui_window_set_background(GuiWindow* self, GuiColor bg_color)
-    {
-        assert(self);
-        self->background_color = bg_color;
-    }
-
-    void
-    gui_window_add_child(GuiWindow* self, GuiWidget* child)
-    {
-        assert(self && self->renderer);
-        assert(child && child->textures.data);
-
-        if(!self->child)
+        GuiWidget *current_widget = self->child;
+        while (current_widget->brother)
         {
-            self->child = child;
+            current_widget = current_widget->brother;
         }
-        else
-        {
-            GuiWidget* current_widget = self->child;
-            while(current_widget->brother)
-            {
-                current_widget = current_widget->brother;
-            }
 
-            current_widget->brother = child;
-        }
+        current_widget->brother = child;
     }
+}
 
-    void
-    gui_window_remove_children(GuiWindow* self)
+void
+gui_window_remove_child (GuiWindow *self, GuiWidget *widget)
+{
+    assert (self && self->app);
+    assert (widget && widget->textures.data);
+
+    /// TODO:
+    abort ();
+}
+
+void
+gui_window_remove_children (GuiWindow *self)
+{
+    internal_gui_window_remove_children (self, self->brother);
+    internal_gui_window_remove_children (self, self->child);
+}
+
+void
+gui_window_deinit (GuiWindow *self)
+{
+    if (self && self->renderer)
     {
-        internal_gui_window_remove_children(self, self->brother);
-        internal_gui_window_remove_children(self, self->child);
+        gui_window_remove_children (self);
+
+        internal_gui_app_remove_window (self->app, self);
+
+        SDL_Window *window = SDL_RenderGetWindow (self->renderer);
+        SDL_DestroyRenderer (self->renderer);
+        SDL_DestroyWindow (window);
+
+        free (self->event);
+
+        // clear
+        *self = (GuiWindow){ 0 };
     }
+}
 
-    void
-    gui_window_deinit(GuiWindow* self)
+void
+gui_widget_add_child (GuiWidget *parent, GuiWidget *child)
+{
+    assert (parent && parent->textures.data);
+
+    if (!parent->child)
     {
-        if(self && self->renderer)
-        {
-            gui_window_remove_children(self);
-
-            internal_gui_app_remove_window(self->app, self);
-
-            SDL_Window* window = SDL_RenderGetWindow(self->renderer);
-            SDL_DestroyRenderer(self->renderer);
-            SDL_DestroyWindow(window);
-
-            free(self->event);
-
-            // clear
-            *self = (GuiWindow){ 0 };
-        }
+        parent->child = child;
     }
-
-    void
-    gui_widget_add_child(GuiWidget* parent, GuiWidget* child)
+    else
     {
-        assert(parent && parent->textures.data);
-
-        if(!parent->child)
+        GuiWidget *current_widget = parent->child;
+        while (current_widget->brother)
         {
-            parent->child = child;
+            current_widget = current_widget->brother;
         }
-        else
-        {
-            GuiWidget* current_widget = parent->child;
-            while(current_widget->brother)
-            {
-                current_widget = current_widget->brother;
-            }
 
-            current_widget->brother = child;
-        }
+        current_widget->brother = child;
     }
+}
 
-    void
-    gui_button_init(GuiWindow* self, GuiButton* return_button, const char* label, size_t label_len, size_t x, size_t y, GuiEventHandler event_handler, void* user_data)
+void
+gui_button_init (GuiWindow *self, GuiButton *return_button, const char *label,
+                 size_t label_len, size_t x, size_t y,
+                 GuiEventHandler event_handler, void *user_data)
+{
+    assert (self && self->renderer);
+    assert (label && label_len > 0);
+    assert (return_button);
+
+    SDL_Surface *font_surface = TTF_RenderText_Blended (
+        self->app->font, label, (SDL_Color){ GUI_DEFAULT_FOREGROUND_COLOR });
+    assert (font_surface);
+    SDL_Texture *texture = SDL_CreateTextureFromSurface (
+        (SDL_Renderer *)self->renderer, font_surface);
+    assert (texture);
+
+    uint32_t rmask, gmask, bmask, amask;
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+    rmask = 0xff000000;
+    gmask = 0x00ff0000;
+    bmask = 0x0000ff00;
+    amask = 0x000000ff;
+#else
+    rmask = 0x000000ff;
+    gmask = 0x0000ff00;
+    bmask = 0x00ff0000;
+    amask = 0xff000000;
+#endif
+    SDL_Surface *background_surface = SDL_CreateRGBSurface (
+        0, font_surface->clip_rect.w + 8, font_surface->clip_rect.h + 4, 32,
+        rmask, gmask, bmask, amask);
+    assert (background_surface);
+    assert (SDL_FillRect (background_surface, NULL,
+                          SDL_MapRGBA (background_surface->format,
+                                       GUI_BUTTON_DEFAULT_BACKGROUND_COLOR))
+            == 0);
+    SDL_Texture *background_texture = SDL_CreateTextureFromSurface (
+        (SDL_Renderer *)self->renderer, background_surface);
+    assert (background_texture);
+
+    SDL_Surface *hover_surface = SDL_CreateRGBSurface (
+        0, font_surface->clip_rect.w + 8, font_surface->clip_rect.h + 4, 32,
+        rmask, gmask, bmask, amask);
+    assert (hover_surface);
+    assert (
+        SDL_FillRect (hover_surface, NULL,
+                      SDL_MapRGBA (hover_surface->format,
+                                   GUI_BUTTON_DEFAULT_HOVER_BACKGROUND_COLOR))
+        == 0);
+    SDL_Texture *hover_texture = SDL_CreateTextureFromSurface (
+        (SDL_Renderer *)self->renderer, hover_surface);
+    assert (hover_texture);
+
+    GuiWidgetTexture *textures = calloc (3, sizeof (GuiWidgetTexture));
+    assert (textures);
+    textures[0] = (GuiWidgetTexture){
+        .x = x + GUI_BUTTON_DEFAULT_HORIZONTAL_PADDING,
+        .y = y + GUI_BUTTON_DEFAULT_VERTICAL_PADDING,
+        .width = font_surface->clip_rect.w,
+        .height = font_surface->clip_rect.h,
+        .next_index = -1,
+        .texture = texture,
+    };
+    textures[1] = (GuiWidgetTexture){
+        .x = x,
+        .y = y,
+        .width = font_surface->clip_rect.w
+                 + (2 * GUI_BUTTON_DEFAULT_HORIZONTAL_PADDING),
+        .height = font_surface->clip_rect.h
+                  + (2 * GUI_BUTTON_DEFAULT_VERTICAL_PADDING),
+        .next_index = 0,
+        .texture = background_texture
+    };
+    textures[2] = (GuiWidgetTexture){
+        .x = x,
+        .y = y,
+        .width = font_surface->clip_rect.w
+                 + (2 * GUI_BUTTON_DEFAULT_HORIZONTAL_PADDING),
+        .height = font_surface->clip_rect.h
+                  + (2 * GUI_BUTTON_DEFAULT_VERTICAL_PADDING),
+        .next_index = 0,
+        .texture = hover_texture
+    };
+
+    *return_button = (GuiButton){
+        .label = (char *)label,
+        .label_len = label_len,
+        .widget
+        = { .state = GUI_WIDGET_STATE_NORMAL,
+            .state_handler = (GuiWidgetStateHandler)gui_button_set_state,
+            .widget_remove_handler = (GuiWidgetRemoveHandler)gui_button_remove,
+            .textures = { .count = 3, .root_index = 1, .data = textures },
+            .event_handler = event_handler,
+            .user_data = user_data,
+            .event = self->event }
+    };
+
+    SDL_AddEventWatch (internal_gui_event_mouse_handler, return_button);
+
+    SDL_FreeSurface (font_surface);
+    SDL_FreeSurface (background_surface);
+    SDL_FreeSurface (hover_surface);
+}
+
+void
+gui_button_set_state (GuiButton *button, GuiWidgetState state)
+{
+    assert (button && button->widget.textures.data);
+
+    button->widget.state = state;
+
+    switch (state)
     {
-        assert(self && self->renderer);
-        assert(label && label_len > 0);
-        assert(return_button);
-
-        SDL_Surface* font_surface = TTF_RenderText_Blended(self->app->font, label, (SDL_Color){ GUI_DEFAULT_FOREGROUND_COLOR });
-        assert(font_surface);
-        SDL_Texture *texture = SDL_CreateTextureFromSurface((SDL_Renderer *)self->renderer, font_surface);
-        assert(texture);
-
-        uint32_t rmask, gmask, bmask, amask;
-        #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-            rmask = 0xff000000;
-            gmask = 0x00ff0000;
-            bmask = 0x0000ff00;
-            amask = 0x000000ff;
-        #else
-            rmask = 0x000000ff;
-            gmask = 0x0000ff00;
-            bmask = 0x00ff0000;
-            amask = 0xff000000;
-        #endif
-        SDL_Surface* background_surface = SDL_CreateRGBSurface(0, font_surface->clip_rect.w + 8, font_surface->clip_rect.h + 4, 32, rmask, gmask, bmask, amask);
-        assert(background_surface);
-        assert(SDL_FillRect(background_surface, NULL, SDL_MapRGBA(background_surface->format, GUI_BUTTON_DEFAULT_BACKGROUND_COLOR)) == 0);
-        SDL_Texture *background_texture = SDL_CreateTextureFromSurface((SDL_Renderer *)self->renderer, background_surface);
-        assert(background_texture);
-
-        SDL_Surface* hover_surface = SDL_CreateRGBSurface(0, font_surface->clip_rect.w + 8, font_surface->clip_rect.h + 4, 32, rmask, gmask, bmask, amask);
-        assert(hover_surface);
-        assert(SDL_FillRect(hover_surface, NULL, SDL_MapRGBA(hover_surface->format, GUI_BUTTON_DEFAULT_HOVER_BACKGROUND_COLOR)) == 0);
-        SDL_Texture *hover_texture = SDL_CreateTextureFromSurface((SDL_Renderer *)self->renderer, hover_surface);
-        assert(hover_texture);
-
-        GuiWidgetTexture* textures = calloc(3, sizeof(GuiWidgetTexture));
-        assert(textures);
-        textures[0] = (GuiWidgetTexture){
-            .x = x + GUI_BUTTON_DEFAULT_HORIZONTAL_PADDING,
-            .y = y + GUI_BUTTON_DEFAULT_VERTICAL_PADDING,
-            .width = font_surface->clip_rect.w,
-            .height = font_surface->clip_rect.h,
-            .next_index = -1,
-            .texture = texture,
-        };
-        textures[1] = (GuiWidgetTexture){
-            .x = x,
-            .y = y,
-            .width = font_surface->clip_rect.w + (2 * GUI_BUTTON_DEFAULT_HORIZONTAL_PADDING),
-            .height = font_surface->clip_rect.h + (2 * GUI_BUTTON_DEFAULT_VERTICAL_PADDING),
-            .next_index = 0,
-            .texture = background_texture
-        };
-        textures[2] = (GuiWidgetTexture){
-            .x = x,
-            .y = y,
-            .width = font_surface->clip_rect.w + (2 * GUI_BUTTON_DEFAULT_HORIZONTAL_PADDING),
-            .height = font_surface->clip_rect.h + (2 * GUI_BUTTON_DEFAULT_VERTICAL_PADDING),
-            .next_index = 0,
-            .texture = hover_texture
-        };
-
-        *return_button = (GuiButton) {
-            .label = (char *)label,
-            .label_len = label_len,
-            .widget = {
-                .state = GUI_WIDGET_STATE_NORMAL,
-                .state_handler = (GuiWidgetStateHandler)gui_button_set_state,
-                .widget_remove_handler = (GuiWidgetRemoveHandler)gui_button_remove,
-                .textures = { .count = 3, .root_index = 1, .data = textures },
-                .event_handler = event_handler,
-                .user_data = user_data,
-                .event = self->event
-            }
-        };
-
-        SDL_AddEventWatch(internal_gui_event_mouse_handler, return_button);
-
-        SDL_FreeSurface(font_surface);
-        SDL_FreeSurface(background_surface);
-        SDL_FreeSurface(hover_surface);
+    case GUI_WIDGET_STATE_HOVER:
+    {
+        // SDL_Cursor* cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
+        // SDL_SetCursor(cursor);
+        button->widget.textures.root_index = 2;
+        break;
     }
-
-    void
-    gui_button_set_state(GuiButton* button, GuiWidgetState state)
-    {
-        assert(button && button->widget.textures.data);
-
-        button->widget.state = state;
-
-        switch(state)
-        {
-            case GUI_WIDGET_STATE_HOVER:
-            {
-                // SDL_Cursor* cursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
-                // SDL_SetCursor(cursor);
-                button->widget.textures.root_index = 2;
-                break;
-            }
-            case GUI_WIDGET_STATE_CLICK:
-                button->widget.textures.root_index = 1;
-                break;
-            case GUI_WIDGET_STATE_NORMAL:
-                button->widget.textures.root_index = 1;
-                // SDL_SetCursor(SDL_GetDefaultCursor());
-                break;
-        }
+    case GUI_WIDGET_STATE_CLICK:
+        button->widget.textures.root_index = 1;
+        break;
+    case GUI_WIDGET_STATE_NORMAL:
+        button->widget.textures.root_index = 1;
+        // SDL_SetCursor(SDL_GetDefaultCursor());
+        break;
     }
+}
 
-    void
-    gui_button_remove(GuiWindow* self, GuiButton* button)
+void
+gui_button_remove (GuiWindow *self, GuiButton *button)
+{
+    if (self && self->renderer && button)
     {
-        assert(self && self->renderer);
-        assert(button);
-
-        for(size_t iii = 0; iii < button->widget.textures.count; iii++)
+        for (size_t iii = 0; iii < button->widget.textures.count; iii++)
         {
-            SDL_DestroyTexture(button->widget.textures.data[iii].texture);
+            SDL_DestroyTexture (button->widget.textures.data[iii].texture);
         }
-        free(button->widget.textures.data);
+        free (button->widget.textures.data);
 
-        SDL_DelEventWatch(internal_gui_event_mouse_handler, button);
+        SDL_DelEventWatch (internal_gui_event_mouse_handler, button);
 
         *button = (GuiButton){ 0 };
     }
+}
 
-    void
-    gui_label_init(GuiWindow* self, GuiLabel* return_label, const char* label, size_t label_len, size_t x, size_t y, GuiEventHandler event_handler, void* user_data)
+void
+gui_label_init (GuiWindow *self, GuiLabel *return_label, const char *label,
+                size_t label_len, size_t x, size_t y,
+                GuiEventHandler event_handler, void *user_data)
+{
+    assert (self && self->renderer);
+    assert (label && label_len > 0);
+    assert (return_label);
+
+    SDL_Surface *font_surface = TTF_RenderText_Blended (
+        self->app->font, label, (SDL_Color){ GUI_DEFAULT_FOREGROUND_COLOR });
+    assert (font_surface);
+    SDL_Texture *texture = SDL_CreateTextureFromSurface (
+        (SDL_Renderer *)self->renderer, font_surface);
+    assert (texture);
+
+    GuiWidgetTexture *textures = calloc (1, sizeof (GuiWidgetTexture));
+    assert (textures);
+    textures[0] = (GuiWidgetTexture){ .x = x,
+                                      .y = y,
+                                      .width = font_surface->clip_rect.w,
+                                      .height = font_surface->clip_rect.h,
+                                      .next_index = -1,
+                                      .texture = texture };
+
+    *return_label = (GuiLabel){
+        .label = (char *)label,
+        .label_len = label_len,
+        .widget
+        = { .state = GUI_WIDGET_STATE_NORMAL,
+            .state_handler = (GuiWidgetStateHandler)gui_label_set_state,
+            .widget_remove_handler = (GuiWidgetRemoveHandler)gui_label_remove,
+            .textures = { .count = 1, .root_index = 0, .data = textures },
+            .event_handler = event_handler,
+            .user_data = user_data,
+            .event = self->event }
+    };
+
+    SDL_AddEventWatch (internal_gui_event_mouse_handler, return_label);
+
+    SDL_FreeSurface (font_surface);
+}
+
+void
+gui_label_set_state (GuiLabel *label, GuiWidgetState state)
+{
+}
+
+void
+gui_label_remove (GuiWindow *self, GuiLabel *label)
+{
+    if (self && self->renderer && label)
     {
-        assert(self && self->renderer);
-        assert(label && label_len > 0);
-        assert(return_label);
-
-        SDL_Surface* font_surface = TTF_RenderText_Blended(self->app->font, label, (SDL_Color){ GUI_DEFAULT_FOREGROUND_COLOR });
-        assert(font_surface);
-        SDL_Texture *texture = SDL_CreateTextureFromSurface((SDL_Renderer *)self->renderer, font_surface);
-        assert(texture);
-
-        GuiWidgetTexture* textures = calloc(1, sizeof(GuiWidgetTexture));
-        assert(textures);
-        textures[0] = (GuiWidgetTexture){
-            .x = x,
-            .y = y,
-            .width = font_surface->clip_rect.w,
-            .height = font_surface->clip_rect.h,
-            .next_index = -1,
-            .texture = texture
-        };
-
-        *return_label = (GuiLabel) {
-            .label = (char *)label,
-            .label_len = label_len,
-            .widget = {
-                .state = GUI_WIDGET_STATE_NORMAL,
-                .state_handler = (GuiWidgetStateHandler)gui_label_set_state,
-                .widget_remove_handler = (GuiWidgetRemoveHandler)gui_label_remove,
-                .textures = { .count = 1, .root_index = 0, .data = textures },
-                .event_handler = event_handler,
-                .user_data = user_data,
-                .event = self->event
-            }
-        };
-
-        SDL_AddEventWatch(internal_gui_event_mouse_handler, return_label);
-
-        SDL_FreeSurface(font_surface);
-    }
-
-    void
-    gui_label_set_state(GuiLabel* label, GuiWidgetState state)
-    {
-
-    }
-
-    void
-    gui_label_remove(GuiWindow* self, GuiLabel* label)
-    {
-        assert(self && self->renderer);
-        assert(label);
-
-        for(size_t iii = 0; iii < label->widget.textures.count; iii++)
+        for (size_t iii = 0; iii < label->widget.textures.count; iii++)
         {
-            SDL_DestroyTexture(label->widget.textures.data[iii].texture);
+            SDL_DestroyTexture (label->widget.textures.data[iii].texture);
         }
-        free(label->widget.textures.data);
+        free (label->widget.textures.data);
 
-        SDL_DelEventWatch(internal_gui_event_mouse_handler, label);
+        SDL_DelEventWatch (internal_gui_event_mouse_handler, label);
 
         *label = (GuiLabel){ 0 };
     }
+}
 
-    void
-    gui_text_input_init(GuiWindow* self, GuiTextInput* return_text_input, char* buffer, size_t buffer_len, size_t x, size_t y, GuiEventHandler event_handler, void* user_data)
+void
+gui_text_input_init (GuiWindow *self, GuiTextInput *return_text_input,
+                     char *buffer, size_t buffer_len, size_t x, size_t y,
+                     GuiEventHandler event_handler, void *user_data)
+{
+    assert (self && self->renderer);
+    assert (return_text_input);
+    assert (buffer && (buffer_len > 0));
+
+    // SDL_Surface* font_surface = TTF_RenderText_Blended(self->app->font,
+    // label, (SDL_Color){ GUI_DEFAULT_FOREGROUND_COLOR });
+    // assert(font_surface);
+    // SDL_Texture *texture = SDL_CreateTextureFromSurface((SDL_Renderer
+    // *)self->renderer, font_surface); assert(texture);
+
+    uint32_t rmask, gmask, bmask, amask;
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+    rmask = 0xff000000;
+    gmask = 0x00ff0000;
+    bmask = 0x0000ff00;
+    amask = 0x000000ff;
+#else
+    rmask = 0x000000ff;
+    gmask = 0x0000ff00;
+    bmask = 0x00ff0000;
+    amask = 0xff000000;
+#endif
+
+    SDL_Surface *cursor_surface = SDL_CreateRGBSurface (
+        0, GUI_TEXT_INPUT_DEFAULT_CURSOR_WIDTH,
+        GUI_TEXT_INPUT_DEFAULT_CURSOR_HEIGHT, 32, rmask, gmask, bmask, amask);
+    assert (cursor_surface);
+    assert (SDL_FillRect (cursor_surface, NULL,
+                          SDL_MapRGBA (cursor_surface->format,
+                                       GUI_TEXT_INPUT_DEFAULT_CURSOR_COLOR))
+            == 0);
+    SDL_Texture *cursor_texture = SDL_CreateTextureFromSurface (
+        (SDL_Renderer *)self->renderer, cursor_surface);
+    assert (cursor_texture);
+
+    SDL_Surface *border_surface = SDL_CreateRGBSurface (
+        0, GUI_TEXT_INPUT_DEFAULT_WIDTH, GUI_TEXT_INPUT_DEFAULT_HEIGHT, 32,
+        rmask, gmask, bmask, amask);
+    assert (border_surface);
+    assert (SDL_FillRect (border_surface, NULL,
+                          SDL_MapRGBA (border_surface->format,
+                                       GUI_TEXT_INPUT_DEFAULT_BORDER_COLOR))
+            == 0);
+    SDL_Texture *border_texture = SDL_CreateTextureFromSurface (
+        (SDL_Renderer *)self->renderer, border_surface);
+    assert (border_texture);
+
+    SDL_Surface *face_surface = SDL_CreateRGBSurface (
+        0, GUI_TEXT_INPUT_DEFAULT_WIDTH - GUI_TEXT_INPUT_DEFAULT_BORDER_WIDTH,
+        GUI_TEXT_INPUT_DEFAULT_HEIGHT - GUI_TEXT_INPUT_DEFAULT_BORDER_WIDTH,
+        32, rmask, gmask, bmask, amask);
+    assert (face_surface);
+    assert (
+        SDL_FillRect (face_surface, NULL,
+                      SDL_MapRGBA (face_surface->format,
+                                   GUI_TEXT_INPUT_DEFAULT_BACKGROUND_COLOR))
+        == 0);
+    SDL_Texture *face_texture = SDL_CreateTextureFromSurface (
+        (SDL_Renderer *)self->renderer, face_surface);
+    assert (face_texture);
+
+    GuiWidgetTexture *textures = calloc (4, sizeof (GuiWidgetTexture));
+    assert (textures);
+    // cursor
+    textures[0]
+        = (GuiWidgetTexture){ .x
+                              = x + GUI_TEXT_INPUT_DEFAULT_HORIZONTAL_PADDING,
+                              .y = y + GUI_TEXT_INPUT_DEFAULT_VERTICAL_PADDING,
+                              .width = cursor_surface->clip_rect.w,
+                              .height = cursor_surface->clip_rect.h,
+                              .next_index = -1,
+                              .texture = cursor_texture };
+    // border
+    textures[1] = (GuiWidgetTexture){ .x = x,
+                                      .y = y,
+                                      .width = border_surface->clip_rect.w,
+                                      .height = border_surface->clip_rect.h,
+                                      .next_index = 2,
+                                      .texture = border_texture };
+    // face
+    textures[2]
+        = (GuiWidgetTexture){ .x = x + GUI_TEXT_INPUT_DEFAULT_BORDER_WIDTH,
+                              .y = y + GUI_TEXT_INPUT_DEFAULT_BORDER_WIDTH,
+                              .width = face_surface->clip_rect.w,
+                              .height = face_surface->clip_rect.h,
+                              .next_index = 0,
+                              .texture = face_texture };
+    // text
+    textures[3]
+        = (GuiWidgetTexture){ .x = x + GUI_TEXT_INPUT_DEFAULT_BORDER_WIDTH + 2,
+                              .y = y + GUI_TEXT_INPUT_DEFAULT_BORDER_WIDTH + 2,
+                              .width = 0,
+                              .height = 0,
+                              .next_index = 0,
+                              .texture = NULL };
+
+    *return_text_input = (GuiTextInput){
+        .buffer = buffer,
+        .buffer_len = buffer_len,
+        .widget
+        = { .state = GUI_WIDGET_STATE_NORMAL,
+            .state_handler = (GuiWidgetStateHandler)gui_text_input_set_state,
+            .widget_remove_handler
+            = (GuiWidgetRemoveHandler)gui_text_input_remove,
+            .textures = { .count = 4, .root_index = 1, .data = textures },
+            .event_handler = event_handler,
+            .user_data = user_data,
+            .event = self->event }
+    };
+
+    SDL_AddEventWatch (internal_gui_event_mouse_handler, return_text_input);
+
+    SDL_FreeSurface (cursor_surface);
+    SDL_FreeSurface (border_surface);
+    SDL_FreeSurface (face_surface);
+}
+
+void
+gui_text_input_set_state (GuiTextInput *text_input, GuiWidgetState state)
+{
+}
+
+void
+gui_text_input_remove (GuiWindow *self, GuiTextInput *text_input)
+{
+    if (self && self->renderer && text_input)
     {
-        assert(self && self->renderer);
-        assert(return_text_input);
-        assert(buffer && (buffer_len > 0));
-
-        // SDL_Surface* font_surface = TTF_RenderText_Blended(self->app->font, label, (SDL_Color){ GUI_DEFAULT_FOREGROUND_COLOR });
-        // assert(font_surface);
-        // SDL_Texture *texture = SDL_CreateTextureFromSurface((SDL_Renderer *)self->renderer, font_surface);
-        // assert(texture);
-
-            uint32_t rmask, gmask, bmask, amask;
-            #if SDL_BYTEORDER == SDL_BIG_ENDIAN
-                rmask = 0xff000000;
-                gmask = 0x00ff0000;
-                bmask = 0x0000ff00;
-                amask = 0x000000ff;
-            #else
-                rmask = 0x000000ff;
-                gmask = 0x0000ff00;
-                bmask = 0x00ff0000;
-                amask = 0xff000000;
-            #endif
-
-        SDL_Surface* cursor_surface = SDL_CreateRGBSurface(0, GUI_TEXT_INPUT_DEFAULT_CURSOR_WIDTH, GUI_TEXT_INPUT_DEFAULT_CURSOR_HEIGHT, 32, rmask, gmask, bmask, amask);
-        assert(cursor_surface);
-        assert(SDL_FillRect(cursor_surface, NULL, SDL_MapRGBA(cursor_surface->format, GUI_TEXT_INPUT_DEFAULT_CURSOR_COLOR)) == 0);
-        SDL_Texture *cursor_texture = SDL_CreateTextureFromSurface((SDL_Renderer *)self->renderer, cursor_surface);
-        assert(cursor_texture);
-
-        SDL_Surface* border_surface = SDL_CreateRGBSurface(0, GUI_TEXT_INPUT_DEFAULT_WIDTH, GUI_TEXT_INPUT_DEFAULT_HEIGHT, 32, rmask, gmask, bmask, amask);
-        assert(border_surface);
-        assert(SDL_FillRect(border_surface, NULL, SDL_MapRGBA(border_surface->format, GUI_TEXT_INPUT_DEFAULT_BORDER_COLOR)) == 0);
-        SDL_Texture *border_texture = SDL_CreateTextureFromSurface((SDL_Renderer *)self->renderer, border_surface);
-        assert(border_texture);
-
-        SDL_Surface* face_surface = SDL_CreateRGBSurface(0, GUI_TEXT_INPUT_DEFAULT_WIDTH - GUI_TEXT_INPUT_DEFAULT_BORDER_WIDTH, GUI_TEXT_INPUT_DEFAULT_HEIGHT - GUI_TEXT_INPUT_DEFAULT_BORDER_WIDTH, 32, rmask, gmask, bmask, amask);
-        assert(face_surface);
-        assert(SDL_FillRect(face_surface, NULL, SDL_MapRGBA(face_surface->format, GUI_TEXT_INPUT_DEFAULT_BACKGROUND_COLOR)) == 0);
-        SDL_Texture *face_texture = SDL_CreateTextureFromSurface((SDL_Renderer *)self->renderer, face_surface);
-        assert(face_texture);
-
-        GuiWidgetTexture* textures = calloc(4, sizeof(GuiWidgetTexture));
-        assert(textures);
-        // cursor
-        textures[0] = (GuiWidgetTexture){
-            .x = x + GUI_TEXT_INPUT_DEFAULT_HORIZONTAL_PADDING,
-            .y = y + GUI_TEXT_INPUT_DEFAULT_VERTICAL_PADDING,
-            .width = cursor_surface->clip_rect.w,
-            .height = cursor_surface->clip_rect.h,
-            .next_index = -1,
-            .texture = cursor_texture
-        };
-        // border
-        textures[1] = (GuiWidgetTexture){
-            .x = x,
-            .y = y,
-            .width = border_surface->clip_rect.w,
-            .height = border_surface->clip_rect.h,
-            .next_index = 2,
-            .texture = border_texture
-        };
-        // face
-        textures[2] = (GuiWidgetTexture){
-            .x = x + GUI_TEXT_INPUT_DEFAULT_BORDER_WIDTH,
-            .y = y + GUI_TEXT_INPUT_DEFAULT_BORDER_WIDTH,
-            .width = face_surface->clip_rect.w,
-            .height = face_surface->clip_rect.h,
-            .next_index = 0,
-            .texture = face_texture
-        };
-        // text
-        textures[3] = (GuiWidgetTexture){
-            .x = x + GUI_TEXT_INPUT_DEFAULT_BORDER_WIDTH + 2,
-            .y = y + GUI_TEXT_INPUT_DEFAULT_BORDER_WIDTH + 2,
-            .width = 0,
-            .height = 0,
-            .next_index = 0,
-            .texture = NULL
-        };
-
-        *return_text_input = (GuiTextInput) {
-            .buffer = buffer,
-            .buffer_len = buffer_len,
-            .widget = {
-                .state = GUI_WIDGET_STATE_NORMAL,
-                .state_handler = (GuiWidgetStateHandler)gui_text_input_set_state,
-                .widget_remove_handler = (GuiWidgetRemoveHandler)gui_text_input_remove,
-                .textures = { .count = 4, .root_index = 1, .data = textures },
-                .event_handler = event_handler,
-                .user_data = user_data,
-                .event = self->event
-            }
-        };
-
-        SDL_AddEventWatch(internal_gui_event_mouse_handler, return_text_input);
-
-        SDL_FreeSurface(cursor_surface);
-        SDL_FreeSurface(border_surface);
-        SDL_FreeSurface(face_surface);
-    }
-
-    void
-    gui_text_input_set_state(GuiTextInput* text_input, GuiWidgetState state)
-    {
-
-    }
-
-    void
-    gui_text_input_remove(GuiWindow* self, GuiTextInput* text_input)
-    {
-        assert(self && self->renderer);
-        assert(text_input);
-
-        for(size_t iii = 0; iii < text_input->widget.textures.count; iii++)
+        for (size_t iii = 0; iii < text_input->widget.textures.count; iii++)
         {
-            SDL_DestroyTexture(text_input->widget.textures.data[iii].texture);
+            SDL_DestroyTexture (text_input->widget.textures.data[iii].texture);
         }
-        free(text_input->widget.textures.data);
+        free (text_input->widget.textures.data);
 
-        SDL_DelEventWatch(internal_gui_event_mouse_handler, text_input);
+        SDL_DelEventWatch (internal_gui_event_mouse_handler, text_input);
 
         *text_input = (GuiTextInput){ 0 };
     }
+}
 
-    // ------------------------- internal ------------------------- //
+// ------------------------- internal ------------------------- //
 
-    int
-    internal_gui_event_mouse_handler(void* widget, SDL_Event* event)
+int
+internal_gui_event_mouse_handler (void *widget, SDL_Event *event)
+{
+    if ((event->type >= SDL_MOUSEMOTION) && (event->type <= SDL_MOUSEWHEEL))
     {
-        if((event->type >= SDL_MOUSEMOTION) && (event->type <= SDL_MOUSEWHEEL))
+        SDL_Point mouse_position = { 0 };
+        if (event->type == SDL_MOUSEWHEEL)
         {
-            SDL_Point mouse_position = { 0 };
-            if(event->type == SDL_MOUSEWHEEL)
+            mouse_position.x = event->wheel.mouseX;
+            mouse_position.y = event->wheel.mouseY;
+        }
+        else
+        {
+            mouse_position.x = event->motion.x;
+            mouse_position.y = event->motion.y;
+        }
+
+        GuiWidgetTexture *widget_texture
+            = &((GuiWidget *)widget)
+                   ->textures.data[((GuiWidget *)widget)->textures.root_index];
+
+        if (SDL_PointInRect (&mouse_position,
+                             &(SDL_Rect){ widget_texture->x, widget_texture->y,
+                                          widget_texture->width,
+                                          widget_texture->height }))
+        {
+            if (event->type == SDL_MOUSEBUTTONDOWN)
             {
-                mouse_position.x = event->wheel.mouseX;
-                mouse_position.y = event->wheel.mouseY;
+                ((GuiWidget *)widget)
+                    ->state_handler (widget, GUI_WIDGET_STATE_CLICK);
             }
             else
             {
-                mouse_position.x = event->motion.x;
-                mouse_position.y = event->motion.y;
+                ((GuiWidget *)widget)
+                    ->state_handler (widget, GUI_WIDGET_STATE_HOVER);
             }
 
-            GuiWidgetTexture* widget_texture = &((GuiWidget *)widget)->textures.data[((GuiWidget *)widget)->textures.root_index];
-
-            if(SDL_PointInRect(&mouse_position, &(SDL_Rect){ widget_texture->x, widget_texture->y, widget_texture->width, widget_texture->height }))
+            if (((GuiWidget *)widget)->event_handler)
             {
-                if(event->type == SDL_MOUSEBUTTONDOWN)
-                {
-                    ((GuiWidget *)widget)->state_handler(widget, GUI_WIDGET_STATE_CLICK);
-                }
-                else
-                {
-                    ((GuiWidget *)widget)->state_handler(widget, GUI_WIDGET_STATE_HOVER);
-                }
-
-
-                if(((GuiWidget *)widget)->event_handler)
-                {
-                    internal_gui_event_update(((GuiWidget *)widget)->event, event);
-                    ((GuiWidget *)widget)->event_handler((GuiWidget *)widget, ((GuiWidget *)widget)->event, ((GuiWidget *)widget)->user_data);
-                }
-
-                return 1;
+                internal_gui_event_update (((GuiWidget *)widget)->event,
+                                           event);
+                ((GuiWidget *)widget)
+                    ->event_handler ((GuiWidget *)widget,
+                                     ((GuiWidget *)widget)->event,
+                                     ((GuiWidget *)widget)->user_data);
             }
-            else if(((GuiWidget *)widget)->state != GUI_WIDGET_STATE_NORMAL)
-            {
-                ((GuiWidget *)widget)->state_handler(widget, GUI_WIDGET_STATE_NORMAL);
-            }
-        }
 
-        return 0;
+            return 1;
+        }
+        else if (((GuiWidget *)widget)->state != GUI_WIDGET_STATE_NORMAL)
+        {
+            ((GuiWidget *)widget)
+                ->state_handler (widget, GUI_WIDGET_STATE_NORMAL);
+        }
     }
 
-    void
-    internal_gui_event_update(GuiEvent* event, SDL_Event* sdl_event)
+    return 0;
+}
+
+void
+internal_gui_event_update (GuiEvent *event, SDL_Event *sdl_event)
+{
+    switch (sdl_event->type)
     {
-        switch(sdl_event->type)
-        {
-            case SDL_MOUSEMOTION:
-                event->mouse = (struct GuiEventMouse) {
-                    .x = sdl_event->motion.x,
-                    .y = sdl_event->motion.y,
-                };
-                event->type = GUI_EVENT_TYPE_MOUSE_MOTION;
-                break;
-            case SDL_MOUSEBUTTONDOWN:
-                event->mouse = (struct GuiEventMouse) {
-                    .x = sdl_event->motion.x,
-                    .y = sdl_event->motion.y,
-                    .click_type = sdl_event->button.button,
-                };
-                event->type = GUI_EVENT_TYPE_MOUSE_BUTTON_DOWN;
-                break;
-            case SDL_MOUSEBUTTONUP:
-                event->mouse = (struct GuiEventMouse) {
-                    .x = sdl_event->motion.x,
-                    .y = sdl_event->motion.y,
-                    .click_type = sdl_event->button.button,
-                };
-                event->type = GUI_EVENT_TYPE_MOUSE_BUTTON_UP;
-                break;
-            case SDL_MOUSEWHEEL:
-                event->mouse = (struct GuiEventMouse) {
-                    .x = sdl_event->motion.x,
-                    .y = sdl_event->motion.y,
-                    .wheel_x = sdl_event->wheel.x,
-                    .wheel_y = sdl_event->wheel.y,
-                };
-                event->type = GUI_EVENT_TYPE_MOUSE_BUTTON_UP;
-                break;
-        }
+    case SDL_MOUSEMOTION:
+        event->mouse = (struct GuiEventMouse){
+            .x = sdl_event->motion.x,
+            .y = sdl_event->motion.y,
+        };
+        event->type = GUI_EVENT_TYPE_MOUSE_MOTION;
+        break;
+    case SDL_MOUSEBUTTONDOWN:
+        event->mouse = (struct GuiEventMouse){
+            .x = sdl_event->motion.x,
+            .y = sdl_event->motion.y,
+            .click_type = sdl_event->button.button,
+        };
+        event->type = GUI_EVENT_TYPE_MOUSE_BUTTON_DOWN;
+        break;
+    case SDL_MOUSEBUTTONUP:
+        event->mouse = (struct GuiEventMouse){
+            .x = sdl_event->motion.x,
+            .y = sdl_event->motion.y,
+            .click_type = sdl_event->button.button,
+        };
+        event->type = GUI_EVENT_TYPE_MOUSE_BUTTON_UP;
+        break;
+    case SDL_MOUSEWHEEL:
+        event->mouse = (struct GuiEventMouse){
+            .x = sdl_event->motion.x,
+            .y = sdl_event->motion.y,
+            .wheel_x = sdl_event->wheel.x,
+            .wheel_y = sdl_event->wheel.y,
+        };
+        event->type = GUI_EVENT_TYPE_MOUSE_BUTTON_UP;
+        break;
     }
+}
 
-    void
-    internal_gui_app_add_window(GuiApp* self, GuiWindow* window)
+void
+internal_gui_app_add_window (GuiApp *self, GuiWindow *window)
+{
+    assert (++self->current_child_index < self->children_max_count);
+    self->children[self->current_child_index] = window;
+}
+
+void
+internal_gui_app_remove_window (GuiApp *self, GuiWindow *window)
+{
+    size_t iii = 0;
+    for (; iii <= self->current_child_index; ++iii)
     {
-        assert(++self->current_child_index < self->children_max_count);
-        self->children[self->current_child_index] = window;
+        if (window == self->children[iii])
+            break;
     }
 
-    void
-    internal_gui_app_remove_window(GuiApp* self, GuiWindow* window)
+    if (iii < self->current_child_index)
     {
-        size_t iii = 0;
-        for(; iii <= self->current_child_index; ++iii)
-        {
-            if(window == self->children[iii]) break;
-        }
-
-        if(iii < self->current_child_index)
-        {
-            memmove(&self->children[iii], &self->children[iii + 1], (self->current_child_index - iii) * sizeof(GuiWindow *));
-        }
-
-        self->current_child_index--;
+        memmove (&self->children[iii], &self->children[iii + 1],
+                 (self->current_child_index - iii) * sizeof (GuiWindow *));
     }
 
-    GuiWindow*
-    internal_gui_app_get_window_from_id(GuiApp* app, uint32_t id)
+    self->current_child_index--;
+}
+
+GuiWindow *
+internal_gui_app_get_window_from_id (GuiApp *app, uint32_t id)
+{
+    for (size_t iii = 0; iii <= app->current_child_index; ++iii)
     {
-        for(size_t iii = 0; iii <= app->current_child_index; ++iii)
+        if (app->children[iii]->id == id)
         {
-            if(app->children[iii]->id == id)
-            {
-                return app->children[iii];
-            }
+            return app->children[iii];
         }
-
-        return NULL;
     }
 
-    void
-    internal_gui_window_remove_children(GuiWindow* window, GuiWidget* widget)
+    return NULL;
+}
+
+void
+internal_gui_window_remove_children (GuiWindow *window, GuiWidget *widget)
+{
+    if (!widget || !widget->widget_remove_handler)
+        return;
+
+    if (widget->brother)
     {
-        if(!widget) return;
-
-        if(widget->brother)
-        {
-            internal_gui_window_remove_children(window, widget->brother);
-        }
-
-        if(widget->child)
-        {
-            internal_gui_window_remove_children(window, widget->child);
-        }
-
-        widget->widget_remove_handler(window, widget);
+        internal_gui_window_remove_children (window, widget->brother);
     }
+
+    if (widget->child)
+    {
+        internal_gui_window_remove_children (window, widget->child);
+    }
+
+    widget->widget_remove_handler (window, widget);
+}
 #endif // CSTDLIB_GUI_IMPLEMENTATION
 
-
 #ifdef CSTDLIB_GUI_UNIT_TESTS
-    #ifdef NDEBUG
-    #define NDEBUG_
-    #undef NDEBUG
-    #endif
+#ifdef NDEBUG
+#define NDEBUG_
+#undef NDEBUG
+#endif
 
-    #include <assert.h>
+#include <assert.h>
 
-    #define STR(str) (str), (sizeof((str)) - 1)
+#define STR(str) (str), (sizeof ((str)) - 1)
 
-    static void
-    gui_unit_tests_button_event_handler(GuiWidget* widget, GuiEvent* event, void* user_data);
+static void gui_unit_tests_button_event_handler (GuiWidget *widget,
+                                                 GuiEvent *event,
+                                                 void *user_data);
 
-    void gui_unit_tests(void)
+void
+gui_unit_tests (void)
+{
+    GuiApp app = { 0 };
+    gui_app_init (&app, 2);
+
+    // test: general
     {
-        GuiApp app = { 0 };
-        gui_app_init(&app, 2);
+        // -- window 1
+        GuiWindow window = { 0 };
+        gui_window_init (&app, &window, -1, -1, 800, 600, STR ("My title"),
+                         GUI_WINDOW_SHOWN | GUI_WINDOW_RESIZABLE);
 
-        // test: general
-        {
-            // -- window 1
-            GuiWindow window = { 0 };
-            gui_window_init(
-                &app, &window, -1, -1, 800, 600, STR("My title"), GUI_WINDOW_SHOWN | GUI_WINDOW_RESIZABLE);
+        // gui_window_set_background(&gui, (GuiColor){
+        // GUI_BUTTON_DEFAULT_BACKGROUND_COLOR });
 
-            // gui_window_set_background(&gui, (GuiColor){ GUI_BUTTON_DEFAULT_BACKGROUND_COLOR });
+        GuiButton button = { 0 };
+        gui_button_init (&window, &button, STR ("Ok"), 8, 10,
+                         gui_unit_tests_button_event_handler, NULL);
 
-            GuiButton button = { 0 };
-            gui_button_init(&window, &button, STR("Ok"), 8, 10, gui_unit_tests_button_event_handler, NULL);
+        GuiLabel label = { 0 };
+        gui_label_init (&window, &label, STR ("label"), 8, 70, NULL, NULL);
 
-            GuiLabel label = { 0 };
-            gui_label_init(&window, &label, STR("label"), 8, 70, NULL, NULL);
+        gui_window_add_child (&window, &button.widget);
+        gui_window_add_child (&window, &label.widget);
 
-            gui_window_add_child(&window, &button.widget);
-            gui_window_add_child(&window, &label.widget);
+        // -- window 2
+        GuiWindow window2 = { 0 };
+        gui_window_init (&app, &window2, -1, -1, 800, 600, STR ("My title 2"),
+                         GUI_WINDOW_SHOWN | GUI_WINDOW_RESIZABLE);
 
-            // -- window 2
-            GuiWindow window2 = { 0 };
-            gui_window_init(
-                &app, &window2, -1, -1, 800, 600, STR("My title 2"), GUI_WINDOW_SHOWN | GUI_WINDOW_RESIZABLE);
+        GuiTextInput text_input = { 0 };
+        char buffer[256];
+        gui_text_input_init (&window2, &text_input, buffer, 256, 10, 10, NULL,
+                             NULL);
+        gui_window_add_child (&window2, &text_input.widget);
 
-            GuiTextInput text_input = { 0 };
-            char buffer[256];
-            gui_text_input_init(&window2, &text_input, buffer, 256, 10, 10, NULL, NULL);
-            gui_window_add_child(&window2, &text_input.widget);
+        gui_app_mainloop (&app);
 
-            gui_app_mainloop(&app);
+        gui_button_remove (&window, &button);
+        gui_label_remove (&window, &label);
+        gui_window_deinit (&window);
 
-            gui_button_remove(&window, &button);
-            gui_label_remove(&window, &label);
-            gui_window_deinit(&window);
-
-            gui_text_input_remove(&window2, &text_input);
-            gui_window_deinit(&window2);
-        }
-
-        gui_app_deinit(&app);
+        gui_text_input_remove (&window2, &text_input);
+        gui_window_deinit (&window2);
     }
 
-    void
-    gui_unit_tests_button_event_handler(GuiWidget* widget, GuiEvent* event, void* user_data)
+    gui_app_deinit (&app);
+}
+
+void
+gui_unit_tests_button_event_handler (GuiWidget *widget, GuiEvent *event,
+                                     void *user_data)
+{
+    if (event->type == GUI_EVENT_TYPE_MOUSE_BUTTON_DOWN)
     {
-        if(event->type == GUI_EVENT_TYPE_MOUSE_BUTTON_DOWN)
+        if (event->mouse.click_type == GUI_EVENT_MOUSE_CLICK_MIDDLE)
         {
-            if(event->mouse.click_type == GUI_EVENT_MOUSE_CLICK_MIDDLE)
-            {
-                puts("Mouse middle button clicked ..");
-            }
+            puts ("Mouse middle button clicked ..");
         }
-
     }
+}
 
-    #ifdef NDEBUG_
-    #define NDEBUG
-    #undef NDEBUG_
-    #endif
+#ifdef NDEBUG_
+#define NDEBUG
+#undef NDEBUG_
+#endif
 #endif // CSTDLIB_GUI_UNIT_TESTS
 
 #ifdef CSTDLIB_GUI_IMPLEMENTATION
-    unsigned char assets_DejaVuSansMono_ttf[] = {
-        0x00, 0x01, 0x00, 0x00, 0x00, 0x12, 0x01, 0x00, 0x00, 0x04, 0x00, 0x20,
+unsigned char assets_DejaVuSansMono_ttf[]
+    = { 0x00, 0x01, 0x00, 0x00, 0x00, 0x12, 0x01, 0x00, 0x00, 0x04, 0x00, 0x20,
         0x46, 0x46, 0x54, 0x4d, 0x66, 0x09, 0x1d, 0xae, 0x00, 0x00, 0x01, 0x2c,
         0x00, 0x00, 0x00, 0x1c, 0x47, 0x44, 0x45, 0x46, 0x7f, 0x6b, 0x72, 0x48,
         0x00, 0x00, 0x01, 0x48, 0x00, 0x00, 0x00, 0xb0, 0x47, 0x50, 0x4f, 0x53,
@@ -28979,29 +29078,27 @@
         0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b,
         0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b,
         0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b, 0x2b,
-        0x2b, 0x2b, 0x1d, 0x00
-    };
-    unsigned int assets_DejaVuSansMono_ttf_len = 335068;
+        0x2b, 0x2b, 0x1d, 0x00 };
+unsigned int assets_DejaVuSansMono_ttf_len = 335068;
 
 #endif // CSTDLIB_GUI_IMPLEMENTATION
 
 /*
  * MIT License
  *
- * Copyright (c) 2019 Sean Barrett
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do
- * so, subject to the following conditions:
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
+ * Copyright (c) 2024 Mohamed A. Elmeligy
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions: The above copyright
+ * notice and this permission notice shall be included in all copies or
+ * substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS",
+ * WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+ * TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
