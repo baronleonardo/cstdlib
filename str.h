@@ -153,7 +153,7 @@ c_str_create (char const cstr[],
   CStr str = { 0 };
 
   size_t cstr_len = internal_cstr_len (cstr, cstr_max_len);
-  if (cstr_len <= 0)
+  if (cstr_len == 0)
     {
       *err = -1;
       return str;
@@ -209,7 +209,7 @@ c_str_create_unmanaged (char const* cstr,
   err = err ? err : &error_;
 
   size_t cstr_len = internal_cstr_len (cstr, cstr_max_len);
-  if (cstr_len <= 0)
+  if (cstr_len == 0)
     {
       *err = -1;
       return str;
@@ -455,7 +455,7 @@ c_str_concatenate_with_cstr (CStr* str1,
   err = err ? err : &error_;
 
   size_t cstr_len = internal_cstr_len (cstr, cstr_max_len);
-  if (cstr_len <= 0)
+  if (cstr_len == 0)
     {
       *err = -1;
       return;
@@ -858,14 +858,15 @@ c_str_unit_tests (void)
     assert (err == 0);
 
     size_t next_index = 0;
-    size_t ground_truth_size[] = { 4, 4, 3, 3, 3 };
+    size_t const ground_truth_size[] = { 4, 4, 3, 3, 3 };
     size_t gt_index = 0;
     for (size_t codepoint_size = c_str_utf8_next_codepoint (&str, next_index, &err);
          err == 0;
          codepoint_size = c_str_utf8_next_codepoint (&str, next_index, &err))
       {
         assert (err == 0);
-        assert (codepoint_size == ground_truth_size[gt_index++]);
+        assert (codepoint_size == ground_truth_size[gt_index]);
+        gt_index++;
 
         next_index += codepoint_size;
       }
