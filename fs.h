@@ -44,16 +44,16 @@ typedef struct cerror_t
 /// @param mode this is the same as mode in `fopen`
 /// @param out_cfile return the new object
 /// @return error
-cerror_t c_fs_file_open (char const* restrict path,
+cerror_t c_fs_file_open (char const* path,
                          size_t path_len,
-                         char const mode[restrict],
-                         CFile* restrict out_cfile);
+                         char const mode[],
+                         CFile* out_cfile);
 
 /// @brief get file size
 /// @param self
 /// @param out_size return the file size
 /// @return error
-cerror_t c_fs_file_size (CFile* restrict self, size_t* restrict out_size);
+cerror_t c_fs_file_size (CFile* self, size_t* out_size);
 
 /// @brief read file content
 /// @param self
@@ -61,10 +61,10 @@ cerror_t c_fs_file_size (CFile* restrict self, size_t* restrict out_size);
 /// @param buf_size
 /// @param err return error (any value but zero is treated as an error)
 /// @return return the bytes read
-cerror_t c_fs_file_read (CFile* restrict self,
-                         char buf[restrict],
+cerror_t c_fs_file_read (CFile* self,
+                         char buf[],
                          size_t buf_size,
-                         size_t* restrict out_size);
+                         size_t* out_size);
 
 /// @brief write to file
 /// @param self
@@ -72,10 +72,10 @@ cerror_t c_fs_file_read (CFile* restrict self,
 /// @param buf_size
 /// @param err return error (any value but zero is treated as an error)
 /// @return return the bytes written
-cerror_t c_fs_file_write (CFile* restrict self,
-                          char buf[restrict],
+cerror_t c_fs_file_write (CFile* self,
+                          char buf[],
                           size_t buf_size,
-                          size_t* restrict out_size);
+                          size_t* out_size);
 
 /// @brief close an alreay opend file
 /// @param self
@@ -87,16 +87,16 @@ cerror_t c_fs_file_close (CFile* self);
 /// @param path_capacity
 /// @param err return error (any value but zero is treated as an error)
 /// @return
-cerror_t c_fs_path_create (char const path[restrict],
+cerror_t c_fs_path_create (char const path[],
                            size_t path_len,
                            size_t path_capacity,
-                           CPath* restrict out_path);
+                           CPath* out_path);
 
 /// @brief
 /// @param path_capacity
 /// @param err
 /// @return
-cerror_t c_fs_path_create_empty (size_t path_capacity, CPath* restrict out_path);
+cerror_t c_fs_path_create_empty (size_t path_capacity, CPath* out_path);
 
 /// @brief this will append `path` to `CPath` and adding '/' in between
 /// @param self
@@ -129,9 +129,9 @@ cerror_t c_fs_dir_create (char const dir_path[], size_t path_len);
 /// @param dir_path
 /// @param path_len
 /// @return
-cerror_t c_fs_dir_exists (char const dir_path[restrict],
+cerror_t c_fs_dir_exists (char const dir_path[],
                           size_t path_len,
-                          bool* restrict out_exists);
+                          bool* out_exists);
 
 /// @brief
 /// @param buf
@@ -197,6 +197,11 @@ c_fs_foreach (CPath dir_path,
 #define PATH_SEP '/'
 #endif
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4996) // disable warning about unsafe functions
+#endif
+
 static cerror_t internal_c_fs_delete_recursively_handler (char* path,
                                                           size_t path_len,
                                                           void* extra_data);
@@ -211,10 +216,10 @@ errno_to_cerror (int errno_)
 }
 
 cerror_t
-c_fs_file_open (char const* restrict path,
+c_fs_file_open (char const* path,
                 size_t path_len,
-                char const mode[restrict],
-                CFile* restrict out_cfile)
+                char const mode[],
+                CFile* out_cfile)
 {
   assert (mode);
   assert (path);
@@ -266,7 +271,7 @@ c_fs_file_open (char const* restrict path,
 }
 
 cerror_t
-c_fs_file_size (CFile* restrict self, size_t* restrict out_size)
+c_fs_file_size (CFile* self, size_t* out_size)
 {
   assert (self && self->raw);
 
@@ -294,10 +299,10 @@ c_fs_file_size (CFile* restrict self, size_t* restrict out_size)
 }
 
 cerror_t
-c_fs_file_read (CFile* restrict self,
-                char buf[restrict],
+c_fs_file_read (CFile* self,
+                char buf[],
                 size_t buf_size,
-                size_t* restrict out_size)
+                size_t* out_size)
 {
   assert (self && self->raw);
   assert (buf);
@@ -313,10 +318,10 @@ c_fs_file_read (CFile* restrict self,
 }
 
 cerror_t
-c_fs_file_write (CFile* restrict self,
-                 char buf[restrict],
+c_fs_file_write (CFile* self,
+                 char buf[],
                  size_t buf_size,
-                 size_t* restrict out_size)
+                 size_t* out_size)
 {
   assert (self && self->raw);
   assert (buf);
@@ -345,10 +350,10 @@ c_fs_file_close (CFile* self)
 }
 
 cerror_t
-c_fs_path_create (char const path[restrict],
+c_fs_path_create (char const path[],
                   size_t path_len,
                   size_t path_capacity,
-                  CPath* restrict out_cpath)
+                  CPath* out_cpath)
 {
   assert (path);
   assert (path_len > 0);
@@ -367,7 +372,7 @@ c_fs_path_create (char const path[restrict],
 }
 
 cerror_t
-c_fs_path_create_empty (size_t path_capacity, CPath* restrict out_cpath)
+c_fs_path_create_empty (size_t path_capacity, CPath* out_cpath)
 {
   assert (path_capacity > 0);
 
@@ -480,8 +485,8 @@ c_fs_path_to_absolute (CPath* self, bool could_realloc)
 
 #ifdef _WIN32
   SetLastError (0);
-  self->len = GetLongPathNameA (self->buf, self->buf, self->capacity);
-  return path_len > 0 ? CERROR_NONE : (cerror_t){ GetLastError (), "" };
+  self->len = GetLongPathNameA (self->buf, self->buf, (DWORD) self->capacity);
+  return self->len > 0 ? CERROR_NONE : (cerror_t){ GetLastError (), "" };
 #else
   errno = 0;
   char* path_status = realpath (self->buf, self->buf);
@@ -574,10 +579,10 @@ c_fs_dir_get_current (char buf[], size_t buf_len, size_t* out_size)
 {
 #ifdef _WIN32
   SetLastError (0);
-  DWORD path_len = GetCurrentDirectory (buf, buf_len);
+  DWORD path_len = GetCurrentDirectoryA ((DWORD) buf_len, buf);
   if (out_size)
     *out_size = path_len;
-  return state > 0 ? CERROR_NONE : (cerror_t){ GetLastError (), "" };
+  return path_len > 0 ? CERROR_NONE : (cerror_t){ GetLastError (), "" };
 #else
   char* state = getcwd (buf, buf_len);
   if (out_size)
@@ -599,9 +604,9 @@ c_fs_dir_is_empty (CPath dir_path, bool* out_is_empty)
 }
 
 cerror_t
-c_fs_exists (char const path[restrict],
+c_fs_exists (char const path[],
              size_t path_len,
-             bool* restrict out_exists)
+             bool* out_exists)
 {
   assert (path);
   assert (path_len > 0);
@@ -757,10 +762,10 @@ c_fs_foreach (CPath dir_path,
                   filename_len);
           dir_path.buf[dir_path.len - 1 + filename_len] = L'\0';
 
-          bool handler_status = handler (
-              dir_path.buf, dir_path.len - 1 + filename_len, extra_data, err);
+          err = handler (
+              dir_path.buf, dir_path.len - 1 + filename_len, extra_data);
 
-          if (!handler_status)
+          if (err.code != CERROR_NONE.code)
             {
               break;
             }
@@ -861,6 +866,10 @@ internal_c_fs_dir_is_empty_handler (char* path,
 
   return CERROR_NONE;
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #undef CSTDLIB_FS_IMPLEMENTATION
 #endif // CSTDLIB_FS_IMPLEMENTATION
@@ -1097,7 +1106,7 @@ c_fs_handler (char* path, size_t path_len, void* extra_data)
  * Copyright (c) 2024 Mohamed A. Elmeligy
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
- * deal in the Software without restriction, including without limitation the
+ * deal in the Software without ion, including without limitation the
  * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions: The above copyright
