@@ -197,6 +197,10 @@ c_fs_foreach (CPath dir_path,
 #define PATH_SEP '/'
 #endif
 
+#if _WIN32 && (!_MSC_VER || !(_MSC_VER >= 1900))
+#error "You need MSVC must be higher that or equal to 1900
+#endif
+
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4996) // disable warning about unsafe functions

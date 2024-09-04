@@ -327,12 +327,10 @@ internal_c_map_search_and_get (CMap const* self, void* key, size_t key_size)
 #define STR_W_LEN(str) str, sizeof (str)
 #define INT_W_LEN(i) &(int){ i }, sizeof (int)
 
-int err = 0;
-
 void
 c_map_unit_tests (void)
 {
-
+  int err = 0;
   CMap map = c_map_create (100, 11, sizeof (int), &err);
   assert (err == 0);
 
