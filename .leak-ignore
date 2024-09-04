@@ -1,3 +1,5 @@
 leak:SDL*
 leak:gtk*
 leak:g_*
+leak:Fc*
+leak:__interceptor_*

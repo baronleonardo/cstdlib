@@ -24,7 +24,7 @@ typedef enum
   LOG_FATAL
 } CLogType;
 
-void c_log_impl (CLogType type, const char *file, size_t line, FILE *out, bool use_color, const char *format, ...);
+void c_log_impl (CLogType type, char const* file, size_t line, FILE* out, bool use_color, char const* format, ...);
 
 #ifdef _WIN32
 #define __FILENAME__ \
@@ -81,17 +81,17 @@ void c_log_impl (CLogType type, const char *file, size_t line, FILE *out, bool u
 #ifdef CSTDLIB_LOG_IMPLEMENTATION
 #include <assert.h>
 
-static void internal_c_log_get_cur_time (char *time_buf, size_t time_buf_size);
+static void internal_c_log_get_cur_time (char* time_buf, size_t time_buf_size);
 
 void
-c_log_impl (CLogType type, const char *file, size_t line, FILE *out, bool use_color, const char *format, ...)
+c_log_impl (CLogType type, char const* file, size_t line, FILE* out, bool use_color, char const* format, ...)
 {
   assert (type < 4);
   assert (out);
 
-  const char *log_types[] = { "INFO", "WARN", "ERROR", "FATAL" };
-  const char *colors[] = { "\x1b[32m", "\x1b[33m", "\x1b[31m", "\x1b[35m" };
-  const char *color_reset = "\x1b[0m";
+  char const* log_types[] = { "INFO", "WARN", "ERROR", "FATAL" };
+  char const* colors[] = { "\x1b[32m", "\x1b[33m", "\x1b[31m", "\x1b[35m" };
+  char const* color_reset = "\x1b[0m";
 
   enum
   {
@@ -122,7 +122,7 @@ c_log_impl (CLogType type, const char *file, size_t line, FILE *out, bool use_co
 #include <time.h>
 
 void
-internal_c_log_get_cur_time (char *time_buf, size_t time_buf_size)
+internal_c_log_get_cur_time (char* time_buf, size_t time_buf_size)
 {
   time_t rawtime;
   struct tm timeinfo;

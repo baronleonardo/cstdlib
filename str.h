@@ -19,7 +19,7 @@
 
 typedef struct CStr
 {
-  char *data;
+  char* data;
   size_t capacity;
   size_t len;
 } CStr;
@@ -36,87 +36,99 @@ typedef struct CCodePoint
   size_t size;
 } CCodePoint;
 
-CStr c_str_create (const char cstr[],
-                   size_t cstr_max_len,
-                   int *err);
+typedef enum
+{
+  CSTR_ERROR_none,
+  CSTR_ERROR_allocation,
+  CSTR_ERROR_wrong_capacity,
+  CSTR_ERROR_wrong_length,
+  CSTR_ERROR_wrong_index,
+  CSTR_ERROR_capacity_full,
+  CSTR_ERROR_invalid_utf8,
+  CSTR_ERROR_format
+} CStrError;
+
+CStr c_str_create (char const cstr[],
+                   size_t cstr_len,
+                   int* err);
 
 CStr c_str_create_empty (size_t capacity,
-                         int *err);
+                         int* err);
 
-CStr c_str_create_unmanaged (const char *cstr,
-                             size_t cstr_max_len,
-                             int *err);
+CStr c_str_create_unmanaged (char const* cstr,
+                             size_t cstr_len,
+                             int* err);
 
-CStr c_str_clone (CStr *self, int *err);
+CStr c_str_clone (CStr* self, int* err);
 
-char *c_str_search (CStr *self, const char cstr[], size_t cstr_max_len);
+char* c_str_search (CStr* self, char const cstr[], size_t cstr_len);
 
-void c_str_insert (CStr *self,
-                   const char cstr[],
-                   size_t cstr_max_len,
+void c_str_insert (CStr* self,
+                   char const cstr[],
+                   size_t cstr_len,
                    size_t index,
                    bool could_realloc,
-                   int *err);
+                   int* err);
 
-void c_str_remove (CStr *self,
-                   const char cstr[],
-                   size_t cstr_max_len,
-                   int *err);
+void c_str_remove (CStr* self,
+                   char const cstr[],
+                   size_t cstr_len,
+                   int* err);
 
-size_t c_str_remove_at (CStr *self,
+size_t c_str_remove_at (CStr* self,
                         size_t index,
                         size_t range,
-                        int *err);
+                        int* err);
 
-void c_str_replace (CStr *self,
-                    const char needle[],
-                    size_t needle_max_len,
-                    const char with[],
-                    size_t with_max_len,
+void c_str_replace (CStr* self,
+                    char const needle[],
+                    size_t needle_len,
+                    char const with[],
+                    size_t with_len,
                     bool could_realloc,
-                    int *err);
+                    int* err);
 
-void c_str_replace_at (CStr *self,
+void c_str_replace_at (CStr* self,
                        size_t index,
                        size_t range,
-                       const char with[],
-                       size_t with_max_len,
+                       char const with[],
+                       size_t with_len,
                        bool could_realloc,
-                       int *err);
+                       int* err);
 
-void c_str_concatenate (CStr *str1,
-                        const CStr *str2,
+void c_str_concatenate (CStr* str1,
+                        CStr const* str2,
                         bool could_realloc,
-                        int *err);
+                        int* err);
 
-void c_str_concatenate_with_cstr (CStr *str1,
-                                  const char cstr[],
-                                  size_t cstr_max_len,
+void c_str_concatenate_with_cstr (CStr* str1,
+                                  char const cstr[],
+                                  size_t cstr_len,
                                   bool could_realloc,
-                                  int *err);
+                                  int* err);
 
-void c_str_format (CStr *self,
-                   int *err,
-                   size_t format_max_len,
-                   const char *format,
+void c_str_format (CStr* self,
+                   int* err,
+                   size_t format_len,
+                   char const* format,
                    ...);
 
-bool c_str_utf8_valid (CStr *self);
+bool c_str_utf8_valid (CStr* self);
 
-size_t c_str_utf8_next_codepoint (CStr *self,
+size_t c_str_utf8_next_codepoint (CStr* self,
                                   size_t index,
-                                  int *err);
+                                  int* err);
 
 // size_t c_str_utf8_next_grapheme (CStr *self,
 //                                  size_t index,
 //                                  int *err);
 
 size_t
-c_str_len (const CStr *self);
+c_str_len (CStr const* self);
 
-size_t c_str_capacity (const CStr *self);
+size_t c_str_capacity (CStr const* self);
 
-void c_str_destroy (CStr *self);
+void c_str_destroy (CStr* self);
 #endif /* CSTDLIB_STR_H */
 
 /* ------------------------------------------------------------------------ */
@@ -134,56 +146,44 @@ void c_str_destroy (CStr *self);
 
 #define MAX_FORMAT_STR_LEN 10000
 #define MAX_FORMAT_BUF_LEN 32
+#define ON_ERROR(error, code) (error && (*error = code))
 
-static char *internal_c_str_search (CStr *self,
-                                    const char cstr[],
-                                    size_t cstr_max_len,
-                                    size_t *return_cstr_len);
-static size_t internal_cstr_len (const char cstr[],
-                                 size_t cstr_max_len);
+static char* internal_c_str_search (CStr* self,
+                                    char const cstr[],
+                                    size_t cstr_len,
+                                    size_t* return_cstr_len);
+static size_t internal_cstr_len (char const cstr[],
+                                 size_t cstr_len);
 
 CStr
-c_str_create (const char cstr[],
-              size_t cstr_max_len,
-              int *err)
+c_str_create (char const cstr[],
+              size_t cstr_len,
+              int* err)
 {
-  assert (cstr_max_len > 0);
+  assert (cstr_len > 0);
   assert (cstr);
 
-  CStr str = { 0 };
-
-  size_t cstr_len = internal_cstr_len (cstr, cstr_max_len);
-  if (cstr_len <= 0)
+  CStr str = c_str_create_empty (cstr_len + 1, err);
+  if (*err == CSTR_ERROR_none)
     {
-      *err = -1;
-      return str;
+      memcpy (str.data, cstr, cstr_len);
+
+      str.data[cstr_len] = '\0';
+      str.len = cstr_len;
     }
-
-  str = c_str_create_empty (cstr_len + 1, err);
-  if (*err < 0)
-    {
-      return str;
-    }
-
-  memcpy (str.data, cstr, cstr_len);
-
-  str.data[cstr_len] = '\0';
-  str.len = cstr_len;
 
   return str;
 }
 
 CStr
 c_str_create_empty (size_t capacity,
-                    int *err)
+                    int* err)
 {
   assert (capacity > 0);
 
   CStr str = { 0 };
-  int error_ = -1;
-  err = err ? err : &error_;
 
-  str.data = (char *) malloc (capacity);
+  str.data = (char*) malloc (capacity);
   if (!str.data)
     {
       *err = -1;
@@ -197,25 +197,25 @@ c_str_create_empty (size_t capacity,
 }
 
 CStr
-c_str_create_unmanaged (const char *cstr,
-                        size_t cstr_max_len,
-                        int *err)
+c_str_create_unmanaged (char const* cstr,
+                        size_t cstr_len,
+                        int* err)
 {
-  assert (cstr_max_len > 0);
+  assert (cstr_len > 0);
   assert (cstr);
 
   CStr str = { 0 };
   int error_ = -1;
   err = err ? err : &error_;
 
-  size_t cstr_len = internal_cstr_len (cstr, cstr_max_len);
-  if (cstr_len <= 0)
+  size_t cstr_len = internal_cstr_len (cstr, cstr_len);
+  if (cstr_len == 0)
     {
       *err = -1;
       return str;
     }
 
-  str.data = (char *) cstr;
+  str.data = (char*) cstr;
   str.len = str.capacity = cstr_len;
 
   *err = 0;
@@ -223,23 +223,23 @@ c_str_create_unmanaged (const char *cstr,
 }
 
 void
-c_str_insert (CStr *self,
-              const char cstr[],
-              size_t cstr_max_len,
+c_str_insert (CStr* self,
+              char const cstr[],
+              size_t cstr_len,
               size_t index,
               bool could_realloc,
-              int *err)
+              int* err)
 {
   assert (self && self->data);
   assert (cstr);
-  assert (cstr_max_len > 0);
+  assert (cstr_len > 0);
 
   int error_ = -1;
   err = err ? err : &error_;
 
   index %= self->len;
 
-  size_t cstr_len = internal_cstr_len (cstr, cstr_max_len);
+  size_t cstr_len = internal_cstr_len (cstr, cstr_len);
   if (cstr_len == 0)
     {
       *err = -1;
@@ -274,20 +274,20 @@ c_str_insert (CStr *self,
 }
 
 void
-c_str_remove (CStr *self,
-              const char cstr[],
-              size_t cstr_max_len,
-              int *err)
+c_str_remove (CStr* self,
+              char const cstr[],
+              size_t cstr_len,
+              int* err)
 {
   assert (self && self->data);
   assert (cstr);
-  assert (cstr_max_len > 0);
+  assert (cstr_len > 0);
 
   int error_ = -1;
   err = err ? err : &error_;
 
   size_t cstr_len = 0;
-  char *substring_ptr = internal_c_str_search (self, cstr, cstr_max_len, &cstr_len);
+  char* substring_ptr = internal_c_str_search (self, cstr, cstr_len, &cstr_len);
   if (substring_ptr)
     {
       memmove (substring_ptr, substring_ptr + cstr_len,
@@ -303,10 +303,10 @@ c_str_remove (CStr *self,
 }
 
 size_t
-c_str_remove_at (CStr *self,
+c_str_remove_at (CStr* self,
                  size_t index,
                  size_t range,
-                 int *err)
+                 int* err)
 {
   assert (self && self->data);
 
@@ -332,34 +332,34 @@ c_str_remove_at (CStr *self,
 }
 
 CStr
-c_str_clone (CStr *self, int *err)
+c_str_clone (CStr* self, int* err)
 {
   return c_str_create (self->data, self->len, err);
 }
 
-char *
-c_str_search (CStr *self,
-              const char cstr[],
-              size_t cstr_max_len)
+char*
+c_str_search (CStr* self,
+              char const cstr[],
+              size_t cstr_len)
 {
   assert (self && self->data);
   assert (cstr);
-  assert (cstr_max_len > 0);
+  assert (cstr_len > 0);
 
-  return internal_c_str_search (self, cstr, cstr_max_len, NULL);
+  return internal_c_str_search (self, cstr, cstr_len, NULL);
 }
 
 void
-c_str_replace (CStr *self,
-               const char needle[],
-               size_t needle_max_len,
-               const char with[],
-               size_t with_max_len,
+c_str_replace (CStr* self,
+               char const needle[],
+               size_t needle_len,
+               char const with[],
+               size_t with_len,
                bool could_realloc,
-               int *err)
+               int* err)
 {
   size_t needle_len = 0;
-  char *searched_str = internal_c_str_search (self, needle, needle_max_len, &needle_len);
+  char* searched_str = internal_c_str_search (self, needle, needle_len, &needle_len);
   if (!searched_str || needle_len == 0)
     {
       if (err)
@@ -367,26 +367,26 @@ c_str_replace (CStr *self,
       return;
     }
 
-  c_str_replace_at (self, searched_str - self->data, needle_len, with, with_max_len, could_realloc, err);
+  c_str_replace_at (self, searched_str - self->data, needle_len, with, with_len, could_realloc, err);
 }
 
 void
-c_str_replace_at (CStr *self,
+c_str_replace_at (CStr* self,
                   size_t index,
                   size_t range,
-                  const char with[],
-                  size_t with_max_len,
+                  char const with[],
+                  size_t with_len,
                   bool could_realloc,
-                  int *err)
+                  int* err)
 {
   assert (self && self->data);
   assert (with);
-  assert (with_max_len > 0);
+  assert (with_len > 0);
 
   int error_ = -1;
   err = err ? err : &error_;
 
-  size_t with_len = internal_cstr_len (with, with_max_len);
+  size_t with_len = internal_cstr_len (with, with_len);
   if (with_len == 0)
     {
       *err = -1;
@@ -430,10 +430,10 @@ c_str_replace_at (CStr *self,
 }
 
 void
-c_str_concatenate (CStr *str1,
-                   const CStr *str2,
+c_str_concatenate (CStr* str1,
+                   CStr const* str2,
                    bool could_realloc,
-                   int *err)
+                   int* err)
 {
   assert (str2);
 
@@ -441,21 +441,21 @@ c_str_concatenate (CStr *str1,
 }
 
 void
-c_str_concatenate_with_cstr (CStr *str1,
-                             const char cstr[],
-                             size_t cstr_max_len,
+c_str_concatenate_with_cstr (CStr* str1,
+                             char const cstr[],
+                             size_t cstr_len,
                              bool could_realloc,
-                             int *err)
+                             int* err)
 {
   assert (str1 && str1->data);
   assert (cstr);
-  assert (cstr_max_len > 0);
+  assert (cstr_len > 0);
 
   int error_ = -1;
   err = err ? err : &error_;
 
-  size_t cstr_len = internal_cstr_len (cstr, cstr_max_len);
-  if (cstr_len <= 0)
+  size_t cstr_len = internal_cstr_len (cstr, cstr_len);
+  if (cstr_len == 0)
     {
       *err = -1;
       return;
@@ -489,7 +489,7 @@ c_str_concatenate_with_cstr (CStr *str1,
 }
 
 bool
-c_str_utf8_valid (CStr *self)
+c_str_utf8_valid (CStr* self)
 {
   assert (self && self->data);
 
@@ -508,9 +508,9 @@ c_str_utf8_valid (CStr *self)
 }
 
 size_t
-c_str_utf8_next_codepoint (CStr *self,
+c_str_utf8_next_codepoint (CStr* self,
                            size_t index,
-                           int *err)
+                           int* err)
 {
   assert (self && self->data);
 
@@ -585,17 +585,17 @@ c_str_utf8_next_codepoint (CStr *self,
 }
 
 void
-c_str_format (CStr *self,
-              int *err,
-              size_t format_max_len,
-              const char *format,
+c_str_format (CStr* self,
+              int* err,
+              size_t format_len,
+              char const* format,
               ...)
 {
   assert (self && self->data);
   assert (format);
-  assert (format_max_len > 0);
+  assert (format_len > 0);
 
-  size_t format_len = internal_cstr_len (format, format_max_len);
+  size_t format_len = internal_cstr_len (format, format_len);
   if (format_len == 0)
     {
       *err = -1;
@@ -605,17 +605,17 @@ c_str_format (CStr *self,
   int error_ = -1;
   err = err ? err : &error_;
 
-  char *format_ = NULL;
-  if (format_max_len < format_len)
+  char* format_ = NULL;
+  if (format_len < format_len)
     {
-      format_ = malloc (format_max_len);
+      format_ = malloc (format_len);
       if (!format_)
         {
           *err = -1;
           return;
         }
 
-      format_len = format_max_len - 1;
+      format_len = format_len - 1;
       memcpy (format_, format, format_len);
       format_[format_len - 1] = '\0';
     }
@@ -647,7 +647,7 @@ c_str_format (CStr *self,
 }
 
 size_t
-c_str_len (const CStr *self)
+c_str_len (CStr const* self)
 {
   assert (self && self->data);
 
@@ -655,7 +655,7 @@ c_str_len (const CStr *self)
 }
 
 size_t
-c_str_capacity (const CStr *self)
+c_str_capacity (CStr const* self)
 {
   assert (self && self->data);
 
@@ -663,7 +663,7 @@ c_str_capacity (const CStr *self)
 }
 
 void
-c_str_destroy (CStr *self)
+c_str_destroy (CStr* self)
 {
   assert (self && self->data);
 
@@ -672,20 +672,20 @@ c_str_destroy (CStr *self)
 }
 
 /* ------------------------- internal ------------------------- */
-char *
-internal_c_str_search (CStr *self,
-                       const char cstr[],
-                       size_t cstr_max_len,
-                       size_t *return_cstr_len)
+char*
+internal_c_str_search (CStr* self,
+                       char const cstr[],
+                       size_t cstr_len,
+                       size_t* return_cstr_len)
 {
   assert (self && self->data);
   assert (cstr);
-  assert (cstr_max_len > 0);
+  assert (cstr_len > 0);
   assert (return_cstr_len);
 
   if (cstr)
     {
-      size_t cstr_len = internal_cstr_len (cstr, cstr_max_len);
+      size_t cstr_len = internal_cstr_len (cstr, cstr_len);
       *return_cstr_len = cstr_len;
 
       for (size_t c_str_counter = 0; c_str_counter < self->len; ++c_str_counter)
@@ -701,11 +701,11 @@ internal_c_str_search (CStr *self,
 }
 
 size_t
-internal_cstr_len (const char cstr[],
-                   size_t cstr_max_len)
+internal_cstr_len (char const cstr[],
+                   size_t cstr_len)
 {
-  char *found = memchr (cstr, (int) '\0', cstr_max_len);
-  return found ? (size_t) (found - cstr) : cstr_max_len;
+  char* found = memchr (cstr, (int) '\0', cstr_len);
+  return found ? (size_t) (found - cstr) : cstr_len;
 }
 
 #undef CSTDLIB_STR_IMPLEMENTATION
@@ -858,14 +858,15 @@ c_str_unit_tests (void)
     assert (err == 0);
 
     size_t next_index = 0;
-    size_t ground_truth_size[] = { 4, 4, 3, 3, 3 };
+    size_t const ground_truth_size[] = { 4, 4, 3, 3, 3 };
     size_t gt_index = 0;
     for (size_t codepoint_size = c_str_utf8_next_codepoint (&str, next_index, &err);
          err == 0;
          codepoint_size = c_str_utf8_next_codepoint (&str, next_index, &err))
       {
         assert (err == 0);
-        assert (codepoint_size == ground_truth_size[gt_index++]);
+        assert (codepoint_size == ground_truth_size[gt_index]);
+        gt_index++;
 
         next_index += codepoint_size;
       }
