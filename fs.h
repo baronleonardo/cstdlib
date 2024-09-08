@@ -433,7 +433,7 @@ c_fs_path_append (CPath* self,
     }
 
   self->buf[self->len++] = PATH_SEP;
-  memcpy (self->buf + 1, path, path_len + 1);
+  memcpy (self->buf + self->len, path, path_len + 1);
   self->len += path_len;
   self->buf[self->len] = '\0';
 
@@ -711,10 +711,11 @@ c_fs_delete (char const* path, size_t path_len)
     }
 #endif
 
+  errno = 0;
   int remove_status = remove (path);
   if (remove_status != 0)
     {
-      return (cerror_t){ remove_status, "" };
+      return errno_to_cerror (errno);
     }
 
   return CERROR_NONE;
@@ -1094,12 +1095,33 @@ c_fs_unit_tests (void)
 
   // test: absolute path
   {
-
     err = c_fs_path_replace (&path_buf, STR ("./test_playground"), true);
     assert (err.code == 0);
     err = c_fs_path_to_absolute (&path_buf, true);
     assert (err.code == 0);
     assert (path_buf.buf);
+  }
+
+  // test: change current dir
+  {
+    size_t path_len = 0;
+    char path[INT16_MAX];
+    err = c_fs_dir_get_current (path, INT16_MAX, &path_len);
+    assert (err.code == 0);
+
+    err = c_fs_path_replace (&path_buf, path, path_len, true);
+    assert (err.code == 0);
+
+    err = c_fs_path_append (&path_buf, STR (".."), true);
+    assert (err.code == 0);
+
+    err = c_fs_dir_change_current (path_buf.buf, path_buf.len);
+    assert (err.code == 0);
+
+    assert (strcmp (path, path_buf.buf) != 0);
+
+    err = c_fs_dir_change_current (path, path_len);
+    assert (err.code == 0);
   }
 
   err = c_fs_delete (STR (test_playground));
