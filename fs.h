@@ -140,6 +140,12 @@ cerror_t c_fs_dir_exists (char const dir_path[],
 /// @return
 cerror_t c_fs_dir_get_current (char buf[], size_t buf_len, size_t* out_size);
 
+/// @brief
+/// @param buf
+/// @param buf_len
+/// @return
+cerror_t c_fs_dir_change_current (char buf[], size_t buf_len);
+
 /// @brief check if the directory is empty
 /// @param dir_path
 /// @param err return error (any value but zero is treated as an error)
@@ -588,10 +594,29 @@ c_fs_dir_get_current (char buf[], size_t buf_len, size_t* out_size)
     *out_size = path_len;
   return path_len > 0 ? CERROR_NONE : (cerror_t){ GetLastError (), "" };
 #else
+  errno = 0;
   char* state = getcwd (buf, buf_len);
   if (out_size)
     *out_size = strlen (buf);
   return state ? CERROR_NONE : CERROR_SMALL_BUFFER;
+#endif
+}
+
+cerror_t
+c_fs_dir_change_current (char buf[], size_t buf_len)
+{
+  assert (buf && buf_len > 0);
+  assert (buf[buf_len] == '\0');
+  (void) buf_len;
+
+#ifdef _WIN32
+  SetLastError (0);
+  BOOL status = SetCurrentDirectory (buf);
+  return status ? CERROR_NONE : (cerror_t){ GetLastError (), "" };
+#else
+  errno = 0;
+  int status = chdir (buf);
+  return status == 0 ? CERROR_NONE : errno_to_cerror (errno);
 #endif
 }
 
