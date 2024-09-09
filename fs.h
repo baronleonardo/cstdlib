@@ -679,7 +679,7 @@ c_fs_dir_get_current_r (char dir_path[], size_t dir_path_len, size_t* out_size)
 
 #ifdef _WIN32
   SetLastError (0);
-  DWORD path_len = GetCurrentDirectoryA ((DWORD) dir_path_len, buf);
+  DWORD path_len = GetCurrentDirectoryA ((DWORD) dir_path_len, dir_path);
   if (out_size)
     *out_size = path_len;
   return path_len > 0 ? CERROR_NONE : (cerror_t){ GetLastError (), "" };
@@ -709,7 +709,7 @@ c_fs_dir_change_current_r (char const dir_path[], size_t dir_path_len)
 
 #ifdef _WIN32
   SetLastError (0);
-  BOOL status = SetCurrentDirectory (buf);
+  BOOL status = SetCurrentDirectory (dir_path);
   return status ? CERROR_NONE : (cerror_t){ GetLastError (), "" };
 #else
   errno = 0;
@@ -909,9 +909,9 @@ c_fs_foreach (CPath* path,
   size_t orig_path_len = path->len;
 
 #if defined(_WIN32)
-  path->buf[path->len] = L'/';
-  path->buf[path->len + 1] = L'*';
-  path->buf[path->len + 2] = L'\0';
+  path->buf[path->len] = '/';
+  path->buf[path->len + 1] = '*';
+  path->buf[path->len + 2] = '\0';
   path->len += 2;
 
   SetLastError (0);
@@ -921,7 +921,7 @@ c_fs_foreach (CPath* path,
     {
       if (find_handler == INVALID_HANDLE_VALUE)
         {
-          path->buf[path->len - 2] = L'\0';
+          path->buf[path->len - 2] = '\0';
           return (cerror_t){ GetLastError (), "" };
         }
 
@@ -939,11 +939,12 @@ c_fs_foreach (CPath* path,
           memcpy (path->buf + path->len - 1,
                   cur_file.cFileName,
                   filename_len);
-          path->buf[path->len - 1 + filename_len] = L'\0';
+          path->buf[path->len - 1 + filename_len] = '\0';
 
-          err = handler (
-              path->buf, path->len - 1 + filename_len, extra_data);
-
+          size_t old_len = path->len;
+          path->len = path->len - 1 + filename_len;
+          cerror_t err = handler (path, extra_data);
+          path->len = old_len;
           if (err.code != CERROR_NONE.code)
             {
               break;

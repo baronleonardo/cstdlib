@@ -11,7 +11,7 @@ if (MSVC)
         /WX
         /utf-8
         /Zi
-        $<$<CONFIG:DEBUG>:/fsanitize=address>
+        # $<$<CONFIG:DEBUG>:/fsanitize=address>
         # $<$<CONFIG:DEBUG>:/RTCcsu>
     )
     add_link_options(
@@ -34,8 +34,8 @@ else()
     add_link_options($<$<CONFIG:DEBUG>:-fsanitize=address,undefined>)
 endif()
 
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2 SDL2_ttf SDL2_image)
+# find_package(PkgConfig REQUIRED)
+# pkg_check_modules(SDL2 REQUIRED IMPORTED_TARGET sdl2 SDL2_ttf SDL2_image)
 # pkg_check_modules(GLFW REQUIRED IMPORTED_TARGET glfw3 vulkan)
 
 FILE(GLOB_RECURSE modules *.h)
