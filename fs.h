@@ -683,20 +683,14 @@ c_fs_foreach (char path_buf[],
       if ((strcmp (cur_file.cFileName, ".") != 0) &&
           (strcmp (cur_file.cFileName, "..") != 0))
         {
-          size_t filename_len = strnlen (cur_file.cFileName,
-#ifdef _WIN32
-                                         INT_MAX
-#else
-                                         FILENAME_MAX
-#endif
-          );
-          strcpy (path_buf + path_buf_len - 1,
+          size_t filename_len = strnlen (cur_file.cFileName, MAX_PATH_LEN);
+          strncpy (path_buf + path_buf_len - 1,
                   cur_file.cFileName,
                   filename_len);
 
           size_t old_len = path_buf_len;
           path_buf_len = path_buf_len - 1 + filename_len;
-          cerror_t err = handler (path_buf, extra_data);
+          cerror_t err = handler (path_buf, path_buf_len, extra_data);
           path_buf_len = old_len;
           if (err.code != CERROR_NONE.code)
             {
@@ -709,7 +703,7 @@ c_fs_foreach (char path_buf[],
   SetLastError (0);
   if (!FindClose (find_handler))
     {
-      path_buf[orig_path_buf_len] = '\0';
+      path_buf[orig_path_len] = '\0';
       err = (cerror_t){ GetLastError (), "" };
       goto Error;
     }
@@ -835,6 +829,11 @@ internal_c_fs_delete_recursively (char path_buf[],
 #ifdef NDEBUG
 #define NDEBUG_
 #undef NDEBUG
+#endif
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4996) // disable warning about unsafe functions
 #endif
 
 #include <assert.h>
@@ -1073,6 +1072,10 @@ c_fs_handler (char path[],
 
   return (cerror_t){ 0 };
 }
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #ifdef NDEBUG_
 #define NDEBUG
