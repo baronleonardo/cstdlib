@@ -18,13 +18,6 @@ typedef struct CFile
   FILE* raw;
 } CFile;
 
-typedef struct CPath
-{
-  char* buf;
-  size_t len;
-  size_t capacity;
-} CPath;
-
 typedef struct cerror_t
 {
   int code;
@@ -39,26 +32,16 @@ typedef struct cerror_t
 #define CERROR_SMALL_BUFFER ((cerror_t){ 259, "buffer is small" })
 #define CERROR_SMALL_PATH_CAPACITY ((cerror_t){ 260, "path capacity is small" })
 
-/// @brief open/create a file
-/// @param path
-/// @param path_len
-/// @param mode this is the same as mode in `fopen`
-/// @param out_cfile return the new object
-/// @return error
-cerror_t c_fs_file_open (CPath const* path,
-                         char const mode[],
-                         CFile* out_cfile);
-
 /// @brief
 /// @param path
 /// @param path_len
 /// @param mode
 /// @param out_cfile
 /// @return
-cerror_t c_fs_file_open_r (char const* path,
-                           size_t path_len,
-                           char const mode[],
-                           CFile* out_cfile);
+cerror_t c_fs_file_open (char const path[],
+                         size_t path_len,
+                         char const mode[],
+                         CFile* out_cfile);
 
 /// @brief get file size
 /// @param self
@@ -92,146 +75,93 @@ cerror_t c_fs_file_write (CFile* self,
 /// @param self
 cerror_t c_fs_file_close (CFile* self);
 
+/// @briefthis will append `path` to `base_path` and adding '/' in between
+/// @param base_path
+/// @param base_path_len
+/// @param base_path_capacity
+/// @param path
+/// @param path_len
+/// @param out_new_path_len
+/// @return error (any value but zero is treated as an error)
+cerror_t c_fs_path_append (char base_path[],
+                           size_t base_path_len,
+                           size_t base_path_capacity,
+                           char const path[],
+                           size_t path_len,
+                           size_t* out_new_path_len);
+
 /// @brief
 /// @param path
 /// @param path_len
-/// @param path_capacity
-/// @param err return error (any value but zero is treated as an error)
+/// @param out_absolute_path
+/// @param out_absolute_path_capacity
+/// @param out_absolute_path_len
 /// @return
-cerror_t c_fs_path_create (char const path[],
-                           size_t path_len,
-                           size_t path_capacity,
-                           CPath* out_path);
-
-/// @brief
-/// @param path_capacity
-/// @param err
-/// @return
-cerror_t c_fs_path_create_empty (size_t path_capacity, CPath* out_path);
-
-/// @brief this will append `path` to `CPath` and adding '/' in between
-/// @param self
-/// @param new_path
-/// @param new_path_len
-/// @param could_realloc
-/// @param err return error (any value but zero is treated as an error)
-cerror_t c_fs_path_append (CPath* self,
-                           char const path[],
-                           size_t path_len,
-                           bool could_realloc);
-
-/// @brief
-/// @param self
-/// @param could_realloc
-/// @return
-cerror_t c_fs_path_to_absolute (CPath* self, bool could_realloc);
-
-/// @brief
-/// @param path
-void c_fs_path_destroy (CPath* self);
-
-/// @brief create a directory
-/// @param path
-/// @return err return error (any value but zero is treated as an error)
-cerror_t c_fs_dir_create (CPath const* path);
+cerror_t c_fs_path_to_absolute (char const path[],
+                                size_t path_len,
+                                char out_absolute_path[],
+                                size_t out_absolute_path_capacity,
+                                size_t* out_absolute_path_len);
 
 /// @brief create a directory with raw path
 /// @param dir_path
 /// @param path_len
 /// @param err return error (any value but zero is treated as an error)
-cerror_t c_fs_dir_create_r (char const dir_path[], size_t path_len);
+cerror_t c_fs_dir_create (char const dir_path[], size_t path_len);
 
 /// @brief check if path is a directory
-/// @param dir_path
-/// @param out_exists
-/// @return
-cerror_t c_fs_dir_exists (CPath const* dir_path,
-                          bool* out_exists);
-
-/// @brief check if path is a directory
-/// @param dir_path
+/// @param path
 /// @param path_len
 /// @return
-cerror_t c_fs_dir_exists_r (char const dir_path[],
-                            size_t path_len,
-                            bool* out_exists);
-
-/// @brief
-/// @param dir_path
-/// @param out_size
-/// @return
-cerror_t c_fs_dir_get_current (CPath* dir_path, size_t* out_size);
-
-/// @brief
-/// @param dir_path
-/// @param dir_path_len
-/// @param out_size
-/// @return
-cerror_t c_fs_dir_get_current_r (char dir_path[], size_t dir_path_len, size_t* out_size);
-
-cerror_t c_fs_dir_change_current (CPath const* dir_path);
-
-/// @brief
-/// @param dir_path
-/// @param dir_path_len
-/// @return
-cerror_t c_fs_dir_change_current_r (char const dir_path[], size_t dir_path_len);
-
-/// @brief check if the directory is empty
-/// @param dir_path
-/// @param err return error (any value but zero is treated as an error)
-/// @return
-cerror_t c_fs_dir_is_empty (CPath const* dir_path, bool* out_is_empty);
-
-/// @brief
-/// @param dir_path
-/// @param dir_path_len
-/// @param out_is_empty
-/// @return
-cerror_t c_fs_dir_is_empty_r (char const dir_path[], size_t dir_path_len, bool* out_is_empty);
+cerror_t c_fs_dir_exists (char const path[],
+                          size_t path_len,
+                          bool* out_exists);
 
 /// @brief
 /// @param path
-/// @param out_exists
+/// @param path_len
 /// @return
-cerror_t c_fs_exists (CPath const* path, bool* out_exists);
+cerror_t c_fs_dir_change_current (char const path[], size_t path_len);
+
+/// @brief
+/// @param path
+/// @param path_len
+/// @param out_is_empty
+/// @return
+cerror_t c_fs_dir_is_empty (char const path[],
+                            size_t path_len,
+                            bool* out_is_empty);
 
 /// @brief check if file/directory exists
 /// @param path
 /// @param path_len
 /// @param err return error (any value but zero is treated as an error)
 /// @return
-cerror_t c_fs_exists_r (char const path[], size_t path_len, bool* out_exists);
-
-/// @brief
-/// @param path
-/// @return
-cerror_t c_fs_delete (CPath const* path);
+cerror_t c_fs_exists (char const path[], size_t path_len, bool* out_exists);
 
 /// @brief delete a file/directory (empty directory only) with raw path
 /// @param path
 /// @param path_len
-cerror_t c_fs_delete_r (char const path[], size_t path_len);
-
-/// @brief delete a non-empty directory
-/// @param dir_path
-/// @param err return error (any value but zero is treated as an error)
-cerror_t c_fs_delete_recursively (CPath* dir_path);
+cerror_t c_fs_delete (char const path[], size_t path_len);
 
 /// @brief
 /// @param path
 /// @param path_len
 /// @return
-cerror_t c_fs_delete_recursively_r (char path[], size_t path_len, size_t path_capacity);
+cerror_t c_fs_delete_recursively (char path[], size_t path_len);
 
-/// @brief this will run `handler` on every file/directory inside `path`
-/// @param path
+/// @brief
+/// @param path_buf
+/// @param path_buf_len
+/// @param path_buf_capacity
 /// @param handler
-/// @param extra_data [optional] send/recieve extra data to the handler
-/// @param err return error (any value but zero is treated as an error)
+/// @param extra_data
+/// @return
 cerror_t
-c_fs_foreach (CPath* path,
-              cerror_t handler (CPath* path, void* extra_data),
+c_fs_foreach (char path_buf[],
+              size_t path_buf_len,
+              size_t path_buf_capacity,
+              cerror_t handler (char* path, size_t path_len, void* extra_data),
               void* extra_data);
 #endif // CSTDLIB_FS_H
 
@@ -267,10 +197,15 @@ c_fs_foreach (CPath* path,
 #pragma warning(disable : 4996) // disable warning about unsafe functions
 #endif
 
-static cerror_t internal_c_fs_delete_recursively_handler (CPath* path,
+static cerror_t internal_c_fs_delete_recursively_handler (char path[],
+                                                          size_t path_len,
                                                           void* extra_data);
-static cerror_t internal_c_fs_dir_is_empty_handler (CPath* path,
+static cerror_t internal_c_fs_dir_is_empty_handler (char path[],
+                                                    size_t path_len,
                                                     void* extra_data);
+
+static cerror_t internal_c_fs_delete_recursively (char path_buf[],
+                                                  size_t path_buf_len);
 
 static inline cerror_t
 errno_to_cerror (int errno_)
@@ -279,20 +214,10 @@ errno_to_cerror (int errno_)
 }
 
 cerror_t
-c_fs_file_open (CPath const* path,
+c_fs_file_open (char const* path,
+                size_t path_len,
                 char const mode[],
                 CFile* out_cfile)
-{
-  assert (path);
-
-  return c_fs_file_open_r (path->buf, path->len, mode, out_cfile);
-}
-
-cerror_t
-c_fs_file_open_r (char const* path,
-                  size_t path_len,
-                  char const mode[],
-                  CFile* out_cfile)
 {
   assert (mode);
   assert (path);
@@ -423,170 +348,60 @@ c_fs_file_close (CFile* self)
 }
 
 cerror_t
-c_fs_path_create (char const path[],
-                  size_t path_len,
-                  size_t path_capacity,
-                  CPath* out_cpath)
-{
-  assert (path);
-  assert (path_len > 0);
-  assert (path[path_len] == '\0');
-
-  cerror_t err = c_fs_path_create_empty (path_capacity, out_cpath);
-
-  if (err.code == CERROR_NONE.code)
-    {
-      out_cpath->len = path_len;
-      memcpy (out_cpath->buf, path, path_len);
-      out_cpath->buf[out_cpath->len] = '\0';
-    }
-
-  return err;
-}
-
-cerror_t
-c_fs_path_create_empty (size_t path_capacity, CPath* out_cpath)
-{
-  assert (path_capacity > 0);
-
-  if (out_cpath)
-    {
-      *out_cpath =
-          (CPath){ .buf = malloc (path_capacity), .capacity = path_capacity };
-
-      if (!out_cpath->buf)
-        {
-          return CERROR_MEM_ALLOCATION;
-        }
-
-      return CERROR_NONE;
-    }
-
-  return CERROR_OUT_IS_NULL;
-}
-
-cerror_t
-c_fs_path_append (CPath* self,
+c_fs_path_append (char base_path[],
+                  size_t base_path_len,
+                  size_t base_path_capacity,
                   char const path[],
                   size_t path_len,
-                  bool could_realloc)
+                  size_t* out_new_path_len)
 {
-  assert (self && self->buf);
-  assert (path);
-  assert (path_len > 0);
+  assert (base_path && base_path_len > 0);
+  assert (path && path_len > 0);
 
-  if (self->capacity < path_len + 1)
+  if (base_path_capacity < (base_path_len + path_len + 2))
     {
-      if (could_realloc)
-        {
-          char* reallocated_buf =
-              realloc (self->buf, self->len + path_len + 2);
-          if (!reallocated_buf)
-            {
-              return CERROR_MEM_ALLOCATION;
-            }
-
-          self->buf = reallocated_buf;
-          self->capacity = self->len + path_len + 2;
-        }
-      else
-        {
-          return CERROR_PATH_BUFFER_FULL;
-        }
+      return CERROR_PATH_BUFFER_FULL;
     }
 
-  self->buf[self->len++] = PATH_SEP;
-  memcpy (self->buf + self->len, path, path_len + 1);
-  self->len += path_len;
-  self->buf[self->len] = '\0';
+  base_path[base_path_len++] = PATH_SEP;
+  memcpy (base_path + base_path_len, path, path_len + 1);
+  base_path_len += path_len;
+  base_path[base_path_len] = '\0';
+
+  if (out_new_path_len)
+    *out_new_path_len = base_path_len;
 
   return CERROR_NONE;
 }
 
 cerror_t
-c_fs_path_replace (CPath* self,
-                   char const new_path[],
-                   size_t new_path_len,
-                   bool could_realloc)
+c_fs_path_to_absolute (char const path[],
+                       size_t path_len,
+                       char out_absolute_path[],
+                       size_t out_absolute_path_capacity,
+                       size_t* out_absolute_path_len)
 {
-  assert (self && self->buf);
-  assert (new_path);
-  assert (new_path_len > 0);
-
-  if (self->capacity < new_path_len + 1)
-    {
-      if (could_realloc)
-        {
-          char* reallocated_buf = realloc (self->buf, new_path_len + 1);
-          if (!reallocated_buf)
-            {
-              return CERROR_MEM_ALLOCATION;
-            }
-
-          self->buf = reallocated_buf;
-          self->capacity = new_path_len + 1;
-        }
-      else
-        {
-          return CERROR_PATH_BUFFER_FULL;
-        }
-    }
-
-  memcpy (self->buf, new_path, new_path_len);
-  self->len = new_path_len;
-  self->buf[self->len] = '\0';
-
-  return CERROR_NONE;
-}
-
-cerror_t
-c_fs_path_to_absolute (CPath* self, bool could_realloc)
-{
-  (void) self;
-  (void) could_realloc;
-
-  if (could_realloc)
-    {
-      char* reallocated_buf = realloc (self->buf, MAX_PATH_LEN);
-      if (!reallocated_buf)
-        {
-          return CERROR_MEM_ALLOCATION;
-        }
-      self->buf = reallocated_buf;
-      self->capacity = MAX_PATH_LEN;
-    }
+  assert (path && path_len > 0);
+  assert (out_absolute_path && out_absolute_path_capacity > 0);
 
 #ifdef _WIN32
   SetLastError (0);
-  self->len = GetLongPathNameA (self->buf, self->buf, (DWORD) self->capacity);
-  return self->len > 0 ? CERROR_NONE : (cerror_t){ GetLastError (), "" };
+  DWORD abs_path_len = GetLongPathNameA (path, out_absolute_path, (DWORD) out_absolute_path_capacity);
+  if (out_absolute_path_len)
+    *out_absolute_path_len = abs_path_len;
+  return abs_path_len > 0 ? CERROR_NONE : (cerror_t){ GetLastError (), "" };
 #else
   errno = 0;
-  char* path_status = realpath (self->buf, self->buf);
-  self->len = strlen (self->buf);
+  char* path_status = realpath (path, out_absolute_path);
+  size_t abs_path_len = path_status ? strlen (out_absolute_path) : 0;
+  if (out_absolute_path_len)
+    *out_absolute_path_len = abs_path_len;
   return path_status ? CERROR_NONE : errno_to_cerror (errno);
 #endif
 }
 
-void
-c_fs_path_destroy (CPath* self)
-{
-  assert (self && self->buf);
-
-  free (self->buf);
-  *self = (CPath){ 0 };
-}
-
 cerror_t
-c_fs_dir_create (CPath const* dir_path)
-{
-  assert (dir_path && dir_path->buf);
-
-  return c_fs_dir_create_r (dir_path->buf, dir_path->len);
-}
-
-cerror_t
-c_fs_dir_create_r (char const dir_path[], size_t path_len)
+c_fs_dir_create (char const dir_path[], size_t path_len)
 {
   assert (dir_path);
   assert (path_len > 0);
@@ -604,16 +419,7 @@ c_fs_dir_create_r (char const dir_path[], size_t path_len)
 }
 
 cerror_t
-c_fs_dir_exists (CPath const* dir_path,
-                 bool* out_exists)
-{
-  assert (dir_path && dir_path->buf);
-
-  return c_fs_dir_exists_r (dir_path->buf, dir_path->len, out_exists);
-}
-
-cerror_t
-c_fs_dir_exists_r (char const dir_path[], size_t path_len, bool* out_exists)
+c_fs_dir_exists (char const dir_path[], size_t path_len, bool* out_exists)
 {
   assert (dir_path);
   assert (path_len > 0);
@@ -665,15 +471,7 @@ c_fs_dir_exists_r (char const dir_path[], size_t path_len, bool* out_exists)
 }
 
 cerror_t
-c_fs_dir_get_current (CPath* dir_path, size_t* out_size)
-{
-  assert (dir_path);
-
-  return c_fs_dir_get_current_r (dir_path->buf, dir_path->len, out_size);
-}
-
-cerror_t
-c_fs_dir_get_current_r (char dir_path[], size_t dir_path_len, size_t* out_size)
+c_fs_dir_get_current (char dir_path[], size_t dir_path_len, size_t* out_size)
 {
   assert (dir_path && dir_path_len > 0);
 
@@ -693,15 +491,7 @@ c_fs_dir_get_current_r (char dir_path[], size_t dir_path_len, size_t* out_size)
 }
 
 cerror_t
-c_fs_dir_change_current (CPath const* dir_path)
-{
-  assert (dir_path);
-
-  return c_fs_dir_change_current_r (dir_path->buf, dir_path->len);
-}
-
-cerror_t
-c_fs_dir_change_current_r (char const dir_path[], size_t dir_path_len)
+c_fs_dir_change_current (char const dir_path[], size_t dir_path_len)
 {
   assert (dir_path && dir_path_len > 0);
   assert (dir_path[dir_path_len] == '\0');
@@ -719,48 +509,35 @@ c_fs_dir_change_current_r (char const dir_path[], size_t dir_path_len)
 }
 
 cerror_t
-c_fs_dir_is_empty (CPath const* dir_path, bool* out_is_empty)
+c_fs_dir_is_empty (char const path[],
+                   size_t path_len,
+                   bool* out_is_empty)
 {
-  assert (dir_path);
+  assert (path && path_len > 0);
+  assert (path[path_len] == '\0');
 
-  return c_fs_dir_is_empty_r (dir_path->buf, dir_path->len, out_is_empty);
-}
-
-cerror_t
-c_fs_dir_is_empty_r (char const dir_path[], size_t dir_path_len, bool* out_is_empty)
-{
-  assert (dir_path && dir_path_len > 0);
-  assert (dir_path[dir_path_len] == '\0');
-
-  CPath path;
-  cerror_t err = c_fs_path_create (dir_path, dir_path_len, MAX_PATH_LEN, &path);
-  if (err.code != 0)
+  char* path_buf = malloc (MAX_PATH_LEN);
+  if (!path_buf)
     {
-      return err;
+      return CERROR_MEM_ALLOCATION;
     }
+  strncpy (path_buf, path, MAX_PATH_LEN);
 
-  err = c_fs_foreach (
-      &path,
+  /// FIXME: need optimization (fail on first path that is not empty)
+  cerror_t err = c_fs_foreach (
+      path_buf, path_len, MAX_PATH_LEN,
       internal_c_fs_dir_is_empty_handler,
       out_is_empty);
 
-  c_fs_path_destroy (&path);
+  free (path_buf);
 
   return err;
 }
 
 cerror_t
-c_fs_exists (CPath const* path, bool* out_exists)
-{
-  assert (path);
-
-  return c_fs_exists_r (path->buf, path->len, out_exists);
-}
-
-cerror_t
-c_fs_exists_r (char const path[],
-               size_t path_len,
-               bool* out_exists)
+c_fs_exists (char const path[],
+             size_t path_len,
+             bool* out_exists)
 {
   assert (path);
   assert (path_len > 0);
@@ -815,15 +592,7 @@ c_fs_exists_r (char const path[],
 }
 
 cerror_t
-c_fs_delete (CPath const* path)
-{
-  assert (path);
-
-  return c_fs_delete_r (path->buf, path->len);
-}
-
-cerror_t
-c_fs_delete_r (char const path[], size_t path_len)
+c_fs_delete (char const path[], size_t path_len)
 {
   assert (path);
   assert (path_len > 0);
@@ -855,74 +624,60 @@ c_fs_delete_r (char const path[], size_t path_len)
 }
 
 cerror_t
-c_fs_delete_recursively (CPath* path)
+c_fs_delete_recursively (char path[], size_t path_len)
 {
-  assert (path);
-
-  return c_fs_delete_recursively_r (path->buf, path->len, path->capacity);
-}
-
-cerror_t
-c_fs_delete_recursively_r (char path[], size_t path_len, size_t path_capacity)
-{
-  assert (path && path_len > 0 && path_capacity > path_len);
+  assert (path && path_len > 0);
   assert (path[path_len] == '\0');
 
-  if (path_capacity > path_len)
+  char* path_buf = malloc (MAX_PATH_LEN);
+  if (!path_buf)
     {
-      cerror_t foreach_err = c_fs_foreach (
-          &(CPath){ .buf = path, .len = path_len, .capacity = path_capacity },
-          internal_c_fs_delete_recursively_handler,
-          NULL);
-
-      if (foreach_err.code != CERROR_NONE.code)
-        {
-          return foreach_err;
-        }
-
-      // delete the directory itself after deleting all his children
-      cerror_t delete_err = c_fs_delete_r (path, path_len);
-
-      return delete_err;
+      return CERROR_MEM_ALLOCATION;
     }
+  strncpy (path_buf, path, MAX_PATH_LEN);
 
-  return CERROR_SMALL_PATH_CAPACITY;
+  cerror_t err = internal_c_fs_delete_recursively (path_buf, path_len);
+
+  free (path_buf);
+  return err;
 }
 
 cerror_t
-c_fs_foreach (CPath* path,
-              cerror_t handler (CPath path[], void* extra_data),
+c_fs_foreach (char path_buf[],
+              size_t path_buf_len,
+              size_t path_buf_capacity,
+              cerror_t handler (char* path, size_t path_len, void* extra_data),
               void* extra_data)
 {
-  assert (path);
-  assert (path->buf && path->len > 0);
-  assert (path->buf[path->len] == '\0');
+  assert (path_buf && path_buf_len > 0 && path_buf_capacity > 0);
+  assert (path_buf[path_buf_len] == '\0');
   assert (handler);
 
   bool dir_exists;
-  cerror_t err = c_fs_dir_exists_r (path->buf, path->len, &dir_exists);
+  cerror_t err = c_fs_dir_exists (path_buf, path_buf_len, &dir_exists);
   if (!dir_exists)
     {
       return err;
     }
 
-  size_t orig_path_len = path->len;
+  size_t orig_path_len = path_buf_len;
 
 #if defined(_WIN32)
-  path->buf[path->len] = '/';
-  path->buf[path->len + 1] = '*';
-  path->buf[path->len + 2] = '\0';
-  path->len += 2;
+  path_buf[path_buf_len] = '/';
+  path_buf[path_buf_len + 1] = '*';
+  path_buf[path_buf_len + 2] = '\0';
+  path_buf_len += 2;
 
   SetLastError (0);
   WIN32_FIND_DATAA cur_file;
-  HANDLE find_handler = FindFirstFileA (path->buf, &cur_file);
+  HANDLE find_handler = FindFirstFileA (path_buf, &cur_file);
   do
     {
       if (find_handler == INVALID_HANDLE_VALUE)
         {
-          path->buf[path->len - 2] = '\0';
-          return (cerror_t){ GetLastError (), "" };
+          path_buf[path_buf_len - 2] = '\0';
+          err = (cerror_t){ GetLastError (), "" };
+          goto Error;
         }
 
       // skip '.' and '..'
@@ -936,15 +691,14 @@ c_fs_foreach (CPath* path,
                                          FILENAME_MAX
 #endif
           );
-          memcpy (path->buf + path->len - 1,
+          strcpy (path_buf + path_buf_len - 1,
                   cur_file.cFileName,
                   filename_len);
-          path->buf[path->len - 1 + filename_len] = '\0';
 
-          size_t old_len = path->len;
-          path->len = path->len - 1 + filename_len;
-          cerror_t err = handler (path, extra_data);
-          path->len = old_len;
+          size_t old_len = path_buf_len;
+          path_buf_len = path_buf_len - 1 + filename_len;
+          cerror_t err = handler (path_buf, extra_data);
+          path_buf_len = old_len;
           if (err.code != CERROR_NONE.code)
             {
               break;
@@ -956,12 +710,13 @@ c_fs_foreach (CPath* path,
   SetLastError (0);
   if (!FindClose (find_handler))
     {
-      path->buf[orig_path_len] = '\0';
-      return (cerror_t){ GetLastError (), "" };
+      path_buf[orig_path_buf_len] = '\0';
+      err = (cerror_t){ GetLastError (), "" };
+      goto Error;
     }
 #else
 
-  DIR* cur_dir = opendir (path->buf);
+  DIR* cur_dir = opendir (path_buf);
   if (cur_dir)
     {
       errno = 0;
@@ -973,16 +728,16 @@ c_fs_foreach (CPath* path,
               (strcmp (cur_dir_properties->d_name, "..") != 0))
             {
               size_t filename_len = strlen (cur_dir_properties->d_name);
-              path->buf[path->len] = '/';
-              assert (memcpy (path->buf + path->len + 1,
-                              cur_dir_properties->d_name,
-                              filename_len));
-              path->buf[path->len + 1 + filename_len] = '\0';
+              path_buf[path_buf_len] = '/';
+              strncpy (path_buf + path_buf_len + 1,
+                       cur_dir_properties->d_name,
+                       filename_len);
 
-              size_t old_len = path->len;
-              path->len = path->len + 1 + filename_len;
-              cerror_t handler_err = handler (path, extra_data);
-              path->len = old_len;
+              size_t old_len = path_buf_len;
+              path_buf_len = path_buf_len + 1 + filename_len;
+              path_buf[path_buf_len] = '\0';
+              cerror_t handler_err = handler (path_buf, path_buf_len, extra_data);
+              path_buf_len = old_len;
               if (handler_err.code != CERROR_NONE.code)
                 {
                   break;
@@ -994,29 +749,33 @@ c_fs_foreach (CPath* path,
 
       if (closedir (cur_dir) != 0)
         {
-          path->buf[orig_path_len] = '\0';
-          return errno_to_cerror (errno);
+          path_buf[orig_path_len] = '\0';
+          err = errno_to_cerror (errno);
+          goto Error;
         }
     }
 #endif
 
-  path->buf[orig_path_len] = '\0';
-  return CERROR_NONE;
+  path_buf[orig_path_len] = '\0';
+
+Error:
+  return err;
 }
 
 // ------------------------- internal ------------------------- //
 cerror_t
-internal_c_fs_delete_recursively_handler (CPath* path,
+internal_c_fs_delete_recursively_handler (char path[],
+                                          size_t path_len,
                                           void* extra_data)
 {
   (void) extra_data;
 
   bool is_dir;
-  c_fs_dir_exists (path, &is_dir);
+  c_fs_dir_exists (path, path_len, &is_dir);
 
   if (is_dir)
     {
-      cerror_t err = c_fs_delete_recursively (path);
+      cerror_t err = internal_c_fs_delete_recursively (path, path_len);
       if (err.code != CERROR_NONE.code)
         {
           return err;
@@ -1024,7 +783,7 @@ internal_c_fs_delete_recursively_handler (CPath* path,
     }
   else
     {
-      cerror_t delete_err = c_fs_delete (path);
+      cerror_t delete_err = c_fs_delete (path, path_len);
       if (delete_err.code != CERROR_NONE.code)
         {
           return delete_err;
@@ -1035,14 +794,35 @@ internal_c_fs_delete_recursively_handler (CPath* path,
 }
 
 cerror_t
-internal_c_fs_dir_is_empty_handler (CPath* path,
+internal_c_fs_dir_is_empty_handler (char path[],
+                                    size_t path_len,
                                     void* extra_data)
 {
   (void) path;
+  (void) path_len;
 
   *(bool*) extra_data = false; // This dir_path is not empty
 
   return CERROR_NONE;
+}
+
+cerror_t
+internal_c_fs_delete_recursively (char path_buf[],
+                                  size_t path_buf_len)
+{
+  cerror_t err = c_fs_foreach (path_buf, path_buf_len, MAX_PATH_LEN,
+                               internal_c_fs_delete_recursively_handler,
+                               NULL);
+
+  if (err.code != CERROR_NONE.code)
+    {
+      return err;
+    }
+
+  // delete the directory itself after deleting all his children
+  err = c_fs_delete (path_buf, path_buf_len);
+
+  return err;
 }
 
 #ifdef _MSC_VER
@@ -1066,7 +846,7 @@ void
 c_fs_unit_tests (void)
 {
 
-#define STR(str) (str), (sizeof ((str)) - 1)
+#define STR(str) str, (sizeof (str) - 1)
 #define test_playground "test_playground"
 
   enum
@@ -1077,11 +857,11 @@ c_fs_unit_tests (void)
 
   cerror_t err = CERROR_NONE;
 
-  CPath path_buf;
-  cerror_t path_buf_err = c_fs_path_create_empty (MAX_PATH_LEN, &path_buf);
-  assert (path_buf_err.code == 0);
+  char* path_buf = malloc (MAX_PATH_LEN);
+  assert (path_buf);
+  size_t path_buf_len = 0;
 
-  err = c_fs_dir_create_r (STR (test_playground));
+  err = c_fs_dir_create (STR (test_playground));
   assert (err.code == 0);
 
   // test: c_fs_file_write
@@ -1089,7 +869,7 @@ c_fs_unit_tests (void)
     CFile f;
     size_t file_size = 0;
 
-    err = c_fs_file_open_r (STR (test_playground "/file_ara.txt"), "w", &f);
+    err = c_fs_file_open (STR (test_playground "/file_ara.txt"), "w", &f);
     assert (err.code == 0);
     err = c_fs_file_write (&f, STR ("بسم الله الرحمن الرحيم\n"), &file_size);
     assert (file_size > 0);
@@ -1097,7 +877,7 @@ c_fs_unit_tests (void)
     err = c_fs_file_close (&f);
     assert (err.code == 0);
 
-    err = c_fs_file_open_r (STR (test_playground "/file_eng.txt"), "w", &f);
+    err = c_fs_file_open (STR (test_playground "/file_eng.txt"), "w", &f);
     assert (err.code == 0);
     err = c_fs_file_write (&f, STR ("May peace be upon you\n"), &file_size);
     assert (file_size > 0);
@@ -1111,7 +891,7 @@ c_fs_unit_tests (void)
     CFile f;
     size_t read_size = 0;
 
-    err = c_fs_file_open_r (STR (test_playground "/file_eng.txt"), "r", &f);
+    err = c_fs_file_open (STR (test_playground "/file_eng.txt"), "r", &f);
     assert (err.code == 0);
 
     err = c_fs_file_read (&f, buf, buf_len, &read_size);
@@ -1122,7 +902,7 @@ c_fs_unit_tests (void)
 
     err = c_fs_file_close (&f);
     assert (err.code == 0);
-    err = c_fs_delete_r (STR (test_playground "/file_eng.txt"));
+    err = c_fs_delete (STR (test_playground "/file_eng.txt"));
     assert (err.code == 0);
   }
 
@@ -1131,7 +911,7 @@ c_fs_unit_tests (void)
     CFile f;
     size_t read_size = 0;
 
-    err = c_fs_file_open_r (STR (test_playground "/file_ara.txt"), "r", &f);
+    err = c_fs_file_open (STR (test_playground "/file_ara.txt"), "r", &f);
     assert (err.code == 0);
 
     err = c_fs_file_read (&f, buf, buf_len, &read_size);
@@ -1142,46 +922,46 @@ c_fs_unit_tests (void)
 
     err = c_fs_file_close (&f);
     assert (err.code == 0);
-    err = c_fs_delete_r (STR (test_playground "/file_ara.txt"));
+    err = c_fs_delete (STR (test_playground "/file_ara.txt"));
     assert (err.code == 0);
   }
 
   // test: c_fs_delete_recursively
   {
-    err = c_fs_dir_create_r (STR (test_playground "/folder"));
+    err = c_fs_dir_create (STR (test_playground "/folder"));
     assert (err.code == 0);
     CFile file1;
-    err = c_fs_file_open_r (STR (test_playground "/folder/1.txt"), "w", &file1);
+    err = c_fs_file_open (STR (test_playground "/folder/1.txt"), "w", &file1);
     assert (err.code == 0);
     err = c_fs_file_close (&file1);
     assert (err.code == 0);
 
-    err = c_fs_dir_create_r (STR (test_playground "/folder/folder2"));
+    err = c_fs_dir_create (STR (test_playground "/folder/folder2"));
     assert (err.code == 0);
     CFile file2;
-    err = c_fs_file_open_r (
+    err = c_fs_file_open (
         STR (test_playground "/folder/folder2/.2.txt"), "w", &file2);
     assert (err.code == 0);
     err = c_fs_file_close (&file2);
     assert (err.code == 0);
 
-    memcpy (path_buf.buf, STR (test_playground "/folder") + 1);
-    path_buf.len = sizeof (test_playground "/folder") - 1;
-    err = c_fs_delete_recursively (&path_buf);
+    memcpy (path_buf, STR (test_playground "/folder") + 1);
+    path_buf_len = sizeof (test_playground "/folder") - 1;
+    err = c_fs_delete_recursively (path_buf, path_buf_len);
     assert (err.code == 0);
   }
 
   // test: c_fs_dir_is_empty
   {
-    err = c_fs_dir_create_r (STR (test_playground "/folder"));
+    err = c_fs_dir_create (STR (test_playground "/folder"));
     assert (err.code == 0);
 
     bool is_empty = false;
-    err = c_fs_dir_is_empty (&path_buf, &is_empty);
+    err = c_fs_dir_is_empty (path_buf, path_buf_len, &is_empty);
     assert (!is_empty);
     assert (err.code == 0);
 
-    err = c_fs_delete_r (STR (test_playground "/folder"));
+    err = c_fs_delete (STR (test_playground "/folder"));
     assert (err.code == 0);
   }
 
@@ -1189,35 +969,42 @@ c_fs_unit_tests (void)
   {
     // this will create a file
     CFile file1;
-    err = c_fs_file_open_r (STR (test_playground "/1.txt"), "w", &file1);
+    err = c_fs_file_open (STR (test_playground "/1.txt"), "w", &file1);
     assert (err.code == 0);
     err = c_fs_file_close (&file1);
     assert (err.code == 0);
 
     bool file_found = false;
-    cerror_t c_fs_handler (CPath * path, void* extra_data);
     assert (err.code == 0);
 
-    err = c_fs_path_replace (&path_buf, STR (test_playground), true);
-    assert (err.code == 0);
-    err = c_fs_foreach (&path_buf, c_fs_handler, &file_found);
+    strcpy (path_buf, test_playground);
+    path_buf_len = strlen (path_buf);
+    // assert (err.code == 0);
+    // assert (out_path_len > 0);
+
+    cerror_t c_fs_handler (char path[], size_t path_len, void* extra_data);
+    err = c_fs_foreach (path_buf,
+                        path_buf_len,
+                        MAX_PATH_LEN,
+                        c_fs_handler,
+                        &file_found);
     assert (err.code == 0);
     assert (file_found);
 
-    err = c_fs_delete_r (STR (test_playground "/1.txt"));
+    err = c_fs_delete (STR (test_playground "/1.txt"));
     assert (err.code == 0);
   }
 
   // test: c_fs_delete
   {
-    err = c_fs_dir_create_r (STR (test_playground "/folder2"));
+    err = c_fs_dir_create (STR (test_playground "/folder2"));
     assert (err.code == 0);
 
     bool is_exists = false;
-    err = c_fs_exists_r (STR (test_playground "/folder2"), &is_exists);
+    err = c_fs_exists (STR (test_playground "/folder2"), &is_exists);
     assert (is_exists);
     assert (err.code == 0);
-    err = c_fs_delete_r (STR (test_playground "/folder2"));
+    err = c_fs_delete (STR (test_playground "/folder2"));
     assert (err.code == 0);
   }
 
@@ -1226,62 +1013,61 @@ c_fs_unit_tests (void)
     CFile file;
     bool is_exists;
 
-    err = c_fs_file_open_r (STR ("/ymp/file1"), "r", &file);
+    err = c_fs_file_open (STR ("/ymp/file1"), "r", &file);
     assert (err.code != 0);
 
-    err = c_fs_dir_create_r (STR ("/ymp/file1"));
+    err = c_fs_dir_create (STR ("/ymp/file1"));
     assert (err.code != 0);
 
-    err = c_fs_dir_exists_r (STR ("/ymp/file1"), &is_exists);
+    err = c_fs_dir_exists (STR ("/ymp/file1"), &is_exists);
     assert (err.code != 0);
     assert (!is_exists);
 
-    err = c_fs_exists_r (STR ("/ymp/file1"), &is_exists);
+    err = c_fs_exists (STR ("/ymp/file1"), &is_exists);
     assert (err.code == 0);
     assert (!is_exists);
   }
 
   // test: absolute path
   {
-    err = c_fs_path_replace (&path_buf, STR ("./test_playground"), true);
+    strcpy (path_buf, "./test_playground");
+    path_buf_len = strlen (path_buf);
+
+    size_t out_path_len = 0;
+    err = c_fs_path_to_absolute (path_buf, path_buf_len, path_buf, MAX_PATH_LEN, &out_path_len);
     assert (err.code == 0);
-    err = c_fs_path_to_absolute (&path_buf, true);
-    assert (err.code == 0);
-    assert (path_buf.buf);
+    assert (path_buf);
+    assert (out_path_len > 0);
   }
 
   // test: change current dir
   {
-    size_t path_len = 0;
-    char path[INT16_MAX];
-    err = c_fs_dir_get_current_r (path, INT16_MAX, &path_len);
+    char tmp_buf[MAX_PATH_LEN] = { 0 };
+    size_t tmp_buf_len = 0;
+
+    err = c_fs_dir_get_current (tmp_buf, MAX_PATH_LEN, &tmp_buf_len);
     assert (err.code == 0);
 
-    err = c_fs_path_replace (&path_buf, path, path_len, true);
+    err = c_fs_path_append (path_buf, path_buf_len, MAX_PATH_LEN, STR (".."), &path_buf_len);
     assert (err.code == 0);
+    assert (path_buf_len > 0);
 
-    err = c_fs_path_append (&path_buf, STR (".."), true);
-    assert (err.code == 0);
-
-    err = c_fs_dir_change_current_r (path_buf.buf, path_buf.len);
-    assert (err.code == 0);
-
-    assert (strcmp (path, path_buf.buf) != 0);
-
-    err = c_fs_dir_change_current_r (path, path_len);
+    err = c_fs_dir_change_current (tmp_buf, tmp_buf_len);
     assert (err.code == 0);
   }
 
-  err = c_fs_delete_r (STR (test_playground));
+  err = c_fs_delete (STR (test_playground));
   assert (err.code == 0);
-
-  c_fs_path_destroy (&path_buf);
 }
 
 cerror_t
-c_fs_handler (CPath* path, void* extra_data)
+c_fs_handler (char path[],
+              size_t path_len,
+              void* extra_data)
 {
-  if (strstr (path->buf, "1.txt"))
+  (void) path_len;
+
+  if (strstr (path, "1.txt"))
     {
       *(bool*) extra_data = true;
     }
