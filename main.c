@@ -5,6 +5,9 @@
 #define CSTDLIB_FS_IMPLEMENTATION
 #include "fs.h"
 
+#define CSTDLIB_DL_IMPLEMENTATION
+#include "dl_loader.h"
+
 // #define CSTDLIB_LOG_IMPLEMENTATION
 // #include "log.h"
 
@@ -24,6 +27,9 @@
 #define CSTDLIB_FS_UNIT_TESTS
 #include "fs.h"
 
+#define CSTDLIB_DL_UNIT_TESTS
+#include "dl_loader.h"
+
 // #define CSTDLIB_LOG_UNIT_TESTS
 // #include "log.h"
 
@@ -36,10 +42,12 @@
 // #define CSTDLIB_GUI_UNIT_TESTS
 // #include "gui.h"
 
-int main(void)
+int
+main (void)
 {
   // c_array_unit_tests();
-  c_fs_unit_tests();
+  c_fs_unit_tests ();
+  c_dl_loader_unit_tests ();
   // c_log_unit_tests();
   // c_map_unit_tests ();
   // c_str_unit_tests();
@@ -50,8 +58,8 @@ int main(void)
 /* @brief Address sanitizer flags
  * @return
  */
-char const *
-__lsan_default_options(void)
+char const*
+__lsan_default_options (void)
 {
   return "suppressions=" CURRENT_DIR "/.leak-ignore"
          ":print_suppressions=0";
