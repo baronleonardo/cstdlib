@@ -364,9 +364,8 @@ c_fs_path_append (char base_path[],
     }
 
   base_path[base_path_len++] = PATH_SEP;
-  memcpy (base_path + base_path_len, path, path_len + 1);
   base_path_len += path_len;
-  base_path[base_path_len] = '\0';
+  strncpy (base_path + base_path_len, path, base_path_len);
 
   if (out_new_path_len)
     *out_new_path_len = base_path_len;
