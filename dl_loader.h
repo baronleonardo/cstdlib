@@ -27,16 +27,32 @@ typedef struct c_dl_error_t
 #define C_DL_ERROR_MEM_ALLOCATION ((c_dl_error_t){ 757, "memory allocation error" })
 #define C_DL_ERROR_FINDING_SYMBOL ((c_dl_error_t){ 758, "failed to find this symbol" })
 
+/// @brief create a loader
+/// @param file_path the dynamic library path
+/// @param file_path_len the dynamic library path string length
+/// @param out_dl_loader the result loader object
+/// @return error
 c_dl_error_t
-c_dl_loader_create (char const file_path[], size_t file_path_len, CDLLoader* out_dl_loader);
+c_dl_loader_create (char const file_path[],
+                    size_t file_path_len,
+                    CDLLoader* out_dl_loader);
 
+/// @brief load a symbol from the loaded dynamic library
+/// @param self the loader object
+/// @param symbol_name
+/// @param symbol_name_len
+/// @param out_result the result symbole (function, variable, ...)
+/// @return error
 c_dl_error_t
 c_dl_loader_get (CDLLoader* self,
                  char const symbol_name[],
                  size_t symbol_name_len,
                  void** out_result);
 
-void c_dl_loader_destroy (CDLLoader* self);
+/// @brief destroy the loader object
+/// @param self the loader object
+void
+c_dl_loader_destroy (CDLLoader* self);
 
 #endif // CSTDLIB_DL_LOADER
 
