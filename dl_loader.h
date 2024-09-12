@@ -150,13 +150,15 @@ c_dl_loader_destroy (CDLLoader* self)
 #pragma warning(disable : 4996) // disable warning about unsafe functions
 #endif
 
+#include <assert.h>
+
 #define DL_STR(str) str, (sizeof (str) - 1)
 
 void
 c_dl_loader_unit_tests (void)
 {
   c_dl_error_t err = C_DL_ERROR_NONE;
-  (void)err;
+  (void) err;
 
   {
 #ifdef _WIN32

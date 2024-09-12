@@ -42,5 +42,3 @@ FILE(GLOB_RECURSE modules *.h)
 add_executable(${PROJECT_NAME} main.c ${modules})
 # target_link_libraries(${PROJECT_NAME} PRIVATE PkgConfig::SDL2 libglfw.so.3)
 target_compile_definitions(${PROJECT_NAME} PRIVATE CURRENT_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
-
-add_library(mylib SHARED add.c)
