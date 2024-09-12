@@ -156,11 +156,16 @@ void
 c_dl_loader_unit_tests (void)
 {
   c_dl_error_t err = C_DL_ERROR_NONE;
+  (void)err;
 
-#ifndef _WIN32
   {
+#ifdef _WIN32
+    char const lib_path[] = "test_assets/mylib.dll";
+#else
+    char const lib_path[] = "test_assets/libmylib.so";
+#endif
     CDLLoader loader;
-    err = c_dl_loader_create (DL_STR ("test_assets/libmylib.so"), &loader);
+    err = c_dl_loader_create (DL_STR (lib_path), &loader);
     assert (err.code == 0);
 
     int (*add) (int, int) = NULL;
@@ -169,7 +174,6 @@ c_dl_loader_unit_tests (void)
 
     c_dl_loader_destroy (&loader);
   }
-#endif
 }
 
 #ifdef _MSC_VER
