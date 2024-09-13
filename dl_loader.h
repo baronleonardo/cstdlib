@@ -10,6 +10,8 @@
 #ifndef CSTDLIB_DL_LOADER
 #define CSTDLIB_DL_LOADER
 
+#include <stddef.h>
+
 typedef struct CDLLoader
 {
   void* raw;
@@ -56,7 +58,7 @@ c_dl_loader_destroy (CDLLoader* self);
 
 #endif // CSTDLIB_DL_LOADER
 
-#ifdef CSTDLIB_DL_IMPLEMENTATION
+#ifdef CSTDLIB_DL_LOADER_IMPLEMENTATION
 #include <assert.h>
 #include <errno.h>
 #include <stdint.h>
@@ -152,10 +154,10 @@ c_dl_loader_destroy (CDLLoader* self)
 #pragma warning(pop)
 #endif
 
-#undef CSTDLIB_DL_IMPLEMENTATION
-#endif // CSTDLIB_DL_IMPLEMENTATION
+#undef CSTDLIB_DL_LOADER_IMPLEMENTATION
+#endif // CSTDLIB_DL_LOADER_IMPLEMENTATION
 
-#ifdef CSTDLIB_DL_UNIT_TESTS
+#ifdef CSTDLIB_DL_LOADER_UNIT_TESTS
 #ifdef NDEBUG
 #define NDEBUG_
 #undef NDEBUG
@@ -166,12 +168,16 @@ c_dl_loader_destroy (CDLLoader* self)
 #pragma warning(disable : 4996) // disable warning about unsafe functions
 #endif
 
-#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define DL_STR(str) str, (sizeof (str) - 1)
+#define DL_TEST_PRINT_ABORT(msg) (fprintf (stderr, "%s\n", msg), abort ())
+#define DL_TEST(cond, err) (!(cond) ? DL_TEST_PRINT_ABORT (err.msg) : (void) 0)
+#define DL_TEST_ERR(err) (DL_TEST (err.code == 0, err))
 
-void
-c_dl_loader_unit_tests (void)
+int
+main (void)
 {
   c_dl_error_t err = C_DL_ERROR_NONE;
   (void) err;
@@ -184,11 +190,11 @@ c_dl_loader_unit_tests (void)
 #endif
     CDLLoader loader;
     err = c_dl_loader_create (DL_STR (lib_path), &loader);
-    assert (err.code == 0);
+    DL_TEST_ERR (err);
 
     int (*add) (int, int) = NULL;
     err = c_dl_loader_get (&loader, DL_STR ("add"), (void**) &add);
-    assert (add (1, 2) == 3);
+    DL_TEST (add (1, 2) == 3, err);
 
     c_dl_loader_destroy (&loader);
   }
@@ -204,8 +210,8 @@ c_dl_loader_unit_tests (void)
 #endif
 
 #undef DL_STR
-#undef CSTDLIB_DL_UNIT_TESTS
-#endif // CSTDLIB_DL_UNIT_TESTS
+#undef CSTDLIB_DL_LOADER_UNIT_TESTS
+#endif // CSTDLIB_DL_LOADER_UNIT_TESTS
 
 /*
  * MIT License

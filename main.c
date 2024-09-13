@@ -8,6 +8,9 @@
 #define CSTDLIB_DL_IMPLEMENTATION
 #include "dl_loader.h"
 
+#define CSTDLIB_PC_IMPLEMENTATION
+#include "printf_color.h"
+
 // #define CSTDLIB_LOG_IMPLEMENTATION
 // #include "log.h"
 
@@ -29,6 +32,9 @@
 
 #define CSTDLIB_DL_UNIT_TESTS
 #include "dl_loader.h"
+
+#define CSTDLIB_PC_UNIT_TESTS
+#include "printf_color.h"
 
 // #define CSTDLIB_LOG_UNIT_TESTS
 // #include "log.h"
