@@ -369,7 +369,8 @@ c_fs_path_append (char base_path[],
 
   base_path[base_path_len++] = PATH_SEP;
   base_path_len += path_len;
-  strncpy (base_path + base_path_len, path, base_path_len);
+  strncpy (base_path + base_path_len - 1, path, path_len);
+  base_path[base_path_len] = '\0';
 
   if (out_new_path_len)
     *out_new_path_len = base_path_len;
@@ -530,7 +531,8 @@ c_fs_dir_is_empty (char const path[],
     {
       return C_FS_ERROR_MEM_ALLOCATION;
     }
-  strncpy (path_buf, path, MAX_PATH_LEN);
+  strncpy (path_buf, path, path_len);
+  path_buf[path_len] = '\0';
 
   /// FIXME: need optimization (fail on first path that is not empty)
   c_fs_error_t err = c_fs_foreach (
@@ -643,7 +645,8 @@ c_fs_delete_recursively (char path[], size_t path_len)
     {
       return C_FS_ERROR_MEM_ALLOCATION;
     }
-  strncpy (path_buf, path, MAX_PATH_LEN);
+  strncpy (path_buf, path, path_len);
+  path_buf[path_len] = '\0';
 
   c_fs_error_t err = internal_c_fs_delete_recursively (path_buf, path_len);
 
@@ -697,6 +700,7 @@ c_fs_foreach (char path_buf[],
           strncpy (path_buf + path_buf_len - 1,
                    cur_file.cFileName,
                    filename_len);
+          path_buf[path_len] = '\0';
 
           size_t old_len = path_buf_len;
           path_buf_len = path_buf_len - 1 + filename_len;
