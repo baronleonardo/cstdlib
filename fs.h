@@ -103,6 +103,10 @@ c_fs_error_t c_fs_path_to_absolute (char const path[],
                                     size_t out_absolute_path_capacity,
                                     size_t* out_absolute_path_len);
 
+/// @brief
+/// @return return the max path length for the current OS
+size_t c_fs_path_get_max_len (void);
+
 /// @brief create a directory with raw path
 /// @param dir_path
 /// @param path_len
@@ -397,6 +401,12 @@ c_fs_path_to_absolute (char const path[],
     *out_absolute_path_len = abs_path_len;
   return path_status ? C_FS_ERROR_NONE : errno_to_cerror (errno);
 #endif
+}
+
+size_t
+c_fs_path_get_max_len (void)
+{
+  return MAX_PATH_LEN;
 }
 
 c_fs_error_t
