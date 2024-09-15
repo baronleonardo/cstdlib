@@ -195,6 +195,7 @@ c_fs_foreach (char path_buf[],
 #include <stdlib.h>
 #include <string.h>
 #ifdef _WIN32
+#include <shlwapi.h>
 #include <windows.h>
 #else
 #include <dirent.h>
