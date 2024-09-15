@@ -104,6 +104,15 @@ c_fs_error_t c_fs_path_to_absolute (char const path[],
                                     size_t* out_absolute_path_len);
 
 /// @brief
+/// @param path
+/// @param path_len
+/// @param out_is_absolute
+/// @return
+c_fs_error_t c_fs_path_is_absolute (char const path[],
+                                    size_t path_len,
+                                    bool* out_is_absolute);
+
+/// @brief
 /// @return return the max path length for the current OS
 size_t c_fs_path_get_max_len (void);
 
@@ -377,8 +386,8 @@ c_fs_path_append (char base_path[],
     }
 
   base_path[base_path_len++] = PATH_SEP;
+  strncpy (base_path + base_path_len, path, path_len);
   base_path_len += path_len;
-  strncpy (base_path + base_path_len - 1, path, path_len);
   base_path[base_path_len] = '\0';
 
   if (out_new_path_len)
@@ -411,6 +420,29 @@ c_fs_path_to_absolute (char const path[],
     *out_absolute_path_len = abs_path_len;
   return path_status ? C_FS_ERROR_NONE : errno_to_cerror (errno);
 #endif
+}
+
+c_fs_error_t
+c_fs_path_is_absolute (char const path[],
+                       size_t path_len,
+                       bool* out_is_absolute)
+{
+  assert (path && path_len > 0);
+  (void) path_len;
+
+  if (out_is_absolute)
+    {
+#ifdef _WIN32
+      BOOL is_abs = !PathIsRelativeA (path);
+      *out_is_absolute = is_abs;
+#else
+      *out_is_absolute = path[0] == '/';
+#endif
+
+      return C_FS_ERROR_NONE;
+    }
+
+  return C_FS_ERROR_OUT_IS_NULL;
 }
 
 size_t
@@ -468,6 +500,7 @@ c_fs_dir_exists (char const dir_path[], size_t path_len, bool* out_exists)
         }
 #else
       struct stat sb = { 0 };
+      errno = 0;
       int path_attributes = stat (dir_path, &sb);
       if (path_attributes != 0)
         {
