@@ -25,9 +25,9 @@ typedef struct c_dl_error_t
 
 #define C_DL_ERROR_NONE ((c_dl_error_t){ 0, "" })
 #define C_DL_ERROR_OUT_IS_NULL ((c_dl_error_t){ 756, "the out pointer is NULL" })
-#define C_DL_ERROR_LOADING ((c_dl_error_t){ 756, "failed to load the dynamic library" })
-#define C_DL_ERROR_MEM_ALLOCATION ((c_dl_error_t){ 757, "memory allocation error" })
-#define C_DL_ERROR_FINDING_SYMBOL ((c_dl_error_t){ 758, "failed to find this symbol" })
+#define C_DL_ERROR_LOADING ((c_dl_error_t){ 757, "failed to load the dynamic library" })
+#define C_DL_ERROR_MEM_ALLOCATION ((c_dl_error_t){ 758, "memory allocation error" })
+#define C_DL_ERROR_FINDING_SYMBOL ((c_dl_error_t){ 759, "failed to find this symbol" })
 
 /// @brief create a loader
 /// @param file_path the dynamic library path
