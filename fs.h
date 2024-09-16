@@ -7,6 +7,10 @@
  * License: MIT (go to the end of this file for details)
  */
 
+/* ------------------------------------------------------------------------ */
+/* -------------------------------- header -------------------------------- */
+/* ------------------------------------------------------------------------ */
+
 #ifndef CSTDLIB_FS_H
 #define CSTDLIB_FS_H
 #include <errno.h>
@@ -186,6 +190,10 @@ c_fs_foreach (char path_buf[],
               c_fs_error_t handler (char* path, size_t path_len, void* extra_data),
               void* extra_data);
 #endif // CSTDLIB_FS_H
+
+/* ------------------------------------------------------------------------ */
+/* ---------------------------- implementation ---------------------------- */
+/* ------------------------------------------------------------------------ */
 
 #ifdef CSTDLIB_FS_IMPLEMENTATION
 #include <assert.h>
@@ -881,6 +889,10 @@ internal_c_fs_delete_recursively (char path_buf[],
 
 #undef CSTDLIB_FS_IMPLEMENTATION
 #endif // CSTDLIB_FS_IMPLEMENTATION
+
+/* ------------------------------------------------------------------------ */
+/* -------------------------------- tests --------------------------------- */
+/* ------------------------------------------------------------------------ */
 
 #ifdef CSTDLIB_FS_UNIT_TESTS
 #ifdef NDEBUG
