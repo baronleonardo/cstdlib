@@ -41,5 +41,6 @@ if (${ENABLE_TESTS})
     enable_testing()
     create_test_target(fs)
     create_test_target(dl_loader)
+    create_test_target(str)
 endif()
 
