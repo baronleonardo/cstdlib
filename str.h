@@ -162,8 +162,6 @@ void c_str_destroy (CStr* self);
 static char* internal_c_str_search (CStr* self,
                                     char const cstr[],
                                     size_t cstr_len);
-// static size_t internal_cstr_len (char const cstr[],
-//                                  size_t cstr_len);
 
 c_str_error_t
 c_str_create (char const cstr[],
@@ -650,14 +648,6 @@ internal_c_str_search (CStr* self,
 
   return NULL;
 }
-
-// size_t
-// internal_cstr_len (char const cstr[],
-//                    size_t cstr_len)
-// {
-//   char* found = memchr (cstr, (int) '\0', cstr_len);
-//   return found ? (size_t) (found - cstr) : cstr_len;
-// }
 
 #ifdef _MSC_VER
 #pragma warning(pop)
