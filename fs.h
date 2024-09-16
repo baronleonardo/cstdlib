@@ -743,10 +743,10 @@ c_fs_foreach (char path_buf[],
           strncpy (path_buf + path_buf_len - 1,
                    cur_file.cFileName,
                    filename_len);
-          path_buf[path_buf_len] = '\0';
 
           size_t old_len = path_buf_len;
           path_buf_len = path_buf_len - 1 + filename_len;
+          path_buf[path_buf_len] = '\0';
           c_fs_error_t err = handler (path_buf, path_buf_len, extra_data);
           path_buf_len = old_len;
           if (err.code != C_FS_ERROR_NONE.code)
