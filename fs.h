@@ -409,7 +409,7 @@ c_fs_path_to_absolute (char const path[],
 
 #ifdef _WIN32
   SetLastError (0);
-  DWORD abs_path_len = GetLongPathNameA (path, out_absolute_path, (DWORD) out_absolute_path_capacity);
+  DWORD abs_path_len = GetFullPathName (path, (DWORD) out_absolute_path_capacity, out_absolute_path, NULL);
   if (out_absolute_path_len)
     *out_absolute_path_len = abs_path_len;
   return abs_path_len > 0 ? C_FS_ERROR_NONE : (c_fs_error_t){ GetLastError (), "" };
