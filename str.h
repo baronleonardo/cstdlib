@@ -17,6 +17,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define C_STR_WHITESPACES " \t\n\v\f\r"
+
 typedef struct CStr
 {
   char* data;
@@ -66,10 +68,10 @@ c_str_error_t c_str_create_unmanaged (char const* cstr,
 
 c_str_error_t c_str_clone (CStr* self, CStr* out_cstr);
 
-c_str_error_t c_str_search (CStr* self,
-                            char const cstr[],
-                            size_t cstr_len,
-                            char* out_result[]);
+c_str_error_t c_str_find (CStr* self,
+                          char const cstr[],
+                          size_t cstr_len,
+                          char* out_result[]);
 
 c_str_error_t c_str_insert (CStr* self,
                             char const cstr[],
@@ -127,7 +129,13 @@ c_str_error_t c_str_utf8_next_codepoint (CStr* self,
 c_str_error_t
 c_str_len (CStr const* self, size_t* out_len);
 
+c_str_error_t
+c_str_set_len (CStr* self, size_t len);
+
 c_str_error_t c_str_capacity (CStr const* self, size_t* out_capacity);
+
+c_str_error_t
+c_str_set_capacity (CStr* self, size_t capacity);
 
 void c_str_destroy (CStr* self);
 #endif /* CSTDLIB_STR_H */
@@ -159,9 +167,9 @@ void c_str_destroy (CStr* self);
 #pragma warning(disable : 4996) // disable warning about unsafe functions
 #endif
 
-static char* internal_c_str_search (CStr* self,
-                                    char const cstr[],
-                                    size_t cstr_len);
+static char* internal_c_str_find (CStr* self,
+                                  char const cstr[],
+                                  size_t cstr_len);
 
 c_str_error_t
 c_str_create (char const cstr[],
@@ -283,7 +291,7 @@ c_str_remove (CStr* self,
   assert (cstr);
   assert (cstr_len > 0);
 
-  char* substring_ptr = internal_c_str_search (self, cstr, cstr_len);
+  char* substring_ptr = internal_c_str_find (self, cstr, cstr_len);
   if (substring_ptr)
     {
       memmove (substring_ptr, substring_ptr + cstr_len,
@@ -329,10 +337,10 @@ c_str_clone (CStr* self, CStr* out_cstr)
 }
 
 c_str_error_t
-c_str_search (CStr* self,
-              char const cstr[],
-              size_t cstr_len,
-              char* out_result[])
+c_str_find (CStr* self,
+            char const cstr[],
+            size_t cstr_len,
+            char* out_result[])
 {
   assert (self && self->data);
   assert (cstr);
@@ -343,7 +351,7 @@ c_str_search (CStr* self,
       return C_STR_ERROR_out_is_null;
     }
 
-  *out_result = internal_c_str_search (self, cstr, cstr_len);
+  *out_result = internal_c_str_find (self, cstr, cstr_len);
 
   return C_STR_ERROR_none;
 }
@@ -356,13 +364,13 @@ c_str_replace (CStr* self,
                size_t with_len,
                bool could_realloc)
 {
-  char* searched_str = internal_c_str_search (self, needle, needle_len);
-  if (!searched_str || needle_len == 0)
+  char* found_str = internal_c_str_find (self, needle, needle_len);
+  if (!found_str || needle_len == 0)
     {
       return C_STR_ERROR_needle_not_found;
     }
 
-  return c_str_replace_at (self, searched_str - self->data, needle_len, with, with_len, could_realloc);
+  return c_str_replace_at (self, found_str - self->data, needle_len, with, with_len, could_realloc);
 }
 
 c_str_error_t
@@ -601,6 +609,20 @@ c_str_len (CStr const* self, size_t* out_len)
 }
 
 c_str_error_t
+c_str_set_len (CStr* self, size_t len)
+{
+  assert (self);
+
+  if (self->len < len)
+    {
+      return c_str_set_capacity (self, len + 1);
+    }
+
+  self->len = len;
+  return C_STR_ERROR_none;
+}
+
+c_str_error_t
 c_str_capacity (CStr const* self, size_t* out_capacity)
 {
   assert (self && self->data);
@@ -616,6 +638,23 @@ c_str_capacity (CStr const* self, size_t* out_capacity)
     }
 }
 
+c_str_error_t
+c_str_set_capacity (CStr* self, size_t capacity)
+{
+  assert (self);
+
+  char* reallocated_data = realloc (self->data, capacity);
+  if (!reallocated_data)
+    {
+      return C_STR_ERROR_mem_allocation;
+    }
+
+  self->data = reallocated_data;
+  self->capacity = capacity;
+
+  return C_STR_ERROR_none;
+}
+
 void
 c_str_destroy (CStr* self)
 {
@@ -627,9 +666,9 @@ c_str_destroy (CStr* self)
 
 /* ------------------------- internal ------------------------- */
 char*
-internal_c_str_search (CStr* self,
-                       char const cstr[],
-                       size_t cstr_len)
+internal_c_str_find (CStr* self,
+                     char const cstr[],
+                     size_t cstr_len)
 {
   assert (self && self->data);
   assert (cstr);
