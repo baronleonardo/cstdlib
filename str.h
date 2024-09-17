@@ -411,10 +411,12 @@ c_str_replace_at (CStr* self,
   if (with_len < range || with_len > range)
     {
       memmove (self->data + index + with_len, self->data + index + range, self->len - index - range + 1);
-      self->len += (with_len < range) ? (range - with_len) : (with_len - range);
+      self->len -= range;
+      self->len += with_len;
     }
 
   memcpy (self->data + index, with, with_len);
+  self->data[self->len] = '\0';
 
   return C_STR_ERROR_none;
 }
