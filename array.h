@@ -96,8 +96,9 @@ c_array_error_t c_array_create_with_capacity_unmanaged (
 /// @param out_is_empty the returned result
 /// @return return error (any value but zero is treated as an error)
 c_array_error_t c_array_is_empty (CArray* self, bool* out_is_empty);
-c_array_error_t
-c_array_is_empty_unmanaged (CArrayUnmanaged* self, bool* out_is_empty);
+c_array_error_t c_array_is_empty_unmanaged (
+    CArrayUnmanaged* self, bool* out_is_empty
+);
 
 /// @brief get array length
 /// @param self
@@ -126,8 +127,9 @@ c_array_error_t c_array_set_len_unmanaged (
 /// @param out_capacity the returned result
 /// @return return error (any value but zero is treated as an error)
 c_array_error_t c_array_capacity (CArray* self, size_t* out_capacity);
-c_array_error_t
-c_array_capacity_unmanaged (CArrayUnmanaged* self, size_t* out_capacity);
+c_array_error_t c_array_capacity_unmanaged (
+    CArrayUnmanaged* self, size_t* out_capacity
+);
 
 /// @brief set capacity
 ///        (NOTE: c_array_realloc is a realloc like function)
@@ -169,8 +171,9 @@ c_array_error_t c_array_push_unmanaged (
 /// @param out_element the returned result
 /// @return return error (any value but zero is treated as an error)
 c_array_error_t c_array_pop (CArray* self, void** out_element);
-c_array_error_t
-c_array_pop_unmanaged (CArrayUnmanaged* self, void** out_element);
+c_array_error_t c_array_pop_unmanaged (
+    CArrayUnmanaged* self, void** out_element
+);
 
 /// @brief insert 1 element at index
 ///        (NOTE: c_array_realloc is a realloc like function)
@@ -178,8 +181,9 @@ c_array_pop_unmanaged (CArrayUnmanaged* self, void** out_element);
 /// @param element
 /// @param index
 /// @return return error (any value but zero is treated as an error)
-c_array_error_t
-c_array_insert (CArray* self, void const* element, size_t index);
+c_array_error_t c_array_insert (
+    CArray* self, void const* element, size_t index
+);
 c_array_error_t c_array_insert_unmanaged (
     CArrayUnmanaged* self,
     void const* element,
@@ -218,8 +222,9 @@ c_array_error_t c_array_remove_unmanaged (CArrayUnmanaged* self, size_t index);
 /// @param start_index
 /// @param range_len range length
 /// @return return error (any value but zero is treated as an error)
-c_array_error_t
-c_array_remove_range (CArray* self, size_t start_index, size_t range_len);
+c_array_error_t c_array_remove_range (
+    CArray* self, size_t start_index, size_t range_len
+);
 c_array_error_t c_array_remove_range_unmanaged (
     CArrayUnmanaged* self, size_t start_index, size_t range_len
 );
@@ -229,8 +234,9 @@ c_array_error_t c_array_remove_range_unmanaged (
 /// @param c_array_free optional: pass a free function to be used for memory
 ///                               freeing
 void c_array_destroy (CArray* self);
-void
-c_array_destroy_unmanaged (CArrayUnmanaged* self, void c_array_free (void*));
+void c_array_destroy_unmanaged (
+    CArrayUnmanaged* self, void c_array_free (void*)
+);
 #endif // CSTDLIB_ARRAY_H
 
 /* ------------------------------------------------------------------------ */

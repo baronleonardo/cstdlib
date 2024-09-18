@@ -24,20 +24,23 @@ typedef struct c_dl_error_t
 } c_dl_error_t;
 
 #define C_DL_ERROR_NONE ((c_dl_error_t){ 0, "" })
-#define C_DL_ERROR_OUT_IS_NULL ((c_dl_error_t){ 756, "the out pointer is NULL" })
-#define C_DL_ERROR_LOADING ((c_dl_error_t){ 757, "failed to load the dynamic library" })
-#define C_DL_ERROR_MEM_ALLOCATION ((c_dl_error_t){ 758, "memory allocation error" })
-#define C_DL_ERROR_FINDING_SYMBOL ((c_dl_error_t){ 759, "failed to find this symbol" })
+#define C_DL_ERROR_OUT_IS_NULL                                                 \
+  ((c_dl_error_t){ 756, "the out pointer is NULL" })
+#define C_DL_ERROR_LOADING                                                     \
+  ((c_dl_error_t){ 757, "failed to load the dynamic library" })
+#define C_DL_ERROR_MEM_ALLOCATION                                              \
+  ((c_dl_error_t){ 758, "memory allocation error" })
+#define C_DL_ERROR_FINDING_SYMBOL                                              \
+  ((c_dl_error_t){ 759, "failed to find this symbol" })
 
 /// @brief create a loader
 /// @param file_path the dynamic library path
 /// @param file_path_len the dynamic library path string length
 /// @param out_dl_loader the result loader object
 /// @return error
-c_dl_error_t
-c_dl_loader_create (char const file_path[],
-                    size_t file_path_len,
-                    CDLLoader* out_dl_loader);
+c_dl_error_t c_dl_loader_create (
+    char const file_path[], size_t file_path_len, CDLLoader* out_dl_loader
+);
 
 /// @brief load a symbol from the loaded dynamic library
 /// @param self the loader object
@@ -45,16 +48,16 @@ c_dl_loader_create (char const file_path[],
 /// @param symbol_name_len
 /// @param out_result the result symbole (function, variable, ...)
 /// @return error
-c_dl_error_t
-c_dl_loader_get (CDLLoader* self,
-                 char const symbol_name[],
-                 size_t symbol_name_len,
-                 void** out_result);
+c_dl_error_t c_dl_loader_get (
+    CDLLoader* self,
+    char const symbol_name[],
+    size_t symbol_name_len,
+    void** out_result
+);
 
 /// @brief destroy the loader object
 /// @param self the loader object
-void
-c_dl_loader_destroy (CDLLoader* self);
+void c_dl_loader_destroy (CDLLoader* self);
 
 #endif // CSTDLIB_DL_LOADER
 
@@ -80,7 +83,9 @@ c_dl_loader_destroy (CDLLoader* self);
 #endif
 
 c_dl_error_t
-c_dl_loader_create (char const file_path[], size_t file_path_len, CDLLoader* out_dl_loader)
+c_dl_loader_create (
+    char const file_path[], size_t file_path_len, CDLLoader* out_dl_loader
+)
 {
   assert (file_path && file_path_len > 0);
   assert (file_path[file_path_len] == '\0');
@@ -94,12 +99,16 @@ c_dl_loader_create (char const file_path[], size_t file_path_len, CDLLoader* out
       SetLastError (0);
       out_dl_loader->raw = (void*) LoadLibraryA (file_path);
 
-      return out_dl_loader->raw ? C_DL_ERROR_NONE : (c_dl_error_t){ GetLastError (), C_DL_ERROR_LOADING.msg };
+      return out_dl_loader->raw
+                 ? C_DL_ERROR_NONE
+                 : (c_dl_error_t){ GetLastError (), C_DL_ERROR_LOADING.msg };
 #else
       dlerror ();
       out_dl_loader->raw = dlopen (file_path, RTLD_LAZY);
 
-      return out_dl_loader->raw ? C_DL_ERROR_NONE : (c_dl_error_t){ C_DL_ERROR_LOADING.code, dlerror () };
+      return out_dl_loader->raw
+                 ? C_DL_ERROR_NONE
+                 : (c_dl_error_t){ C_DL_ERROR_LOADING.code, dlerror () };
 #endif
     }
 
@@ -107,10 +116,12 @@ c_dl_loader_create (char const file_path[], size_t file_path_len, CDLLoader* out
 }
 
 c_dl_error_t
-c_dl_loader_get (CDLLoader* self,
-                 char const symbol_name[],
-                 size_t symbol_name_len,
-                 void** out_result)
+c_dl_loader_get (
+    CDLLoader* self,
+    char const symbol_name[],
+    size_t symbol_name_len,
+    void** out_result
+)
 {
   assert (self && self->raw);
   assert (symbol_name && symbol_name_len > 0);
@@ -122,12 +133,16 @@ c_dl_loader_get (CDLLoader* self,
       SetLastError (0);
       *out_result = GetProcAddress (self->raw, symbol_name);
 
-      return *out_result ? C_DL_ERROR_NONE : (c_dl_error_t){ GetLastError (), C_DL_ERROR_FINDING_SYMBOL.msg };
+      return *out_result ? C_DL_ERROR_NONE
+                         : (c_dl_error_t){ GetLastError (),
+                                           C_DL_ERROR_FINDING_SYMBOL.msg };
 #else
       dlerror ();
       *out_result = dlsym (self->raw, symbol_name);
 
-      return *out_result ? C_DL_ERROR_NONE : (c_dl_error_t){ C_DL_ERROR_FINDING_SYMBOL.code, dlerror () };
+      return *out_result
+                 ? C_DL_ERROR_NONE
+                 : (c_dl_error_t){ C_DL_ERROR_FINDING_SYMBOL.code, dlerror () };
 #endif
     }
 
@@ -210,6 +225,9 @@ main (void)
 #endif
 
 #undef DL_STR
+#undef DL_TEST_PRINT_ABORT
+#undef DL_TEST
+#undef DL_TEST_ERR
 #undef CSTDLIB_DL_LOADER_UNIT_TESTS
 #endif // CSTDLIB_DL_LOADER_UNIT_TESTS
 
