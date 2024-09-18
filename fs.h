@@ -29,12 +29,16 @@ typedef struct c_fs_error_t
 } c_fs_error_t;
 
 #define C_FS_ERROR_NONE ((c_fs_error_t){ 0, "" })
-#define C_FS_ERROR_OUT_IS_NULL ((c_fs_error_t){ 256, "the out pointer is NULL" })
-#define C_FS_ERROR_WRONG_FS_STR_LEN ((c_fs_error_t){ 257, "invalid string (wrong length)" })
-#define C_FS_ERROR_MEM_ALLOCATION ((c_fs_error_t){ 257, "memory allocation error" })
+#define C_FS_ERROR_OUT_IS_NULL                                                 \
+  ((c_fs_error_t){ 256, "the out pointer is NULL" })
+#define C_FS_ERROR_WRONG_FS_STR_LEN                                            \
+  ((c_fs_error_t){ 257, "invalid string (wrong length)" })
+#define C_FS_ERROR_MEM_ALLOCATION                                              \
+  ((c_fs_error_t){ 257, "memory allocation error" })
 #define C_FS_ERROR_PATH_BUFFER_FULL ((c_fs_error_t){ 258, "CPath is full" })
 #define C_FS_ERROR_SMALL_BUFFER ((c_fs_error_t){ 259, "buffer is small" })
-#define C_FS_ERROR_SMALL_PATH_CAPACITY ((c_fs_error_t){ 260, "path capacity is small" })
+#define C_FS_ERROR_SMALL_PATH_CAPACITY                                         \
+  ((c_fs_error_t){ 260, "path capacity is small" })
 
 /// @brief
 /// @param path
@@ -42,10 +46,9 @@ typedef struct c_fs_error_t
 /// @param mode
 /// @param out_cfile
 /// @return
-c_fs_error_t c_fs_file_open (char const path[],
-                             size_t path_len,
-                             char const mode[],
-                             CFile* out_cfile);
+c_fs_error_t c_fs_file_open (
+    char const path[], size_t path_len, char const mode[], CFile* out_cfile
+);
 
 /// @brief get file size
 /// @param self
@@ -59,10 +62,9 @@ c_fs_error_t c_fs_file_size (CFile* self, size_t* out_size);
 /// @param buf_size
 /// @param err return error (any value but zero is treated as an error)
 /// @return return the bytes read
-c_fs_error_t c_fs_file_read (CFile* self,
-                             char buf[],
-                             size_t buf_size,
-                             size_t* out_size);
+c_fs_error_t c_fs_file_read (
+    CFile* self, char buf[], size_t buf_size, size_t* out_size
+);
 
 /// @brief write to file
 /// @param self
@@ -70,10 +72,9 @@ c_fs_error_t c_fs_file_read (CFile* self,
 /// @param buf_size
 /// @param err return error (any value but zero is treated as an error)
 /// @return return the bytes written
-c_fs_error_t c_fs_file_write (CFile* self,
-                              char buf[],
-                              size_t buf_size,
-                              size_t* out_size);
+c_fs_error_t c_fs_file_write (
+    CFile* self, char buf[], size_t buf_size, size_t* out_size
+);
 
 /// @brief close an alreay opend file
 /// @param self
@@ -87,12 +88,14 @@ c_fs_error_t c_fs_file_close (CFile* self);
 /// @param path_len
 /// @param out_new_path_len
 /// @return error (any value but zero is treated as an error)
-c_fs_error_t c_fs_path_append (char base_path[],
-                               size_t base_path_len,
-                               size_t base_path_capacity,
-                               char const path[],
-                               size_t path_len,
-                               size_t* out_new_path_len);
+c_fs_error_t c_fs_path_append (
+    char base_path[],
+    size_t base_path_len,
+    size_t base_path_capacity,
+    char const path[],
+    size_t path_len,
+    size_t* out_new_path_len
+);
 
 /// @brief
 /// @param path
@@ -101,20 +104,22 @@ c_fs_error_t c_fs_path_append (char base_path[],
 /// @param out_absolute_path_capacity
 /// @param out_absolute_path_len
 /// @return
-c_fs_error_t c_fs_path_to_absolute (char const path[],
-                                    size_t path_len,
-                                    char out_absolute_path[],
-                                    size_t out_absolute_path_capacity,
-                                    size_t* out_absolute_path_len);
+c_fs_error_t c_fs_path_to_absolute (
+    char const path[],
+    size_t path_len,
+    char out_absolute_path[],
+    size_t out_absolute_path_capacity,
+    size_t* out_absolute_path_len
+);
 
 /// @brief
 /// @param path
 /// @param path_len
 /// @param out_is_absolute
 /// @return
-c_fs_error_t c_fs_path_is_absolute (char const path[],
-                                    size_t path_len,
-                                    bool* out_is_absolute);
+c_fs_error_t c_fs_path_is_absolute (
+    char const path[], size_t path_len, bool* out_is_absolute
+);
 
 /// @brief
 /// @return return the max path length for the current OS
@@ -130,17 +135,18 @@ c_fs_error_t c_fs_dir_create (char const dir_path[], size_t path_len);
 /// @param path
 /// @param path_len
 /// @return
-c_fs_error_t c_fs_dir_exists (char const path[],
-                              size_t path_len,
-                              bool* out_exists);
+c_fs_error_t c_fs_dir_exists (
+    char const path[], size_t path_len, bool* out_exists
+);
 
 /// @brief
 /// @param path
 /// @param path_len
 /// @param out_size
 /// @return
-c_fs_error_t
-c_fs_dir_get_current (char path[], size_t path_len, size_t* out_size);
+c_fs_error_t c_fs_dir_get_current (
+    char path[], size_t path_len, size_t* out_size
+);
 
 /// @brief
 /// @param path
@@ -154,9 +160,9 @@ c_fs_error_t c_fs_dir_change_current (char const path[], size_t path_len);
 /// @param path_len
 /// @param out_is_empty
 /// @return
-c_fs_error_t c_fs_dir_is_empty (char const path[],
-                                size_t path_len,
-                                bool* out_is_empty);
+c_fs_error_t c_fs_dir_is_empty (
+    char const path[], size_t path_len, bool* out_is_empty
+);
 
 /// @brief check if file/directory exists
 /// @param path
@@ -183,12 +189,13 @@ c_fs_error_t c_fs_delete_recursively (char path[], size_t path_len);
 /// @param handler
 /// @param extra_data
 /// @return
-c_fs_error_t
-c_fs_foreach (char path_buf[],
-              size_t path_buf_len,
-              size_t path_buf_capacity,
-              c_fs_error_t handler (char* path, size_t path_len, void* extra_data),
-              void* extra_data);
+c_fs_error_t c_fs_foreach (
+    char path_buf[],
+    size_t path_buf_len,
+    size_t path_buf_capacity,
+    c_fs_error_t handler (char* path, size_t path_len, void* extra_data),
+    void* extra_data
+);
 #endif // CSTDLIB_FS_H
 
 /* ------------------------------------------------------------------------ */
@@ -228,15 +235,16 @@ c_fs_foreach (char path_buf[],
 #pragma warning(disable : 4996) // disable warning about unsafe functions
 #endif
 
-static c_fs_error_t internal_c_fs_delete_recursively_handler (char path[],
-                                                              size_t path_len,
-                                                              void* extra_data);
-static c_fs_error_t internal_c_fs_dir_is_empty_handler (char path[],
-                                                        size_t path_len,
-                                                        void* extra_data);
+static c_fs_error_t internal_c_fs_delete_recursively_handler (
+    char path[], size_t path_len, void* extra_data
+);
+static c_fs_error_t internal_c_fs_dir_is_empty_handler (
+    char path[], size_t path_len, void* extra_data
+);
 
-static c_fs_error_t internal_c_fs_delete_recursively (char path_buf[],
-                                                      size_t path_buf_len);
+static c_fs_error_t internal_c_fs_delete_recursively (
+    char path_buf[], size_t path_buf_len
+);
 
 static inline c_fs_error_t
 errno_to_cerror (int errno_)
@@ -245,10 +253,9 @@ errno_to_cerror (int errno_)
 }
 
 c_fs_error_t
-c_fs_file_open (char const* path,
-                size_t path_len,
-                char const mode[],
-                CFile* out_cfile)
+c_fs_file_open (
+    char const* path, size_t path_len, char const mode[], CFile* out_cfile
+)
 {
   assert (mode);
   assert (path);
@@ -274,9 +281,9 @@ c_fs_file_open (char const* path,
 #if defined(_WIN32)
       char mode_[MAX_FINAL_MODE_LEN] = { 0 };
       memcpy (mode_, mode, MAX_MODE_LEN);
-      memcpy (mode_ + mode_len,
-              "b, ccs=UTF-8",
-              MAX_FINAL_MODE_LEN - MAX_MODE_LEN);
+      memcpy (
+          mode_ + mode_len, "b, ccs=UTF-8", MAX_FINAL_MODE_LEN - MAX_MODE_LEN
+      );
 
       SetLastError (0);
       out_cfile->raw = fopen (path, mode_);
@@ -328,10 +335,7 @@ c_fs_file_size (CFile* self, size_t* out_size)
 }
 
 c_fs_error_t
-c_fs_file_read (CFile* self,
-                char buf[],
-                size_t buf_size,
-                size_t* out_size)
+c_fs_file_read (CFile* self, char buf[], size_t buf_size, size_t* out_size)
 {
   assert (self && self->raw);
   assert (buf);
@@ -347,10 +351,7 @@ c_fs_file_read (CFile* self,
 }
 
 c_fs_error_t
-c_fs_file_write (CFile* self,
-                 char buf[],
-                 size_t buf_size,
-                 size_t* out_size)
+c_fs_file_write (CFile* self, char buf[], size_t buf_size, size_t* out_size)
 {
   assert (self && self->raw);
   assert (buf);
@@ -362,7 +363,8 @@ c_fs_file_write (CFile* self,
   if (out_size)
     *out_size = write_size;
 
-  return write_size > 0 ? C_FS_ERROR_NONE : errno_to_cerror (ferror (self->raw));
+  return write_size > 0 ? C_FS_ERROR_NONE
+                        : errno_to_cerror (ferror (self->raw));
 }
 
 c_fs_error_t
@@ -379,12 +381,14 @@ c_fs_file_close (CFile* self)
 }
 
 c_fs_error_t
-c_fs_path_append (char base_path[],
-                  size_t base_path_len,
-                  size_t base_path_capacity,
-                  char const path[],
-                  size_t path_len,
-                  size_t* out_new_path_len)
+c_fs_path_append (
+    char base_path[],
+    size_t base_path_len,
+    size_t base_path_capacity,
+    char const path[],
+    size_t path_len,
+    size_t* out_new_path_len
+)
 {
   assert (base_path && base_path_len > 0);
   assert (path && path_len > 0);
@@ -406,21 +410,26 @@ c_fs_path_append (char base_path[],
 }
 
 c_fs_error_t
-c_fs_path_to_absolute (char const path[],
-                       size_t path_len,
-                       char out_absolute_path[],
-                       size_t out_absolute_path_capacity,
-                       size_t* out_absolute_path_len)
+c_fs_path_to_absolute (
+    char const path[],
+    size_t path_len,
+    char out_absolute_path[],
+    size_t out_absolute_path_capacity,
+    size_t* out_absolute_path_len
+)
 {
   assert (path && path_len > 0);
   assert (out_absolute_path && out_absolute_path_capacity > 0);
 
 #ifdef _WIN32
   SetLastError (0);
-  DWORD abs_path_len = GetFullPathName (path, (DWORD) out_absolute_path_capacity, out_absolute_path, NULL);
+  DWORD abs_path_len = GetFullPathName (
+      path, (DWORD) out_absolute_path_capacity, out_absolute_path, NULL
+  );
   if (out_absolute_path_len)
     *out_absolute_path_len = abs_path_len;
-  return abs_path_len > 0 ? C_FS_ERROR_NONE : (c_fs_error_t){ GetLastError (), "" };
+  return abs_path_len > 0 ? C_FS_ERROR_NONE
+                          : (c_fs_error_t){ GetLastError (), "" };
 #else
   errno = 0;
   char* path_status = realpath (path, out_absolute_path);
@@ -432,9 +441,9 @@ c_fs_path_to_absolute (char const path[],
 }
 
 c_fs_error_t
-c_fs_path_is_absolute (char const path[],
-                       size_t path_len,
-                       bool* out_is_absolute)
+c_fs_path_is_absolute (
+    char const path[], size_t path_len, bool* out_is_absolute
+)
 {
   assert (path && path_len > 0);
   (void) path_len;
@@ -541,7 +550,8 @@ c_fs_dir_get_current (char path[], size_t path_len, size_t* out_size)
   DWORD result_path_len = GetCurrentDirectoryA ((DWORD) path_len, path);
   if (out_size)
     *out_size = result_path_len;
-  return result_path_len > 0 ? C_FS_ERROR_NONE : (c_fs_error_t){ GetLastError (), "" };
+  return result_path_len > 0 ? C_FS_ERROR_NONE
+                             : (c_fs_error_t){ GetLastError (), "" };
 #else
   errno = 0;
   char* state = getcwd (path, path_len);
@@ -570,9 +580,7 @@ c_fs_dir_change_current (char const path[], size_t path_len)
 }
 
 c_fs_error_t
-c_fs_dir_is_empty (char const path[],
-                   size_t path_len,
-                   bool* out_is_empty)
+c_fs_dir_is_empty (char const path[], size_t path_len, bool* out_is_empty)
 {
   assert (path && path_len > 0);
   assert (path[path_len] == '\0');
@@ -587,9 +595,12 @@ c_fs_dir_is_empty (char const path[],
 
   /// FIXME: need optimization (fail on first path that is not empty)
   c_fs_error_t err = c_fs_foreach (
-      path_buf, path_len, MAX_PATH_LEN,
+      path_buf,
+      path_len,
+      MAX_PATH_LEN,
       internal_c_fs_dir_is_empty_handler,
-      out_is_empty);
+      out_is_empty
+  );
 
   free (path_buf);
 
@@ -597,9 +608,7 @@ c_fs_dir_is_empty (char const path[],
 }
 
 c_fs_error_t
-c_fs_exists (char const path[],
-             size_t path_len,
-             bool* out_exists)
+c_fs_exists (char const path[], size_t path_len, bool* out_exists)
 {
   assert (path);
   assert (path_len > 0);
@@ -706,11 +715,13 @@ c_fs_delete_recursively (char path[], size_t path_len)
 }
 
 c_fs_error_t
-c_fs_foreach (char path_buf[],
-              size_t path_buf_len,
-              size_t path_buf_capacity,
-              c_fs_error_t handler (char* path, size_t path_len, void* extra_data),
-              void* extra_data)
+c_fs_foreach (
+    char path_buf[],
+    size_t path_buf_len,
+    size_t path_buf_capacity,
+    c_fs_error_t handler (char* path, size_t path_len, void* extra_data),
+    void* extra_data
+)
 {
   assert (path_buf && path_buf_len > 0 && path_buf_capacity > 0);
   assert (path_buf[path_buf_len] == '\0');
@@ -748,9 +759,9 @@ c_fs_foreach (char path_buf[],
           (strcmp (cur_file.cFileName, "..") != 0))
         {
           size_t filename_len = strnlen (cur_file.cFileName, MAX_PATH_LEN);
-          strncpy (path_buf + path_buf_len - 1,
-                   cur_file.cFileName,
-                   filename_len);
+          strncpy (
+              path_buf + path_buf_len - 1, cur_file.cFileName, filename_len
+          );
 
           size_t old_len = path_buf_len;
           path_buf_len = path_buf_len - 1 + filename_len;
@@ -787,14 +798,17 @@ c_fs_foreach (char path_buf[],
             {
               size_t filename_len = strlen (cur_dir_properties->d_name);
               path_buf[path_buf_len] = '/';
-              strncpy (path_buf + path_buf_len + 1,
-                       cur_dir_properties->d_name,
-                       filename_len);
+              strncpy (
+                  path_buf + path_buf_len + 1,
+                  cur_dir_properties->d_name,
+                  filename_len
+              );
 
               size_t old_len = path_buf_len;
               path_buf_len = path_buf_len + 1 + filename_len;
               path_buf[path_buf_len] = '\0';
-              c_fs_error_t handler_err = handler (path_buf, path_buf_len, extra_data);
+              c_fs_error_t handler_err =
+                  handler (path_buf, path_buf_len, extra_data);
               path_buf_len = old_len;
               if (handler_err.code != C_FS_ERROR_NONE.code)
                 {
@@ -822,9 +836,9 @@ Error:
 
 // ------------------------- internal ------------------------- //
 c_fs_error_t
-internal_c_fs_delete_recursively_handler (char path[],
-                                          size_t path_len,
-                                          void* extra_data)
+internal_c_fs_delete_recursively_handler (
+    char path[], size_t path_len, void* extra_data
+)
 {
   (void) extra_data;
 
@@ -852,9 +866,9 @@ internal_c_fs_delete_recursively_handler (char path[],
 }
 
 c_fs_error_t
-internal_c_fs_dir_is_empty_handler (char path[],
-                                    size_t path_len,
-                                    void* extra_data)
+internal_c_fs_dir_is_empty_handler (
+    char path[], size_t path_len, void* extra_data
+)
 {
   (void) path;
   (void) path_len;
@@ -865,12 +879,15 @@ internal_c_fs_dir_is_empty_handler (char path[],
 }
 
 c_fs_error_t
-internal_c_fs_delete_recursively (char path_buf[],
-                                  size_t path_buf_len)
+internal_c_fs_delete_recursively (char path_buf[], size_t path_buf_len)
 {
-  c_fs_error_t err = c_fs_foreach (path_buf, path_buf_len, MAX_PATH_LEN,
-                                   internal_c_fs_delete_recursively_handler,
-                                   NULL);
+  c_fs_error_t err = c_fs_foreach (
+      path_buf,
+      path_buf_len,
+      MAX_PATH_LEN,
+      internal_c_fs_delete_recursively_handler,
+      NULL
+  );
 
   if (err.code != C_FS_ERROR_NONE.code)
     {
@@ -905,6 +922,7 @@ internal_c_fs_delete_recursively (char path_buf[],
 #pragma warning(disable : 4996) // disable warning about unsafe functions
 #endif
 
+#include <assert.h>
 #include <stdbool.h>
 #include <string.h>
 
@@ -1000,7 +1018,9 @@ main (void)
     err = c_fs_dir_create (FS_STR (fs_test_playground "/folder"));
     FS_TEST_ERR (err);
     CFile file1;
-    err = c_fs_file_open (FS_STR (fs_test_playground "/folder/1.txt"), "w", &file1);
+    err = c_fs_file_open (
+        FS_STR (fs_test_playground "/folder/1.txt"), "w", &file1
+    );
     FS_TEST_ERR (err);
     err = c_fs_file_close (&file1);
     FS_TEST_ERR (err);
@@ -1009,7 +1029,8 @@ main (void)
     FS_TEST_ERR (err);
     CFile file2;
     err = c_fs_file_open (
-        FS_STR (fs_test_playground "/folder/folder2/.2.txt"), "w", &file2);
+        FS_STR (fs_test_playground "/folder/folder2/.2.txt"), "w", &file2
+    );
     FS_TEST_ERR (err);
     err = c_fs_file_close (&file2);
     FS_TEST_ERR (err);
@@ -1052,11 +1073,9 @@ main (void)
     // FS_TEST (out_path_len > 0, err);
 
     c_fs_error_t c_fs_handler (char path[], size_t path_len, void* extra_data);
-    err = c_fs_foreach (path_buf,
-                        path_buf_len,
-                        MAX_PATH_LEN,
-                        c_fs_handler,
-                        &file_found);
+    err = c_fs_foreach (
+        path_buf, path_buf_len, MAX_PATH_LEN, c_fs_handler, &file_found
+    );
     FS_TEST_ERR (err);
     FS_TEST (file_found, err);
 
@@ -1103,7 +1122,9 @@ main (void)
     path_buf_len = strlen (path_buf);
 
     size_t out_path_len = 0;
-    err = c_fs_path_to_absolute (path_buf, path_buf_len, path_buf, MAX_PATH_LEN, &out_path_len);
+    err = c_fs_path_to_absolute (
+        path_buf, path_buf_len, path_buf, MAX_PATH_LEN, &out_path_len
+    );
     FS_TEST_ERR (err);
     FS_TEST (path_buf, err);
     FS_TEST (out_path_len > 0, err);
@@ -1117,7 +1138,9 @@ main (void)
     err = c_fs_dir_get_current (tmp_buf, MAX_PATH_LEN, &tmp_buf_len);
     FS_TEST_ERR (err);
 
-    err = c_fs_path_append (path_buf, path_buf_len, MAX_PATH_LEN, FS_STR (".."), &path_buf_len);
+    err = c_fs_path_append (
+        path_buf, path_buf_len, MAX_PATH_LEN, FS_STR (".."), &path_buf_len
+    );
     FS_TEST_ERR (err);
     FS_TEST (path_buf_len > 0, err);
 
@@ -1130,9 +1153,7 @@ main (void)
 }
 
 c_fs_error_t
-c_fs_handler (char path[],
-              size_t path_len,
-              void* extra_data)
+c_fs_handler (char path[], size_t path_len, void* extra_data)
 {
   (void) path_len;
 
@@ -1154,6 +1175,9 @@ c_fs_handler (char path[],
 #endif
 
 #undef FS_STR
+#undef FS_TEST_PRINT_ABORT
+#undef FS_TEST
+#undef FS_TEST_ERR
 #undef fs_test_playground
 #undef CSTDLIB_FS_UNIT_TESTS
 #endif // CSTDLIB_FS_UNIT_TESTS
