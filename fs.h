@@ -140,12 +140,12 @@ c_fs_error_t c_fs_dir_exists (
 );
 
 /// @brief
-/// @param path
-/// @param path_len
+/// @param path_buf
+/// @param path_buf_len
 /// @param out_size
 /// @return
 c_fs_error_t c_fs_dir_get_current (
-    char path[], size_t path_len, size_t* out_size
+    char path_buf[], size_t path_buf_len, size_t* out_size
 );
 
 /// @brief
@@ -541,22 +541,22 @@ c_fs_dir_exists (char const dir_path[], size_t path_len, bool* out_exists)
 }
 
 c_fs_error_t
-c_fs_dir_get_current (char path[], size_t path_len, size_t* out_size)
+c_fs_dir_get_current (char path_buf[], size_t path_buf_len, size_t* out_size)
 {
-  assert (path && path_len > 0);
+  assert (path_buf && path_buf_len > 0);
 
 #ifdef _WIN32
   SetLastError (0);
-  DWORD result_path_len = GetCurrentDirectoryA ((DWORD) path_len, path);
+  DWORD result_path_len = GetCurrentDirectoryA ((DWORD) path_buf_len, path_buf);
   if (out_size)
     *out_size = result_path_len;
   return result_path_len > 0 ? C_FS_ERROR_NONE
                              : (c_fs_error_t){ GetLastError (), "" };
 #else
   errno = 0;
-  char* state = getcwd (path, path_len);
+  char* state = getcwd (path_buf, path_buf_len);
   if (out_size)
-    *out_size = strlen (path);
+    *out_size = strlen (path_buf);
   return state ? C_FS_ERROR_NONE : C_FS_ERROR_SMALL_BUFFER;
 #endif
 }
