@@ -1,8 +1,8 @@
 /* How To : To use this module, do this in *ONE* C file:
- *              #define CSTDLIB_DL_IMPLEMENTATION
+ *              #define CSTDLIB_DL_LOADER_IMPLEMENTATION
  *              #include "dl_loader.h"
  * Tests  : To use run test, do this in *ONE* C file:
- *              #define CSTDLIB_DL_UNIT_TESTS
+ *              #define CSTDLIB_DL_LOADER_UNIT_TESTS
  *              #include "dl_loader.h"
  * License: MIT (go to the end of this file for details)
  */
