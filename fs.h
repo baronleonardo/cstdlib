@@ -125,6 +125,14 @@ c_fs_error_t c_fs_path_is_absolute (
 /// @return return the max path length for the current OS
 size_t c_fs_path_get_max_len (void);
 
+/// @brief
+/// @param path_buf
+/// @param path_buf_capacity
+/// @return
+c_fs_error_t c_fs_get_current_exe_path (
+    char path_buf[], size_t path_buf_capacity, size_t* out_path_buf_len
+);
+
 /// @brief create a directory with raw path
 /// @param dir_path
 /// @param path_len
@@ -467,6 +475,42 @@ size_t
 c_fs_path_get_max_len (void)
 {
   return MAX_PATH_LEN;
+}
+
+c_fs_error_t
+c_fs_get_current_exe_path (
+    char path_buf[], size_t path_buf_capacity, size_t* out_path_buf_len
+)
+{
+  assert (path_buf && path_buf_capacity > 0);
+
+#ifdef _WIN32
+  SetLastError (0);
+  DWORD len = GetModuleFileNameA (NULL, path_buf, path_buf_capacity);
+  if (out_path_buf_len)
+    {
+      *out_path_buf_len = len;
+    }
+  return len == 0 ? C_FS_ERROR_NONE
+                  : (c_fs_error_t){ .code = GetLastError (), .msg = "" };
+#else
+  errno = 0;
+  ssize_t len = readlink ("/proc/self/exe", path_buf, path_buf_capacity);
+  if (out_path_buf_len)
+    {
+      *out_path_buf_len = len == -1 ? 0 : len;
+    }
+
+  if (len == -1)
+    {
+      return errno_to_cerror (errno);
+    }
+  else
+    {
+      path_buf[len] = '\0';
+      return C_FS_ERROR_NONE;
+    };
+#endif
 }
 
 c_fs_error_t
