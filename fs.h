@@ -143,6 +143,15 @@ c_fs_error_t c_fs_get_current_exe_path (
     char path_buf[], size_t path_buf_capacity, size_t* out_path_buf_len
 );
 
+/// @brief
+/// @param path_buf
+/// @param path_buf_capacity
+/// @param out_path_buf_len
+/// @return
+c_fs_error_t c_fs_get_current_exe_dir (
+    char path_buf[], size_t path_buf_capacity, size_t* out_path_buf_len
+);
+
 /// @brief create a directory with raw path
 /// @param dir_path
 /// @param path_len
@@ -563,6 +572,24 @@ c_fs_get_current_exe_path (
       return C_FS_ERROR_NONE;
     };
 #endif
+}
+
+c_fs_error_t
+c_fs_get_current_exe_dir (
+    char path_buf[], size_t path_buf_capacity, size_t* out_path_buf_len
+)
+{
+  assert (path_buf && path_buf_capacity > 0);
+
+  size_t out_len;
+  c_fs_error_t err =
+      c_fs_get_current_exe_path (path_buf, path_buf_capacity, &out_len);
+  if (err.code != C_FS_ERROR_NONE.code)
+    {
+      return err;
+    }
+
+  return c_fs_path_get_parent (path_buf, out_len, out_path_buf_len);
 }
 
 c_fs_error_t
