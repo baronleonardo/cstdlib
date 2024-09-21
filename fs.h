@@ -132,6 +132,11 @@ c_fs_error_t c_fs_path_get_parent (
 );
 
 /// @brief
+/// @param separator
+/// @return
+c_fs_error_t c_fs_path_get_separator (char* separator);
+
+/// @brief
 /// @return return the max path length for the current OS
 size_t c_fs_path_get_max_len (void);
 
@@ -521,6 +526,18 @@ c_fs_path_get_parent (char path[], size_t path_len, size_t* out_new_path_len)
         }
       return C_FS_ERROR_INVALID_PATH;
     }
+}
+
+c_fs_error_t
+c_fs_path_get_separator (char* separator)
+{
+  if (separator)
+    {
+      *separator = PATH_SEP;
+      return C_FS_ERROR_NONE;
+    }
+
+  return C_FS_ERROR_OUT_IS_NULL;
 }
 
 size_t
