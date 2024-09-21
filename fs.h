@@ -486,7 +486,7 @@ c_fs_error_t
 c_fs_path_get_parent (char path[], size_t path_len, size_t* out_new_path_len)
 {
   assert (path && path_len > 0);
-  assert (path[path_len - 1] == '\0');
+  assert (path[path_len] == '\0');
 
   // get rid of last slashes and backslashes
   while (path[--path_len] == '\\')
@@ -498,13 +498,16 @@ c_fs_path_get_parent (char path[], size_t path_len, size_t* out_new_path_len)
   char old_ch = path[path_len];
   path[path_len] = '\0';
 
-  char* last_backslash = strpbrk (path, "\\/");
-  if (last_backslash != NULL)
+  while ((--path_len < MAX_PATH_LEN) &&
+         (path[path_len] != '\\' && path[path_len] != '/'))
+    ;
+
+  if (path_len != MAX_PATH_LEN)
     {
-      *last_backslash = '\0'; // Terminate the string at the last backslash
+      path[path_len] = '\0'; // Terminate the string at the last backslash
       if (out_new_path_len)
         {
-          *out_new_path_len = last_backslash - path;
+          *out_new_path_len = path_len;
         }
 
       return C_FS_ERROR_NONE;
@@ -1239,6 +1242,56 @@ main (void)
 
     err = c_fs_dir_change_current (tmp_buf, tmp_buf_len);
     FS_TEST_ERR (err);
+  }
+
+  // test: get parent
+  {
+    size_t new_len = 0;
+
+    // general
+    {
+#ifdef _WIN32
+      char path[] = "C:\\path1\\path2";
+      char gt_path[] = "C:\\path1";
+#else
+      char path[] = "/path1/path2";
+      char gt_path[] = "/path1";
+#endif
+
+      err = c_fs_path_get_parent (FS_STR (path), &new_len);
+      FS_TEST_ERR (err);
+      assert (strncmp (path, gt_path, new_len) == 0);
+    }
+
+    // trailing slashes
+    {
+#ifdef _WIN32
+      char path[] = "C:\\path1\\path2\\";
+      char gt_path[] = "C:\\path1";
+#else
+      char path[] = "/path1/path2/";
+      char gt_path[] = "/path1";
+#endif
+
+      err = c_fs_path_get_parent (FS_STR (path), &new_len);
+      FS_TEST_ERR (err);
+      assert (strncmp (path, gt_path, new_len) == 0);
+    }
+
+    // multiple trailing slashes
+    {
+#ifdef _WIN32
+      char path[] = "C:\\path1\\path2\\\\";
+      char gt_path[] = "C:\\path1";
+#else
+      char path[] = "/path1/path2//";
+      char gt_path[] = "/path1";
+#endif
+
+      err = c_fs_path_get_parent (FS_STR (path), &new_len);
+      FS_TEST_ERR (err);
+      assert (strncmp (path, gt_path, new_len) == 0);
+    }
   }
 
   err = c_fs_delete (FS_STR (fs_test_playground));
