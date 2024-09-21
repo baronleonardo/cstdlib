@@ -30,15 +30,16 @@ typedef struct c_fs_error_t
 
 #define C_FS_ERROR_NONE ((c_fs_error_t){ 0, "" })
 #define C_FS_ERROR_OUT_IS_NULL                                                 \
-  ((c_fs_error_t){ 256, "the out pointer is NULL" })
+  ((c_fs_error_t){ 256, "fs: the out pointer is NULL" })
 #define C_FS_ERROR_WRONG_FS_STR_LEN                                            \
-  ((c_fs_error_t){ 257, "invalid string (wrong length)" })
+  ((c_fs_error_t){ 257, "fs: invalid string (wrong length)" })
 #define C_FS_ERROR_MEM_ALLOCATION                                              \
-  ((c_fs_error_t){ 257, "memory allocation error" })
-#define C_FS_ERROR_PATH_BUFFER_FULL ((c_fs_error_t){ 258, "CPath is full" })
-#define C_FS_ERROR_SMALL_BUFFER ((c_fs_error_t){ 259, "buffer is small" })
+  ((c_fs_error_t){ 257, "fs: memory allocation error" })
+#define C_FS_ERROR_PATH_BUFFER_FULL ((c_fs_error_t){ 258, "fs: CPath is full" })
+#define C_FS_ERROR_SMALL_BUFFER ((c_fs_error_t){ 259, "fs: buffer is small" })
 #define C_FS_ERROR_SMALL_PATH_CAPACITY                                         \
-  ((c_fs_error_t){ 260, "path capacity is small" })
+  ((c_fs_error_t){ 260, "fs: path capacity is small" })
+#define C_FS_ERROR_INVALID_PATH ((c_fs_error_t){ 261, "fs: invalid path" })
 
 /// @brief
 /// @param path
@@ -119,6 +120,15 @@ c_fs_error_t c_fs_path_to_absolute (
 /// @return
 c_fs_error_t c_fs_path_is_absolute (
     char const path[], size_t path_len, bool* out_is_absolute
+);
+
+/// @brief
+/// @param path
+/// @param path_len
+/// @param out_new_path_len
+/// @return
+c_fs_error_t c_fs_path_get_parent (
+    char path[], size_t path_len, size_t* out_new_path_len
 );
 
 /// @brief
@@ -222,6 +232,7 @@ c_fs_error_t c_fs_foreach (
 #include <windows.h>
 #else
 #include <dirent.h>
+#include <libgen.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #endif
@@ -469,6 +480,44 @@ c_fs_path_is_absolute (
     }
 
   return C_FS_ERROR_OUT_IS_NULL;
+}
+
+c_fs_error_t
+c_fs_path_get_parent (char path[], size_t path_len, size_t* out_new_path_len)
+{
+  assert (path && path_len > 0);
+  assert (path[path_len - 1] == '\0');
+
+  // get rid of last slashes and backslashes
+  while (path[--path_len] == '\\')
+    ;
+  path_len++;
+  while (path[--path_len] == '/')
+    ;
+  path_len++;
+  char old_ch = path[path_len];
+  path[path_len] = '\0';
+
+  char* last_backslash = strpbrk (path, "\\/");
+  if (last_backslash != NULL)
+    {
+      *last_backslash = '\0'; // Terminate the string at the last backslash
+      if (out_new_path_len)
+        {
+          *out_new_path_len = last_backslash - path;
+        }
+
+      return C_FS_ERROR_NONE;
+    }
+  else
+    {
+      path[path_len] = old_ch;
+      if (out_new_path_len)
+        {
+          *out_new_path_len = 0;
+        }
+      return C_FS_ERROR_INVALID_PATH;
+    }
 }
 
 size_t
