@@ -656,24 +656,22 @@ c_array_remove_unmanaged (CArrayUnmanaged* self, size_t index)
 {
   assert (self && self->data);
 
-  if (index < self->len)
-    {
-      uint8_t* element = (uint8_t*) self->data + (index * self->element_size);
-
-      memmove (
-          element,
-          element + self->element_size,
-          (self->len - index) * self->element_size
-      );
-
-      self->len--;
-
-      return C_ARRAY_ERROR_none;
-    }
-  else
+  if (index > self->len)
     {
       return C_ARRAY_ERROR_wrong_index;
     }
+
+  uint8_t* element = (uint8_t*) self->data + (index * self->element_size);
+
+  memmove (
+      element,
+      element + self->element_size,
+      (self->len - index - 1) * self->element_size
+  );
+
+  self->len--;
+
+  return C_ARRAY_ERROR_none;
 }
 
 c_array_error_t
