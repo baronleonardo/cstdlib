@@ -397,11 +397,11 @@ c_fs_file_close (CFile* self)
   assert (self && self->raw);
 
   clearerr (self->raw);
-  fclose (self->raw);
+  int close_state = fclose (self->raw);
   c_fs_error_t err = errno_to_cerror (ferror (self->raw));
 
   *self = (CFile){ 0 };
-  return err;
+  return close_state == 0 ? C_FS_ERROR_NONE : err;
 }
 
 c_fs_error_t
