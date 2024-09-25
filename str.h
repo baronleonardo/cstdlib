@@ -289,6 +289,8 @@ c_str_remove (CStr* self, char const cstr[], size_t cstr_len)
   assert (cstr);
   assert (cstr_len > 0);
 
+  c_str_error_t err = C_STR_ERROR_none;
+
   char* substring_ptr = internal_c_str_find (self, cstr, cstr_len);
   if (substring_ptr)
     {
@@ -299,9 +301,14 @@ c_str_remove (CStr* self, char const cstr[], size_t cstr_len)
       );
       *substring_ptr = '\0';
       self->len -= cstr_len;
+
+      if (self->len <= self->capacity / 4)
+        {
+          err = c_str_set_capacity (self, self->capacity / 2);
+        }
     }
 
-  return C_STR_ERROR_none;
+  return err;
 }
 
 c_str_error_t
@@ -319,6 +326,8 @@ c_str_remove_at (CStr* self, size_t index, size_t range, size_t* out_range_size)
       range = self->len - index;
     }
 
+  c_str_error_t err = C_STR_ERROR_none;
+
   memmove (
       self->data + index,
       self->data + index + range,
@@ -326,10 +335,15 @@ c_str_remove_at (CStr* self, size_t index, size_t range, size_t* out_range_size)
   );
   self->len -= self->len - index - range - 1;
 
+  if (self->len <= self->capacity / 4)
+    {
+      err = c_str_set_capacity (self, self->capacity / 2);
+    }
+
   if (out_range_size)
     *out_range_size = range;
 
-  return C_STR_ERROR_none;
+  return err;
 }
 
 c_str_error_t
@@ -390,6 +404,8 @@ c_str_replace_at (
   assert (with);
   assert (with_len > 0);
 
+  c_str_error_t err = C_STR_ERROR_none;
+
   if ((index + range) >= self->len)
     {
       range = self->len - index;
@@ -397,20 +413,23 @@ c_str_replace_at (
 
   if ((self->len - range + with_len + 1) > self->capacity)
     {
-      if (could_realloc)
-        {
-          char* reallocated_data =
-              realloc (self->data, self->capacity - range + with_len);
-          if (!reallocated_data)
-            {
-              return C_STR_ERROR_mem_allocation;
-            }
-          self->data = reallocated_data;
-          self->capacity += with_len - range;
-        }
-      else
+      if (!could_realloc)
         {
           return C_STR_ERROR_capacity_full;
+        }
+
+      char* reallocated_data =
+          realloc (self->data, self->capacity - range + with_len);
+      if (!reallocated_data)
+        {
+          return C_STR_ERROR_mem_allocation;
+        }
+      self->data = reallocated_data;
+      self->capacity += with_len - range;
+
+      if (self->len <= self->capacity / 4)
+        {
+          err = c_str_set_capacity (self, self->capacity / 2);
         }
     }
 
@@ -428,7 +447,7 @@ c_str_replace_at (
   memcpy (self->data + index, with, with_len);
   self->data[self->len] = '\0';
 
-  return C_STR_ERROR_none;
+  return err;
 }
 
 c_str_error_t
