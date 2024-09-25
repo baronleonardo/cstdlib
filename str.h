@@ -403,7 +403,7 @@ c_str_remove_unmanaged (
       *substring_ptr = '\0';
       self->len -= cstr_len;
 
-      if (self->len <= self->capacity / 4)
+      if ((self->len > 0) && (self->len <= self->capacity / 4))
         {
           err = c_str_set_capacity_unmanaged (
               self, self->capacity / 2, realloc_fn
@@ -452,7 +452,7 @@ c_str_remove_at_unmanaged (
   );
   self->len -= self->len - index - range - 1;
 
-  if (self->len <= self->capacity / 4)
+  if ((self->len > 0) && (self->len <= self->capacity / 4))
     {
       err = c_str_set_capacity_unmanaged (self, self->capacity / 2, realloc_fn);
     }
@@ -594,7 +594,7 @@ c_str_replace_at_unmanaged (
       self->len -= range;
       self->len += with_len;
 
-      if (self->len <= self->capacity / 4)
+      if ((self->len > 0) && (self->len <= self->capacity / 4))
         {
           err = c_str_set_capacity_unmanaged (
               self, self->capacity / 2, realloc_fn
