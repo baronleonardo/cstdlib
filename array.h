@@ -62,19 +62,19 @@ typedef struct c_array_error_t
   ((c_array_error_t){ 1766, "array: wrong range" })
 
 /// @brief create a new array
-///        (NOTE: c_array_calloc is a calloc like function)
+///        (NOTE: calloc_fn is a calloc like function)
 /// @param element_size
 /// @param out_c_array the result CArray object created
 /// @return return error (any value but zero is treated as an error)
 c_array_error_t c_array_create (size_t element_size, CArray* out_c_array);
 c_array_error_t c_array_create_unmanaged (
     size_t element_size,
-    void* c_array_calloc (size_t, size_t),
+    void* calloc_fn (size_t, size_t),
     CArrayUnmanaged* out_c_array
 );
 
 /// @brief same as `c_array_create` but with allocating capacity
-///        (NOTE: c_array_calloc is a calloc like function)
+///        (NOTE: calloc_fn is a calloc like function)
 /// @param element_size
 /// @param capacity maximum number of elements to be allocated, minimum
 ///                 capacity is 1
@@ -87,7 +87,7 @@ c_array_error_t c_array_create_with_capacity (
 c_array_error_t c_array_create_with_capacity_unmanaged (
     size_t element_size,
     size_t capacity,
-    void* c_array_calloc (size_t, size_t),
+    void* calloc_fn (size_t, size_t),
     CArrayUnmanaged* out_c_array
 );
 
@@ -116,7 +116,7 @@ c_array_error_t c_array_len_unmanaged (CArrayUnmanaged* self, size_t* out_len);
 /// @return return error (any value but zero is treated as an error)
 c_array_error_t c_array_set_len (CArray* self, size_t new_len);
 c_array_error_t c_array_set_len_unmanaged (
-    CArrayUnmanaged* self, size_t new_len, void* c_array_realloc (void*, size_t)
+    CArrayUnmanaged* self, size_t new_len, void* realloc_fn (void*, size_t)
 );
 
 /// @brief get array capacity
@@ -132,15 +132,13 @@ c_array_error_t c_array_capacity_unmanaged (
 );
 
 /// @brief set capacity
-///        (NOTE: c_array_realloc is a realloc like function)
+///        (NOTE: realloc_fn is a realloc like function)
 /// @param self address of self
 /// @param new_capacity
 /// @return return error (any value but zero is treated as an error)
 c_array_error_t c_array_set_capacity (CArray* self, size_t new_capacity);
 c_array_error_t c_array_set_capacity_unmanaged (
-    CArrayUnmanaged* self,
-    size_t new_capacity,
-    void* c_array_realloc (void*, size_t)
+    CArrayUnmanaged* self, size_t new_capacity, void* realloc_fn (void*, size_t)
 );
 
 /// @brief get elemet_size in bytes
@@ -153,33 +151,29 @@ c_array_error_t c_array_element_size_unmanaged (
 );
 
 /// @brief push one element at the end
-///        (NOTE: c_array_realloc is a realloc like function)
+///        (NOTE: realloc_fn is a realloc like function)
 /// @param self pointer to self
 /// @param element if you want to push literals (example: 3, 5 or 10 ...)
 ///                c_array_push(array, &(int){3});
 /// @return return error (any value but zero is treated as an error)
 c_array_error_t c_array_push (CArray* self, void const* element);
 c_array_error_t c_array_push_unmanaged (
-    CArrayUnmanaged* self,
-    void const* element,
-    void* c_array_realloc (void*, size_t)
+    CArrayUnmanaged* self, void const* element, void* realloc_fn (void*, size_t)
 );
 
 /// @brief pop one element from the end
 ///        [this will NOT resize the array]
-///        (NOTE: c_array_realloc is a realloc like function)
+///        (NOTE: realloc_fn is a realloc like function)
 /// @param self
 /// @param out_element the returned result
 /// @return return error (any value but zero is treated as an error)
 c_array_error_t c_array_pop (CArray* self, void** out_element);
 c_array_error_t c_array_pop_unmanaged (
-    CArrayUnmanaged* self,
-    void** out_element,
-    void* c_array_realloc (void*, size_t)
+    CArrayUnmanaged* self, void** out_element, void* realloc_fn (void*, size_t)
 );
 
 /// @brief insert 1 element at index
-///        (NOTE: c_array_realloc is a realloc like function)
+///        (NOTE: realloc_fn is a realloc like function)
 /// @param self pointer to self
 /// @param element
 /// @param index
@@ -191,11 +185,11 @@ c_array_error_t c_array_insert_unmanaged (
     CArrayUnmanaged* self,
     void const* element,
     size_t index,
-    void* c_array_realloc (void*, size_t)
+    void* realloc_fn (void*, size_t)
 );
 
 /// @brief insert multiple elements at index
-///        (NOTE: c_array_realloc is a realloc like function)
+///        (NOTE: realloc_fn is a realloc like function)
 /// @param self
 /// @param index
 /// @param data
@@ -209,7 +203,7 @@ c_array_error_t c_array_insert_range_unmanaged (
     size_t index,
     void const* data,
     size_t data_len,
-    void* c_array_realloc (void*, size_t)
+    void* realloc_fn (void*, size_t)
 );
 
 /// @brief remove element from CArray
@@ -272,12 +266,12 @@ c_array_create (size_t element_size, CArray* out_c_array)
 c_array_error_t
 c_array_create_unmanaged (
     size_t element_size,
-    void* c_array_calloc (size_t, size_t),
+    void* calloc_fn (size_t, size_t),
     CArrayUnmanaged* out_c_array
 )
 {
   return c_array_create_with_capacity_unmanaged (
-      element_size, 1U, c_array_calloc, out_c_array
+      element_size, 1U, calloc_fn, out_c_array
   );
 }
 
@@ -295,18 +289,18 @@ c_array_error_t
 c_array_create_with_capacity_unmanaged (
     size_t element_size,
     size_t capacity,
-    void* c_array_calloc (size_t, size_t),
+    void* calloc_fn (size_t, size_t),
     CArrayUnmanaged* out_c_array
 )
 {
   assert (element_size > 0);
   assert (capacity > 0);
-  assert (c_array_calloc);
+  assert (calloc_fn);
 
   if (out_c_array)
     {
       *out_c_array = (CArrayUnmanaged){
-        .data = c_array_calloc (capacity, element_size),
+        .data = calloc_fn (capacity, element_size),
         .capacity = capacity,
         .element_size = element_size,
       };
@@ -370,7 +364,7 @@ c_array_set_len (CArray* self, size_t new_len)
 
 c_array_error_t
 c_array_set_len_unmanaged (
-    CArrayUnmanaged* self, size_t new_len, void* c_array_realloc (void*, size_t)
+    CArrayUnmanaged* self, size_t new_len, void* realloc_fn (void*, size_t)
 )
 {
   assert (self && self->data);
@@ -379,7 +373,7 @@ c_array_set_len_unmanaged (
   if (new_len > self->capacity)
     {
       c_array_error_t err =
-          c_array_set_capacity_unmanaged (self, new_len, c_array_realloc);
+          c_array_set_capacity_unmanaged (self, new_len, realloc_fn);
       if (err.code != C_ARRAY_ERROR_none.code)
         {
           return err;
@@ -420,14 +414,12 @@ c_array_set_capacity (CArray* self, size_t new_capacity)
 
 c_array_error_t
 c_array_set_capacity_unmanaged (
-    CArrayUnmanaged* self,
-    size_t new_capacity,
-    void* c_array_realloc (void*, size_t)
+    CArrayUnmanaged* self, size_t new_capacity, void* realloc_fn (void*, size_t)
 )
 {
   assert (self && self->data);
   assert (new_capacity > 0);
-  assert (c_array_realloc);
+  assert (realloc_fn);
 
   void* reallocated_data =
       realloc (self->data, new_capacity * self->element_size);
@@ -471,20 +463,18 @@ c_array_push (CArray* self, void const* element)
 
 c_array_error_t
 c_array_push_unmanaged (
-    CArrayUnmanaged* self,
-    void const* element,
-    void* c_array_realloc (void*, size_t)
+    CArrayUnmanaged* self, void const* element, void* realloc_fn (void*, size_t)
 )
 {
   assert (self && self->data);
   assert (element);
-  assert (c_array_realloc);
+  assert (realloc_fn);
 
   if (self->len == self->capacity)
     {
       self->capacity *= 2;
       void* reallocated_data =
-          c_array_realloc (self->data, self->capacity * self->element_size);
+          realloc_fn (self->data, self->capacity * self->element_size);
       if (!self->data)
         {
           return C_ARRAY_ERROR_mem_allocation;
@@ -510,9 +500,7 @@ c_array_pop (CArray* self, void** out_element)
 
 c_array_error_t
 c_array_pop_unmanaged (
-    CArrayUnmanaged* self,
-    void** out_element,
-    void* c_array_realloc (void*, size_t)
+    CArrayUnmanaged* self, void** out_element, void* realloc_fn (void*, size_t)
 )
 {
   assert (self && self->data);
@@ -528,7 +516,7 @@ c_array_pop_unmanaged (
       if (self->len <= self->capacity / 4)
         {
           err = c_array_set_capacity_unmanaged (
-              self, self->capacity / 2, c_array_realloc
+              self, self->capacity / 2, realloc_fn
           );
         }
 
@@ -556,7 +544,7 @@ c_array_insert_unmanaged (
     CArrayUnmanaged* self,
     void const* element,
     size_t index,
-    void* c_array_realloc (void*, size_t)
+    void* realloc_fn (void*, size_t)
 )
 {
   assert (self && self->data);
@@ -566,7 +554,7 @@ c_array_insert_unmanaged (
       if (self->len == self->capacity)
         {
           c_array_error_t err = c_array_set_capacity_unmanaged (
-              self, self->capacity * 2, c_array_realloc
+              self, self->capacity * 2, realloc_fn
           );
 
           if (err.code != C_ARRAY_ERROR_none.code)
@@ -615,20 +603,20 @@ c_array_insert_range_unmanaged (
     size_t index,
     void const* data,
     size_t data_len,
-    void* c_array_realloc (void*, size_t)
+    void* realloc_fn (void*, size_t)
 )
 {
   assert (self && self->data);
   assert (data);
   assert (data_len > 0);
-  assert (c_array_realloc);
+  assert (realloc_fn);
 
   if (self->len > index)
     {
       while ((self->len + data_len) > self->capacity)
         {
           c_array_error_t err = c_array_set_capacity_unmanaged (
-              self, self->capacity * 2, c_array_realloc
+              self, self->capacity * 2, realloc_fn
           );
           if (err.code != C_ARRAY_ERROR_none.code)
             {
