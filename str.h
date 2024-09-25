@@ -13,6 +13,7 @@
 
 #ifndef CSTDLIB_STR_H
 #define CSTDLIB_STR_H
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -25,6 +26,13 @@ typedef struct CStr
   size_t capacity;
   size_t len;
 } CStr;
+
+typedef struct CStrUnmanaged
+{
+  char* data;
+  size_t capacity;
+  size_t len;
+} CStrUnmanaged;
 
 // typedef struct CGrapheme
 // {
@@ -62,31 +70,58 @@ typedef struct c_str_error_t
   ((c_str_error_t){ 1264, "str: needle not found" })
 
 c_str_error_t c_str_create (char const cstr[], size_t cstr_len, CStr* out_cstr);
+c_str_error_t c_str_create_unmanaged (
+    char const* cstr,
+    size_t cstr_len,
+    void* malloc_fn (size_t),
+    CStrUnmanaged* out_cstr
+);
 
 c_str_error_t c_str_create_empty (size_t capacity, CStr* out_cstr);
-
-c_str_error_t c_str_create_unmanaged (
-    char const* cstr, size_t cstr_len, CStr* out_cstr
+c_str_error_t c_str_create_empty_unmanaged (
+    size_t capacity, void* malloc_fn (size_t), CStrUnmanaged* out_cstr
 );
 
 c_str_error_t c_str_clone (CStr* self, CStr* out_cstr);
+c_str_error_t c_str_clone_unmanaged (
+    CStrUnmanaged* self, void* malloc_fn (size_t), CStrUnmanaged* out_cstr
+);
 
 c_str_error_t c_str_find (
     CStr* self, char const cstr[], size_t cstr_len, char* out_result[]
 );
+c_str_error_t c_str_find_unmanaged (
+    CStrUnmanaged* self, char const cstr[], size_t cstr_len, char* out_result[]
+);
 
 c_str_error_t c_str_insert (
-    CStr* self,
+    CStr* self, char const cstr[], size_t cstr_len, size_t index
+);
+c_str_error_t c_str_insert_unmanaged (
+    CStrUnmanaged* self,
     char const cstr[],
     size_t cstr_len,
     size_t index,
-    bool could_realloc
+    void* realloc_fn (void*, size_t)
 );
 
 c_str_error_t c_str_remove (CStr* self, char const cstr[], size_t cstr_len);
+c_str_error_t c_str_remove_unmanaged (
+    CStrUnmanaged* self,
+    char const cstr[],
+    size_t cstr_len,
+    void* realloc_fn (void*, size_t)
+);
 
 c_str_error_t c_str_remove_at (
     CStr* self, size_t index, size_t range, size_t* out_range_size
+);
+c_str_error_t c_str_remove_at_unmanaged (
+    CStrUnmanaged* self,
+    size_t index,
+    size_t range,
+    void* realloc_fn (void*, size_t),
+    size_t* out_range_size
 );
 
 c_str_error_t c_str_replace (
@@ -94,50 +129,98 @@ c_str_error_t c_str_replace (
     char const needle[],
     size_t needle_len,
     char const with[],
+    size_t with_len
+);
+c_str_error_t c_str_replace_unmanaged (
+    CStrUnmanaged* self,
+    char const needle[],
+    size_t needle_len,
+    char const with[],
     size_t with_len,
-    bool could_realloc
+    void* realloc_fn (void*, size_t)
 );
 
 c_str_error_t c_str_replace_at (
-    CStr* self,
+    CStr* self, size_t index, size_t range, char const with[], size_t with_len
+);
+c_str_error_t c_str_replace_at_unmanaged (
+    CStrUnmanaged* self,
     size_t index,
     size_t range,
     char const with[],
     size_t with_len,
-    bool could_realloc
+    void* realloc_fn (void*, size_t)
 );
 
-c_str_error_t c_str_concatenate (
-    CStr* str1, CStr const* str2, bool could_realloc
+c_str_error_t c_str_concatenate (CStr* str1, CStr const* str2);
+c_str_error_t c_str_concatenate_unmanaged (
+    CStrUnmanaged* str1,
+    CStrUnmanaged const* str2,
+    void* realloc_fn (void*, size_t)
 );
 
 c_str_error_t c_str_concatenate_with_cstr (
-    CStr* str1, char const cstr[], size_t cstr_len, bool could_realloc
+    CStr* str1, char const cstr[], size_t cstr_len
+);
+c_str_error_t c_str_concatenate_with_cstr_unmanaged (
+    CStrUnmanaged* str1,
+    char const cstr[],
+    size_t cstr_len,
+    void* realloc_fn (void*, size_t)
 );
 
 c_str_error_t c_str_format (
     CStr* self, size_t format_len, char const* format, ...
 );
+c_str_error_t c_str_format_va (
+    CStr* self, size_t format_len, char const* format, va_list va
+);
+c_str_error_t c_str_format_unmanaged (
+    CStrUnmanaged* self, size_t format_len, char const* format, ...
+);
+c_str_error_t c_str_format_va_unmanaged (
+    CStrUnmanaged* self, size_t format_len, char const* format, va_list va
+);
 
 c_str_error_t c_str_utf8_valid (CStr* self, bool* out_is_valid);
+c_str_error_t c_str_utf8_valid_unmanaged (
+    CStrUnmanaged* self, bool* out_is_valid
+);
 
 c_str_error_t c_str_utf8_next_codepoint (
     CStr* self, size_t index, size_t* out_next_cp_index
+);
+c_str_error_t c_str_utf8_next_codepoint_unmanaged (
+    CStrUnmanaged* self, size_t index, size_t* out_next_cp_index
 );
 
 // size_t c_str_utf8_next_grapheme (CStr *self,
 //                                  size_t index,
 //                                  int *err);
+// size_t c_str_utf8_next_grapheme_unmanaged (CStrUnmanaged *self,
+//                                  size_t index,
+//                                  int *err);
 
 c_str_error_t c_str_len (CStr const* self, size_t* out_len);
+c_str_error_t c_str_len_unmanaged (CStrUnmanaged const* self, size_t* out_len);
 
 c_str_error_t c_str_set_len (CStr* self, size_t len);
+c_str_error_t c_str_set_len_unmanaged (
+    CStrUnmanaged* self, size_t len, void* realloc_fn (void*, size_t)
+);
 
 c_str_error_t c_str_capacity (CStr const* self, size_t* out_capacity);
+c_str_error_t c_str_capacity_unmanaged (
+    CStrUnmanaged const* self, size_t* out_capacity
+);
 
 c_str_error_t c_str_set_capacity (CStr* self, size_t capacity);
+c_str_error_t c_str_set_capacity_unmanaged (
+    CStrUnmanaged* self, size_t capacity, void* realloc_fn (void*, size_t)
+);
 
 void c_str_destroy (CStr* self);
+void c_str_destroy_unmanaged (CStrUnmanaged* self);
 #endif /* CSTDLIB_STR_H */
 
 /* ------------------------------------------------------------------------ */
@@ -148,7 +231,6 @@ void c_str_destroy (CStr* self);
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
-#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -174,77 +256,90 @@ static char* internal_c_str_find (
 c_str_error_t
 c_str_create (char const cstr[], size_t cstr_len, CStr* out_cstr)
 {
+  return c_str_create_unmanaged (
+      cstr, cstr_len, malloc, (CStrUnmanaged*) out_cstr
+  );
+}
+
+c_str_error_t
+c_str_create_unmanaged (
+    char const cstr[],
+    size_t cstr_len,
+    void* malloc_fn (size_t),
+    CStrUnmanaged* out_cstr
+)
+{
   // assert (cstr_len > 0);
   assert (cstr);
 
-  if (out_cstr)
+  if (!out_cstr)
     {
-      c_str_error_t err = c_str_create_empty (cstr_len + 1, out_cstr);
-      if (err.code != C_STR_ERROR_none.code)
-        {
-          return C_STR_ERROR_mem_allocation;
-        }
-
-      memcpy (out_cstr->data, cstr, cstr_len);
-
-      out_cstr->data[cstr_len] = '\0';
-      out_cstr->len = cstr_len;
-
-      return C_STR_ERROR_none;
+      return C_STR_ERROR_out_is_null;
     }
 
-  return C_STR_ERROR_out_is_null;
+  c_str_error_t err =
+      c_str_create_empty_unmanaged (cstr_len + 1, malloc_fn, out_cstr);
+  if (err.code != C_STR_ERROR_none.code)
+    {
+      return C_STR_ERROR_mem_allocation;
+    }
+
+  memcpy (out_cstr->data, cstr, cstr_len);
+
+  out_cstr->data[cstr_len] = '\0';
+  out_cstr->len = cstr_len;
+
+  return C_STR_ERROR_none;
 }
 
 c_str_error_t
 c_str_create_empty (size_t capacity, CStr* out_cstr)
 {
+  return c_str_create_empty_unmanaged (
+      capacity, malloc, (CStrUnmanaged*) out_cstr
+  );
+}
+
+c_str_error_t
+c_str_create_empty_unmanaged (
+    size_t capacity, void* malloc_fn (size_t), CStrUnmanaged* out_cstr
+)
+{
   assert (capacity > 0);
 
-  if (out_cstr)
+  if (!out_cstr)
     {
-      *out_cstr = (CStr){ 0 };
-
-      out_cstr->data = (char*) malloc (capacity);
-      if (!out_cstr->data)
-        {
-          return C_STR_ERROR_mem_allocation;
-        }
-
-      out_cstr->capacity = capacity;
-
-      return C_STR_ERROR_none;
+      return C_STR_ERROR_out_is_null;
     }
 
-  return C_STR_ERROR_out_is_null;
+  *out_cstr = (CStrUnmanaged){ 0 };
+
+  out_cstr->data = (char*) malloc_fn (capacity);
+  if (!out_cstr->data)
+    {
+      return C_STR_ERROR_mem_allocation;
+    }
+
+  out_cstr->capacity = capacity;
+
+  return C_STR_ERROR_none;
 }
 
 c_str_error_t
-c_str_create_unmanaged (char const* cstr, size_t cstr_len, CStr* out_cstr)
+c_str_insert (CStr* self, char const cstr[], size_t cstr_len, size_t index)
 {
-  assert (cstr_len > 0);
-  assert (cstr);
-
-  if (out_cstr)
-    {
-      *out_cstr = (CStr){ 0 };
-
-      out_cstr->data = (char*) cstr;
-      out_cstr->len = out_cstr->capacity = cstr_len;
-
-      return C_STR_ERROR_none;
-    }
-
-  return C_STR_ERROR_out_is_null;
+  return c_str_insert_unmanaged (
+      (CStrUnmanaged*) self, cstr, cstr_len, index, realloc
+  );
 }
 
 c_str_error_t
-c_str_insert (
-    CStr* self,
+c_str_insert_unmanaged (
+    CStrUnmanaged* self,
     char const cstr[],
     size_t cstr_len,
     size_t index,
-    bool could_realloc
+    void* realloc_fn (void*, size_t)
 )
 {
   assert (self && self->data);
@@ -255,22 +350,15 @@ c_str_insert (
 
   if ((self->len + cstr_len + 1) > self->capacity)
     {
-      if (could_realloc)
+      char* reallocated_data =
+          realloc_fn (self->data, self->capacity + cstr_len);
+      if (!reallocated_data)
         {
-          char* reallocated_data =
-              realloc (self->data, self->capacity + cstr_len);
-          if (!reallocated_data)
-            {
-              return C_STR_ERROR_mem_allocation;
-            }
+          return C_STR_ERROR_mem_allocation;
+        }
 
-          self->data = reallocated_data;
-          self->capacity += cstr_len;
-        }
-      else
-        {
-          return C_STR_ERROR_capacity_full;
-        }
+      self->data = reallocated_data;
+      self->capacity += cstr_len;
     }
 
   memmove (
@@ -285,13 +373,26 @@ c_str_insert (
 c_str_error_t
 c_str_remove (CStr* self, char const cstr[], size_t cstr_len)
 {
+  return c_str_remove_unmanaged (
+      (CStrUnmanaged*) self, cstr, cstr_len, realloc
+  );
+}
+
+c_str_error_t
+c_str_remove_unmanaged (
+    CStrUnmanaged* self,
+    char const cstr[],
+    size_t cstr_len,
+    void* realloc_fn (void*, size_t)
+)
+{
   assert (self && self->data);
   assert (cstr);
   assert (cstr_len > 0);
 
   c_str_error_t err = C_STR_ERROR_none;
 
-  char* substring_ptr = internal_c_str_find (self, cstr, cstr_len);
+  char* substring_ptr = internal_c_str_find ((CStr*) self, cstr, cstr_len);
   if (substring_ptr)
     {
       memmove (
@@ -304,7 +405,9 @@ c_str_remove (CStr* self, char const cstr[], size_t cstr_len)
 
       if (self->len <= self->capacity / 4)
         {
-          err = c_str_set_capacity (self, self->capacity / 2);
+          err = c_str_set_capacity_unmanaged (
+              self, self->capacity / 2, realloc_fn
+          );
         }
     }
 
@@ -313,6 +416,20 @@ c_str_remove (CStr* self, char const cstr[], size_t cstr_len)
 
 c_str_error_t
 c_str_remove_at (CStr* self, size_t index, size_t range, size_t* out_range_size)
+{
+  return c_str_remove_at_unmanaged (
+      (CStrUnmanaged*) self, index, range, realloc, out_range_size
+  );
+}
+
+c_str_error_t
+c_str_remove_at_unmanaged (
+    CStrUnmanaged* self,
+    size_t index,
+    size_t range,
+    void* realloc_fn (void*, size_t),
+    size_t* out_range_size
+)
 {
   assert (self && self->data);
 
@@ -337,7 +454,7 @@ c_str_remove_at (CStr* self, size_t index, size_t range, size_t* out_range_size)
 
   if (self->len <= self->capacity / 4)
     {
-      err = c_str_set_capacity (self, self->capacity / 2);
+      err = c_str_set_capacity_unmanaged (self, self->capacity / 2, realloc_fn);
     }
 
   if (out_range_size)
@@ -349,11 +466,31 @@ c_str_remove_at (CStr* self, size_t index, size_t range, size_t* out_range_size)
 c_str_error_t
 c_str_clone (CStr* self, CStr* out_cstr)
 {
-  return c_str_create (self->data, self->len, out_cstr);
+  return c_str_clone_unmanaged (
+      (CStrUnmanaged*) self, malloc, (CStrUnmanaged*) out_cstr
+  );
+}
+
+c_str_error_t
+c_str_clone_unmanaged (
+    CStrUnmanaged* self, void* malloc_fn (size_t), CStrUnmanaged* out_cstr
+)
+{
+  return c_str_create_unmanaged (self->data, self->len, malloc_fn, out_cstr);
 }
 
 c_str_error_t
 c_str_find (CStr* self, char const cstr[], size_t cstr_len, char* out_result[])
+{
+  return c_str_find_unmanaged (
+      (CStrUnmanaged*) self, cstr, cstr_len, out_result
+  );
+}
+
+c_str_error_t
+c_str_find_unmanaged (
+    CStrUnmanaged* self, char const cstr[], size_t cstr_len, char* out_result[]
+)
 {
   assert (self && self->data);
   assert (cstr);
@@ -364,7 +501,7 @@ c_str_find (CStr* self, char const cstr[], size_t cstr_len, char* out_result[])
       return C_STR_ERROR_out_is_null;
     }
 
-  *out_result = internal_c_str_find (self, cstr, cstr_len);
+  *out_result = internal_c_str_find ((CStr*) self, cstr, cstr_len);
 
   return C_STR_ERROR_none;
 }
@@ -375,29 +512,53 @@ c_str_replace (
     char const needle[],
     size_t needle_len,
     char const with[],
-    size_t with_len,
-    bool could_realloc
+    size_t with_len
 )
 {
-  char* found_str = internal_c_str_find (self, needle, needle_len);
+  return c_str_replace_unmanaged (
+      (CStrUnmanaged*) self, needle, needle_len, with, with_len, realloc
+  );
+}
+
+c_str_error_t
+c_str_replace_unmanaged (
+    CStrUnmanaged* self,
+    char const needle[],
+    size_t needle_len,
+    char const with[],
+    size_t with_len,
+    void* realloc_fn (void*, size_t)
+)
+{
+  char* found_str = internal_c_str_find ((CStr*) self, needle, needle_len);
   if (!found_str || needle_len == 0)
     {
       return C_STR_ERROR_needle_not_found;
     }
 
-  return c_str_replace_at (
-      self, found_str - self->data, needle_len, with, with_len, could_realloc
+  return c_str_replace_at_unmanaged (
+      self, found_str - self->data, needle_len, with, with_len, realloc_fn
   );
 }
 
 c_str_error_t
 c_str_replace_at (
-    CStr* self,
+    CStr* self, size_t index, size_t range, char const with[], size_t with_len
+)
+{
+  return c_str_replace_at_unmanaged (
+      (CStrUnmanaged*) self, index, range, with, with_len, realloc
+  );
+}
+
+c_str_error_t
+c_str_replace_at_unmanaged (
+    CStrUnmanaged* self,
     size_t index,
     size_t range,
     char const with[],
     size_t with_len,
-    bool could_realloc
+    void* realloc_fn (void*, size_t)
 )
 {
   assert (self && self->data);
@@ -413,24 +574,14 @@ c_str_replace_at (
 
   if ((self->len - range + with_len + 1) > self->capacity)
     {
-      if (!could_realloc)
-        {
-          return C_STR_ERROR_capacity_full;
-        }
-
       char* reallocated_data =
-          realloc (self->data, self->capacity - range + with_len);
+          realloc_fn (self->data, self->capacity - range + with_len);
       if (!reallocated_data)
         {
           return C_STR_ERROR_mem_allocation;
         }
       self->data = reallocated_data;
       self->capacity += with_len - range;
-
-      if (self->len <= self->capacity / 4)
-        {
-          err = c_str_set_capacity (self, self->capacity / 2);
-        }
     }
 
   if (with_len < range || with_len > range)
@@ -442,6 +593,13 @@ c_str_replace_at (
       );
       self->len -= range;
       self->len += with_len;
+
+      if (self->len <= self->capacity / 4)
+        {
+          err = c_str_set_capacity_unmanaged (
+              self, self->capacity / 2, realloc_fn
+          );
+        }
     }
 
   memcpy (self->data + index, with, with_len);
@@ -451,18 +609,42 @@ c_str_replace_at (
 }
 
 c_str_error_t
-c_str_concatenate (CStr* str1, CStr const* str2, bool could_realloc)
+c_str_concatenate (CStr* str1, CStr const* str2)
 {
-  assert (str2);
-
-  return c_str_concatenate_with_cstr (
-      str1, str2->data, str2->len, could_realloc
+  return c_str_concatenate_unmanaged (
+      (CStrUnmanaged*) str1, (CStrUnmanaged*) str2, realloc
   );
 }
 
 c_str_error_t
-c_str_concatenate_with_cstr (
-    CStr* str1, char const cstr[], size_t cstr_len, bool could_realloc
+c_str_concatenate_unmanaged (
+    CStrUnmanaged* str1,
+    CStrUnmanaged const* str2,
+    void* realloc_fn (void*, size_t)
+)
+{
+  assert (str1);
+  assert (str2 && str2->data);
+
+  return c_str_concatenate_with_cstr_unmanaged (
+      str1, str2->data, str2->len, realloc_fn
+  );
+}
+
+c_str_error_t
+c_str_concatenate_with_cstr (CStr* str1, char const cstr[], size_t cstr_len)
+{
+  return c_str_concatenate_with_cstr_unmanaged (
+      (CStrUnmanaged*) str1, cstr, cstr_len, realloc
+  );
+}
+
+c_str_error_t
+c_str_concatenate_with_cstr_unmanaged (
+    CStrUnmanaged* str1,
+    char const cstr[],
+    size_t cstr_len,
+    void* realloc_fn (void*, size_t)
 )
 {
   assert (str1 && str1->data);
@@ -471,21 +653,14 @@ c_str_concatenate_with_cstr (
 
   if ((str1->len + cstr_len + 1) > str1->capacity)
     {
-      if (could_realloc)
+      char* reallocated_data =
+          realloc_fn (str1->data, str1->capacity + cstr_len);
+      if (!reallocated_data)
         {
-          char* reallocated_data =
-              realloc (str1->data, str1->capacity + cstr_len);
-          if (!reallocated_data)
-            {
-              return C_STR_ERROR_mem_allocation;
-            }
-          str1->data = reallocated_data;
-          str1->capacity += cstr_len;
+          return C_STR_ERROR_mem_allocation;
         }
-      else
-        {
-          return C_STR_ERROR_capacity_full;
-        }
+      str1->data = reallocated_data;
+      str1->capacity += cstr_len;
     }
 
   memcpy (str1->data + str1->len, cstr, cstr_len);
@@ -498,6 +673,12 @@ c_str_concatenate_with_cstr (
 c_str_error_t
 c_str_utf8_valid (CStr* self, bool* out_is_valid)
 {
+  return c_str_utf8_valid_unmanaged ((CStrUnmanaged*) self, out_is_valid);
+}
+
+c_str_error_t
+c_str_utf8_valid_unmanaged (CStrUnmanaged* self, bool* out_is_valid)
+{
   assert (self && self->data);
 
   if (out_is_valid)
@@ -505,8 +686,9 @@ c_str_utf8_valid (CStr* self, bool* out_is_valid)
       size_t codepoint_len = 0;
       for (size_t iii = 0; iii < self->len; iii += codepoint_len)
         {
-          c_str_error_t err =
-              c_str_utf8_next_codepoint (self, codepoint_len, &codepoint_len);
+          c_str_error_t err = c_str_utf8_next_codepoint_unmanaged (
+              self, codepoint_len, &codepoint_len
+          );
           if (err.code != 0)
             {
               *out_is_valid = false;
@@ -523,6 +705,16 @@ c_str_utf8_valid (CStr* self, bool* out_is_valid)
 
 c_str_error_t
 c_str_utf8_next_codepoint (CStr* self, size_t index, size_t* out_next_cp_index)
+{
+  return c_str_utf8_next_codepoint_unmanaged (
+      (CStrUnmanaged*) self, index, out_next_cp_index
+  );
+}
+
+c_str_error_t
+c_str_utf8_next_codepoint_unmanaged (
+    CStrUnmanaged* self, size_t index, size_t* out_next_cp_index
+)
 {
   assert (self && self->data && self->len > 0);
 
@@ -598,15 +790,48 @@ c_str_utf8_next_codepoint (CStr* self, size_t index, size_t* out_next_cp_index)
 c_str_error_t
 c_str_format (CStr* self, size_t format_len, char const* format, ...)
 {
+  va_list va;
+  va_start (va, format);
+  c_str_error_t err =
+      c_str_format_va_unmanaged ((CStrUnmanaged*) self, format_len, format, va);
+  va_end (va);
+
+  return err;
+}
+
+c_str_error_t
+c_str_format_va (CStr* self, size_t format_len, char const* format, va_list va)
+{
+  return c_str_format_va_unmanaged (
+      (CStrUnmanaged*) self, format_len, format, va
+  );
+}
+
+c_str_error_t
+c_str_format_unmanaged (
+    CStrUnmanaged* self, size_t format_len, char const* format, ...
+)
+{
+  va_list va;
+  va_start (va, format);
+  c_str_error_t err =
+      c_str_format_va_unmanaged ((CStrUnmanaged*) self, format_len, format, va);
+  va_end (va);
+
+  return err;
+}
+
+c_str_error_t
+c_str_format_va_unmanaged (
+    CStrUnmanaged* self, size_t format_len, char const* format, va_list va
+)
+{
   assert (self && self->data);
   assert (format);
   assert (format_len > 0);
 
-  va_list va;
-  va_start (va, format);
   errno = 0;
   int res_len = vsnprintf (self->data, self->capacity, format, va);
-  va_end (va);
 
   if (res_len <= 0)
     {
@@ -622,6 +847,12 @@ c_str_format (CStr* self, size_t format_len, char const* format, ...)
 
 c_str_error_t
 c_str_len (CStr const* self, size_t* out_len)
+{
+  return c_str_len_unmanaged ((CStrUnmanaged*) self, out_len);
+}
+
+c_str_error_t
+c_str_len_unmanaged (CStrUnmanaged const* self, size_t* out_len)
 {
   assert (self && self->data);
 
@@ -639,11 +870,19 @@ c_str_len (CStr const* self, size_t* out_len)
 c_str_error_t
 c_str_set_len (CStr* self, size_t len)
 {
+  return c_str_set_len_unmanaged ((CStrUnmanaged*) self, len, realloc);
+}
+
+c_str_error_t
+c_str_set_len_unmanaged (
+    CStrUnmanaged* self, size_t len, void* realloc_fn (void*, size_t)
+)
+{
   assert (self);
 
   if (self->len < len)
     {
-      return c_str_set_capacity (self, len + 1);
+      return c_str_set_capacity_unmanaged (self, len + 1, realloc_fn);
     }
 
   self->len = len;
@@ -652,6 +891,12 @@ c_str_set_len (CStr* self, size_t len)
 
 c_str_error_t
 c_str_capacity (CStr const* self, size_t* out_capacity)
+{
+  return c_str_capacity_unmanaged ((CStrUnmanaged*) self, out_capacity);
+}
+
+c_str_error_t
+c_str_capacity_unmanaged (CStrUnmanaged const* self, size_t* out_capacity)
 {
   assert (self && self->data);
 
@@ -669,9 +914,19 @@ c_str_capacity (CStr const* self, size_t* out_capacity)
 c_str_error_t
 c_str_set_capacity (CStr* self, size_t capacity)
 {
+  return c_str_set_capacity_unmanaged (
+      (CStrUnmanaged*) self, capacity, realloc
+  );
+}
+
+c_str_error_t
+c_str_set_capacity_unmanaged (
+    CStrUnmanaged* self, size_t capacity, void* realloc_fn (void*, size_t)
+)
+{
   assert (self);
 
-  char* reallocated_data = realloc (self->data, capacity);
+  char* reallocated_data = realloc_fn (self->data, capacity);
   if (!reallocated_data)
     {
       return C_STR_ERROR_mem_allocation;
@@ -686,10 +941,16 @@ c_str_set_capacity (CStr* self, size_t capacity)
 void
 c_str_destroy (CStr* self)
 {
+  c_str_destroy_unmanaged ((CStrUnmanaged*) self);
+}
+
+void
+c_str_destroy_unmanaged (CStrUnmanaged* self)
+{
   assert (self && self->data);
 
   free (self->data);
-  *self = (CStr){ 0 };
+  *self = (CStrUnmanaged){ 0 };
 }
 
 /* ------------------------- internal ------------------------- */
@@ -764,7 +1025,7 @@ main (void)
 
     assert (strncmp (str.data, STR ("Ahmed is ")) == 0);
 
-    err = c_str_concatenate_with_cstr (&str, STR ("here"), true);
+    err = c_str_concatenate_with_cstr (&str, STR ("here"));
     STR_TEST_ERR (err);
     assert (strncmp (str.data, STR ("Ahmed is here")) == 0);
 
@@ -778,6 +1039,8 @@ main (void)
 
     STR_TEST_ERR (err);
     assert (str.data[0] == "\0"[0]);
+
+    c_str_destroy (&str);
   }
 
   /* test: insert */
@@ -786,7 +1049,7 @@ main (void)
     err = c_str_create (STR ("My is Mohamed"), &str);
     STR_TEST_ERR (err);
 
-    err = c_str_insert (&str, STR ("name "), 3, true);
+    err = c_str_insert (&str, STR ("name "), 3);
     STR_TEST_ERR (err);
     assert (strcmp (str.data, "My name is Mohamed") == 0);
 
@@ -799,15 +1062,15 @@ main (void)
     err = c_str_create (STR ("My name is Mohamed"), &str);
     STR_TEST_ERR (err);
 
-    err = c_str_replace (&str, STR ("name"), STR ("game"), true);
+    err = c_str_replace (&str, STR ("name"), STR ("game"));
     STR_TEST_ERR (err);
     assert (strcmp (str.data, "My game is Mohamed") == 0);
 
-    err = c_str_replace (&str, STR ("is"), STR ("is not"), true);
+    err = c_str_replace (&str, STR ("is"), STR ("is not"));
     STR_TEST_ERR (err);
     assert (strcmp (str.data, "My game is not Mohamed") == 0);
 
-    err = c_str_replace (&str, STR ("is not"), STR ("is"), true);
+    err = c_str_replace (&str, STR ("is not"), STR ("is"));
     STR_TEST_ERR (err);
     assert (strcmp (str.data, "My game is Mohamed") == 0);
 
@@ -820,15 +1083,15 @@ main (void)
     err = c_str_create (STR ("My name is Mohamed"), &str);
     STR_TEST_ERR (err);
 
-    err = c_str_replace_at (&str, 3, 4, STR ("game"), true);
+    err = c_str_replace_at (&str, 3, 4, STR ("game"));
     STR_TEST_ERR (err);
     assert (strcmp (str.data, "My game is Mohamed") == 0);
 
-    err = c_str_replace_at (&str, 8, 2, STR ("is not"), true);
+    err = c_str_replace_at (&str, 8, 2, STR ("is not"));
     STR_TEST_ERR (err);
     assert (strcmp (str.data, "My game is not Mohamed") == 0);
 
-    err = c_str_replace_at (&str, 8, 6, STR ("is"), true);
+    err = c_str_replace_at (&str, 8, 6, STR ("is"));
     STR_TEST_ERR (err);
     assert (strcmp (str.data, "My game is Mohamed") == 0);
 
@@ -844,21 +1107,12 @@ main (void)
     err = c_str_create (STR ("world!"), &str2);
     STR_TEST_ERR (err);
 
-    err = c_str_concatenate (&str1, &str2, true);
+    err = c_str_concatenate (&str1, &str2);
     STR_TEST_ERR (err);
     assert (strcmp (str1.data, "Hello, world!") == 0);
 
     c_str_destroy (&str1);
     c_str_destroy (&str2);
-  }
-
-  /* test: unmanaged string */
-  {
-    CStr str;
-    err = c_str_create_unmanaged (STR ("hello"), &str);
-    STR_TEST_ERR (err);
-
-    assert (strcmp (str.data, "hello") == 0);
   }
 
   /* test: format */
@@ -896,7 +1150,7 @@ main (void)
   /* test: codepoint */
   {
     CStr str;
-    err = c_str_create_unmanaged (STR ("🤦🏼‍♂️"), &str);
+    err = c_str_create (STR ("🤦🏼‍♂️"), &str);
     STR_TEST_ERR (err);
 
     size_t next_index = 0;
@@ -913,28 +1167,34 @@ main (void)
 
         next_index += codepoint_size;
       }
+
+    c_str_destroy (&str);
   }
 
   /* test: valid utf8 */
   {
     CStr str;
-    err = c_str_create_unmanaged (STR ("🤦🏼‍♂️"), &str);
+    err = c_str_create (STR ("🤦🏼‍♂️"), &str);
     STR_TEST_ERR (err);
 
     bool is_valid;
     err = c_str_utf8_valid (&str, &is_valid);
     assert (is_valid);
+
+    c_str_destroy (&str);
   }
 
   /* test: invalid utf8 */
   {
     CStr str;
-    err = c_str_create_unmanaged (STR ("\xe2\x80\x8d\x99\x82\xef\xb8"), &str);
+    err = c_str_create (STR ("\xe2\x80\x8d\x99\x82\xef\xb8"), &str);
     STR_TEST_ERR (err);
 
     bool is_valid;
     err = c_str_utf8_valid (&str, &is_valid);
     assert (!is_valid);
+
+    c_str_destroy (&str);
   }
 
   /* test: remove at */
