@@ -856,7 +856,7 @@ c_str_format_va_unmanaged (
   assert (format);
   assert (format_len > 0);
 
-  if (index >= self->len)
+  if (index > self->len)
     {
       return C_STR_ERROR_wrong_index;
     }
@@ -870,8 +870,9 @@ c_str_format_va_unmanaged (
 
   if (needed_len >= self->capacity - index)
     {
-      c_str_error_t err =
-          c_str_set_capacity_unmanaged (self, needed_len + 1, realloc_fn);
+      c_str_error_t err = c_str_set_capacity_unmanaged (
+          self, self->capacity + needed_len + 1, realloc_fn
+      );
       if (err.code != C_STR_ERROR_none.code)
         {
           return err;
@@ -879,13 +880,13 @@ c_str_format_va_unmanaged (
     }
 
   errno = 0;
-  needed_len = vsnprintf (self->data, self->capacity, format, va);
+  needed_len = vsnprintf (self->data + index, self->capacity, format, va);
   if (needed_len < 0)
     {
       return (c_str_error_t){ .code = errno, .msg = strerror (errno) };
     }
 
-  self->len = needed_len;
+  self->len += needed_len;
   self->data[self->len] = '\0';
 
   return C_STR_ERROR_none;
