@@ -862,7 +862,9 @@ c_str_format_va_unmanaged (
     }
 
   errno = 0;
-  int needed_len = vsnprintf (NULL, 0, format, va);
+  va_list va_tmp;
+  va_copy (va_tmp, va);
+  int needed_len = vsnprintf (NULL, 0, format, va_tmp);
   if (needed_len < 0)
     {
       return (c_str_error_t){ .code = errno, .msg = strerror (errno) };
