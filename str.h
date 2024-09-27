@@ -152,17 +152,17 @@ c_str_error_t c_str_replace_at_unmanaged (
     void* realloc_fn (void*, size_t)
 );
 
-c_str_error_t c_str_concatenate (CStr* str1, CStr const* str2);
-c_str_error_t c_str_concatenate_unmanaged (
+c_str_error_t c_str_append (CStr* str1, CStr const* str2);
+c_str_error_t c_str_append_unmanaged (
     CStrUnmanaged* str1,
     CStrUnmanaged const* str2,
     void* realloc_fn (void*, size_t)
 );
 
-c_str_error_t c_str_concatenate_with_cstr (
+c_str_error_t c_str_append_with_cstr (
     CStr* str1, char const cstr[], size_t cstr_len
 );
-c_str_error_t c_str_concatenate_with_cstr_unmanaged (
+c_str_error_t c_str_append_with_cstr_unmanaged (
     CStrUnmanaged* str1,
     char const cstr[],
     size_t cstr_len,
@@ -170,14 +170,15 @@ c_str_error_t c_str_concatenate_with_cstr_unmanaged (
 );
 
 c_str_error_t c_str_format (
-    CStr* self, size_t format_len, char const* format, ...
+    CStr* self, size_t index, size_t format_len, char const* format, ...
 );
 c_str_error_t c_str_format_va (
-    CStr* self, size_t format_len, char const* format, va_list va
+    CStr* self, size_t index, size_t format_len, char const* format, va_list va
 );
 c_str_error_t c_str_format_unmanaged (
     CStrUnmanaged* self,
     void* realloc_fn (void*, size_t),
+    size_t index,
     size_t format_len,
     char const* format,
     ...
@@ -185,6 +186,7 @@ c_str_error_t c_str_format_unmanaged (
 c_str_error_t c_str_format_va_unmanaged (
     CStrUnmanaged* self,
     void* realloc_fn (void*, size_t),
+    size_t index,
     size_t format_len,
     char const* format,
     va_list va
@@ -617,15 +619,15 @@ c_str_replace_at_unmanaged (
 }
 
 c_str_error_t
-c_str_concatenate (CStr* str1, CStr const* str2)
+c_str_append (CStr* str1, CStr const* str2)
 {
-  return c_str_concatenate_unmanaged (
+  return c_str_append_unmanaged (
       (CStrUnmanaged*) str1, (CStrUnmanaged*) str2, realloc
   );
 }
 
 c_str_error_t
-c_str_concatenate_unmanaged (
+c_str_append_unmanaged (
     CStrUnmanaged* str1,
     CStrUnmanaged const* str2,
     void* realloc_fn (void*, size_t)
@@ -634,21 +636,21 @@ c_str_concatenate_unmanaged (
   assert (str1);
   assert (str2 && str2->data);
 
-  return c_str_concatenate_with_cstr_unmanaged (
+  return c_str_append_with_cstr_unmanaged (
       str1, str2->data, str2->len, realloc_fn
   );
 }
 
 c_str_error_t
-c_str_concatenate_with_cstr (CStr* str1, char const cstr[], size_t cstr_len)
+c_str_append_with_cstr (CStr* str1, char const cstr[], size_t cstr_len)
 {
-  return c_str_concatenate_with_cstr_unmanaged (
+  return c_str_append_with_cstr_unmanaged (
       (CStrUnmanaged*) str1, cstr, cstr_len, realloc
   );
 }
 
 c_str_error_t
-c_str_concatenate_with_cstr_unmanaged (
+c_str_append_with_cstr_unmanaged (
     CStrUnmanaged* str1,
     char const cstr[],
     size_t cstr_len,
@@ -796,12 +798,14 @@ c_str_utf8_next_codepoint_unmanaged (
 }
 
 c_str_error_t
-c_str_format (CStr* self, size_t format_len, char const* format, ...)
+c_str_format (
+    CStr* self, size_t index, size_t format_len, char const* format, ...
+)
 {
   va_list va;
   va_start (va, format);
   c_str_error_t err = c_str_format_va_unmanaged (
-      (CStrUnmanaged*) self, realloc, format_len, format, va
+      (CStrUnmanaged*) self, realloc, index, format_len, format, va
   );
   va_end (va);
 
@@ -809,10 +813,12 @@ c_str_format (CStr* self, size_t format_len, char const* format, ...)
 }
 
 c_str_error_t
-c_str_format_va (CStr* self, size_t format_len, char const* format, va_list va)
+c_str_format_va (
+    CStr* self, size_t index, size_t format_len, char const* format, va_list va
+)
 {
   return c_str_format_va_unmanaged (
-      (CStrUnmanaged*) self, realloc, format_len, format, va
+      (CStrUnmanaged*) self, realloc, index, format_len, format, va
   );
 }
 
@@ -820,6 +826,7 @@ c_str_error_t
 c_str_format_unmanaged (
     CStrUnmanaged* self,
     void* realloc_fn (void*, size_t),
+    size_t index,
     size_t format_len,
     char const* format,
     ...
@@ -828,7 +835,7 @@ c_str_format_unmanaged (
   va_list va;
   va_start (va, format);
   c_str_error_t err = c_str_format_va_unmanaged (
-      (CStrUnmanaged*) self, realloc_fn, format_len, format, va
+      (CStrUnmanaged*) self, realloc_fn, index, format_len, format, va
   );
   va_end (va);
 
@@ -839,6 +846,7 @@ c_str_error_t
 c_str_format_va_unmanaged (
     CStrUnmanaged* self,
     void* realloc_fn (void*, size_t),
+    size_t index,
     size_t format_len,
     char const* format,
     va_list va
@@ -848,6 +856,11 @@ c_str_format_va_unmanaged (
   assert (format);
   assert (format_len > 0);
 
+  if (index >= self->len)
+    {
+      return C_STR_ERROR_wrong_index;
+    }
+
   errno = 0;
   int needed_len = vsnprintf (NULL, 0, format, va);
   if (needed_len < 0)
@@ -855,7 +868,7 @@ c_str_format_va_unmanaged (
       return (c_str_error_t){ .code = errno, .msg = strerror (errno) };
     }
 
-  if (needed_len >= self->capacity)
+  if (needed_len >= self->capacity - index)
     {
       c_str_error_t err =
           c_str_set_capacity_unmanaged (self, needed_len + 1, realloc_fn);
@@ -1047,7 +1060,7 @@ main (void)
 {
   c_str_error_t err = C_STR_ERROR_none;
 
-  /* test: create, remove, concatenate */
+  /* test: create, remove, append */
   {
     CStr str;
     err = c_str_create (STR ("Ahmed is here"), &str);
@@ -1058,7 +1071,7 @@ main (void)
 
     assert (strncmp (str.data, STR ("Ahmed is ")) == 0);
 
-    err = c_str_concatenate_with_cstr (&str, STR ("here"));
+    err = c_str_append_with_cstr (&str, STR ("here"));
     STR_TEST_ERR (err);
     assert (strncmp (str.data, STR ("Ahmed is here")) == 0);
 
@@ -1140,7 +1153,7 @@ main (void)
     err = c_str_create (STR ("world!"), &str2);
     STR_TEST_ERR (err);
 
-    err = c_str_concatenate (&str1, &str2);
+    err = c_str_append (&str1, &str2);
     STR_TEST_ERR (err);
     assert (strcmp (str1.data, "Hello, world!") == 0);
 
