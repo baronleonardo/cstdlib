@@ -176,10 +176,18 @@ c_str_error_t c_str_format_va (
     CStr* self, size_t format_len, char const* format, va_list va
 );
 c_str_error_t c_str_format_unmanaged (
-    CStrUnmanaged* self, size_t format_len, char const* format, ...
+    CStrUnmanaged* self,
+    void* realloc_fn (void*, size_t),
+    size_t format_len,
+    char const* format,
+    ...
 );
 c_str_error_t c_str_format_va_unmanaged (
-    CStrUnmanaged* self, size_t format_len, char const* format, va_list va
+    CStrUnmanaged* self,
+    void* realloc_fn (void*, size_t),
+    size_t format_len,
+    char const* format,
+    va_list va
 );
 
 c_str_error_t c_str_utf8_valid (CStr* self, bool* out_is_valid);
@@ -792,8 +800,9 @@ c_str_format (CStr* self, size_t format_len, char const* format, ...)
 {
   va_list va;
   va_start (va, format);
-  c_str_error_t err =
-      c_str_format_va_unmanaged ((CStrUnmanaged*) self, format_len, format, va);
+  c_str_error_t err = c_str_format_va_unmanaged (
+      (CStrUnmanaged*) self, realloc, format_len, format, va
+  );
   va_end (va);
 
   return err;
@@ -803,19 +812,24 @@ c_str_error_t
 c_str_format_va (CStr* self, size_t format_len, char const* format, va_list va)
 {
   return c_str_format_va_unmanaged (
-      (CStrUnmanaged*) self, format_len, format, va
+      (CStrUnmanaged*) self, realloc, format_len, format, va
   );
 }
 
 c_str_error_t
 c_str_format_unmanaged (
-    CStrUnmanaged* self, size_t format_len, char const* format, ...
+    CStrUnmanaged* self,
+    void* realloc_fn (void*, size_t),
+    size_t format_len,
+    char const* format,
+    ...
 )
 {
   va_list va;
   va_start (va, format);
-  c_str_error_t err =
-      c_str_format_va_unmanaged ((CStrUnmanaged*) self, format_len, format, va);
+  c_str_error_t err = c_str_format_va_unmanaged (
+      (CStrUnmanaged*) self, realloc_fn, format_len, format, va
+  );
   va_end (va);
 
   return err;
@@ -823,7 +837,11 @@ c_str_format_unmanaged (
 
 c_str_error_t
 c_str_format_va_unmanaged (
-    CStrUnmanaged* self, size_t format_len, char const* format, va_list va
+    CStrUnmanaged* self,
+    void* realloc_fn (void*, size_t),
+    size_t format_len,
+    char const* format,
+    va_list va
 )
 {
   assert (self && self->data);
@@ -831,15 +849,30 @@ c_str_format_va_unmanaged (
   assert (format_len > 0);
 
   errno = 0;
-  int res_len = vsnprintf (self->data, self->capacity, format, va);
-
-  if (res_len <= 0)
+  int needed_len = vsnprintf (NULL, 0, format, va);
+  if (needed_len < 0)
     {
       return (c_str_error_t){ .code = errno, .msg = strerror (errno) };
     }
 
-  self->len =
-      res_len >= (int) self->capacity ? self->capacity - 1 : (size_t) res_len;
+  if (needed_len >= self->capacity)
+    {
+      c_str_error_t err =
+          c_str_set_capacity_unmanaged (self, needed_len + 1, realloc_fn);
+      if (err.code != C_STR_ERROR_none.code)
+        {
+          return err;
+        }
+    }
+
+  errno = 0;
+  needed_len = vsnprintf (self->data, self->capacity, format, va);
+  if (needed_len < 0)
+    {
+      return (c_str_error_t){ .code = errno, .msg = strerror (errno) };
+    }
+
+  self->len = needed_len;
   self->data[self->len] = '\0';
 
   return C_STR_ERROR_none;
