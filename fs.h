@@ -850,7 +850,7 @@ c_fs_foreach (
   size_t orig_path_len = path_buf_len;
 
 #if defined(_WIN32)
-  path_buf[path_buf_len] = '/';
+  path_buf[path_buf_len] = PATH_SEP;
   path_buf[path_buf_len + 1] = '*';
   path_buf[path_buf_len + 2] = '\0';
   path_buf_len += 2;
@@ -910,7 +910,7 @@ c_fs_foreach (
               (strcmp (cur_dir_properties->d_name, "..") != 0))
             {
               size_t filename_len = strlen (cur_dir_properties->d_name);
-              path_buf[path_buf_len] = '/';
+              path_buf[path_buf_len] = PATH_SEP;
               strncpy (
                   path_buf + path_buf_len + 1,
                   cur_dir_properties->d_name,
@@ -1313,6 +1313,7 @@ main (void)
 
   err = c_fs_delete (FS_STR (fs_test_playground));
   FS_TEST_ERR (err);
+  free (path_buf);
 }
 
 c_fs_error_t

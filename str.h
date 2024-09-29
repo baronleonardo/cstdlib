@@ -870,7 +870,7 @@ c_str_format_va_unmanaged (
       return (c_str_error_t){ .code = errno, .msg = strerror (errno) };
     }
 
-  if (needed_len >= self->capacity - index)
+  if ((size_t) needed_len >= self->capacity - index)
     {
       c_str_error_t err = c_str_set_capacity_unmanaged (
           self, self->capacity + needed_len + 1, realloc_fn
@@ -1172,7 +1172,11 @@ main (void)
     STR_TEST_ERR (err);
 
     err = c_str_format (
-        &str, STR_INV ("smile, smile, smile, %s :), @ %d street"), "Mohamed", 32
+        &str,
+        0,
+        STR_INV ("smile, smile, smile, %s :), @ %d street"),
+        "Mohamed",
+        32
     );
     STR_TEST_ERR (err);
     assert (
@@ -1189,7 +1193,7 @@ main (void)
     STR_TEST_ERR (err);
 
     c_str_format (
-        &str, STR_INV ("%d %s %d, %02d:%02d"), 22, "Mar", 2024, 8, 23
+        &str, 0, STR_INV ("%d %s %d, %02d:%02d"), 22, "Mar", 2024, 8, 23
     );
     STR_TEST_ERR (err);
     assert (strcmp (str.data, "22 Mar 2024, 08:23") == 0);

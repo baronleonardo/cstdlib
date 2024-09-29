@@ -73,8 +73,8 @@ void c_dl_loader_destroy (CDLLoader* self);
 #include <dlfcn.h>
 #endif
 
-#if _WIN32 && (!_MSC_VER || !(_MSC_VER >= 1900))
-#error "You need MSVC must be higher that or equal to 1900
+#if defined(_WIN32) && (!defined(_MSC_VER) || !(_MSC_VER >= 1900))
+#error "You need MSVC must be higher that or equal to 1900"
 #endif
 
 #ifdef _MSC_VER
