@@ -257,6 +257,7 @@ c_fs_error_t c_fs_foreach (
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4996) // disable warning about unsafe functions
+#pragma comment(lib, "Shlwapi.lib")
 #endif
 
 static c_fs_error_t internal_c_fs_delete_recursively_handler (
