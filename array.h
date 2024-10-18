@@ -731,13 +731,9 @@ c_array_destroy (CArray* self)
 void
 c_array_destroy_unmanaged (CArrayUnmanaged* self, void c_array_free (void*))
 {
-  if (self)
+  if (self && self->data)
     {
-      if (self->data)
-        {
-          c_array_free (self->data);
-        }
-
+      c_array_free (self->data);
       *self = (CArrayUnmanaged){ 0 };
     }
 }

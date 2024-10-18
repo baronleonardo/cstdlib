@@ -1000,12 +1000,9 @@ c_str_destroy (CStr* self)
 void
 c_str_destroy_unmanaged (CStrUnmanaged* self)
 {
-  if (self)
+  if (self && self->data)
     {
-      if (self->data)
-        {
-          free (self->data);
-        }
+      free (self->data);
       *self = (CStrUnmanaged){ 0 };
     }
 }

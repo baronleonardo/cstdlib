@@ -405,12 +405,17 @@ c_fs_file_close (CFile* self)
 {
   C_FS_CHECK_PARAMS (self && self->raw);
 
-  clearerr (self->raw);
-  int close_state = fclose (self->raw);
-  c_fs_error_t err = errno_to_cerror (ferror (self->raw));
+  if (self && self->raw)
+    {
+      clearerr (self->raw);
+      int close_state = fclose (self->raw);
+      c_fs_error_t err = errno_to_cerror (ferror (self->raw));
 
-  *self = (CFile){ 0 };
-  return close_state == 0 ? C_FS_ERROR_none : err;
+      return close_state == 0 ? C_FS_ERROR_none : err;
+      *self = (CFile){ 0 };
+    }
+
+  return C_FS_ERROR_none;
 }
 
 c_fs_error_t
