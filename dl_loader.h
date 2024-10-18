@@ -1,9 +1,12 @@
-/* How To : To use this module, do this in *ONE* C file:
+/* How To  : To use this module, do this in *ONE* C file:
  *              #define CSTDLIB_DL_LOADER_IMPLEMENTATION
  *              #include "dl_loader.h"
- * Tests  : To use run test, do this in *ONE* C file:
+ * Tests   : To use run test, do this in *ONE* C file:
  *              #define CSTDLIB_DL_LOADER_UNIT_TESTS
  *              #include "dl_loader.h"
+ * Options :
+ *           - C_DL_LOADER_DONT_CHECK_PARAMS: parameters will not get checked
+ *                                            (this is off by default)
  * License: MIT (go to the end of this file for details)
  */
 
@@ -25,13 +28,15 @@ typedef struct c_dl_error_t
 
 #define C_DL_ERROR_NONE ((c_dl_error_t){ 0, "" })
 #define C_DL_ERROR_OUT_IS_NULL                                                 \
-  ((c_dl_error_t){ 756, "ld_loader: the out pointer is NULL" })
+  ((c_dl_error_t){ 1, "ld_loader: the out pointer is NULL" })
 #define C_DL_ERROR_LOADING                                                     \
-  ((c_dl_error_t){ 757, "ld_loader: failed to load the dynamic library" })
+  ((c_dl_error_t){ 2, "ld_loader: failed to load the dynamic library" })
 #define C_DL_ERROR_MEM_ALLOCATION                                              \
-  ((c_dl_error_t){ 758, "memory allocation error" })
+  ((c_dl_error_t){ 3, "memory allocation error" })
 #define C_DL_ERROR_FINDING_SYMBOL                                              \
-  ((c_dl_error_t){ 759, "ld_loader: failed to find this symbol" })
+  ((c_dl_error_t){ 4, "ld_loader: failed to find this symbol" })
+#define C_DL_LOADER_ERROR_invalid_parameters                                   \
+  ((c_dl_error_t){ 5, "ld_loader: invalid parameters" })
 
 /// @brief create a loader
 /// @param file_path the dynamic library path
@@ -80,6 +85,14 @@ void c_dl_loader_destroy (CDLLoader* self);
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(disable : 4996) // disable warning about unsafe functions
+#endif
+
+#ifndef C_DL_LOADER_DONT_CHECK_PARAMS
+#define C_DL_LOADER_CHECK_PARAMS(params)                                       \
+  if (!(params))                                                               \
+    return C_DL_LOADER_ERROR_invalid_parameters;
+#else
+#define C_DL_LOADER_CHECK_PARAMS(params) ((void) 0)
 #endif
 
 c_dl_error_t
@@ -173,6 +186,7 @@ c_dl_loader_destroy (CDLLoader* self)
 #pragma warning(pop)
 #endif
 
+#undef C_DL_LOADER_DONT_CHECK_PARAMS
 #undef CSTDLIB_DL_LOADER_IMPLEMENTATION
 #endif // CSTDLIB_DL_LOADER_IMPLEMENTATION
 

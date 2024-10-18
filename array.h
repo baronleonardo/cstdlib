@@ -1,9 +1,12 @@
-/* How To : To use this module, do this in *ONE* C file:
+/* How To   : To use this module, do this in *ONE* C file:
  *              #define CSTDLIB_ARRAY_IMPLEMENTATION
  *              #include "array.h"
- * Tests  : To use run test, do this in *ONE* C file:
+ * Tests    : To use run test, do this in *ONE* C file:
  *              #define CSTDLIB_ARRAY_UNIT_TESTS
  *              #include "array.h"
+ * Options :
+ *           - C_ARR_DONT_CHECK_PARAMS: parameters will not get checked
+ *                                      (this is off by default)
  * License: MIT (go to the end of the file for details)
  */
 
@@ -43,23 +46,20 @@ typedef struct c_array_error_t
 } c_array_error_t;
 
 #define C_ARRAY_ERROR_none ((c_array_error_t){ 0, "" })
-#define C_ARRAY_ERROR_out_is_null                                              \
-  ((c_array_error_t){ 1756, "array: the out pointer is NULL" })
 #define C_ARRAY_ERROR_mem_allocation                                           \
-  ((c_array_error_t){ 1757, "array: memory allocation error" })
-#define C_ARRAY_ERROR_wrong_len                                                \
-  ((c_array_error_t){ 1758, "array: wrong length" })
+  ((c_array_error_t){ 1, "array: memory allocation error" })
+#define C_ARRAY_ERROR_wrong_len ((c_array_error_t){ 2, "array: wrong length" })
 #define C_ARRAY_ERROR_wrong_capacity                                           \
-  ((c_array_error_t){ 1759, "array: wrong capactiy" })
-#define C_ARRAY_ERROR_wrong_index                                              \
-  ((c_array_error_t){ 1760, "array: wrong index" })
+  ((c_array_error_t){ 3, "array: wrong capactiy" })
+#define C_ARRAY_ERROR_wrong_index ((c_array_error_t){ 4, "array: wrong index" })
 #define C_ARRAY_ERROR_capacity_full                                            \
-  ((c_array_error_t){ 1761, "array: capacity is full" })
+  ((c_array_error_t){ 5, "array: capacity is full" })
 #define C_ARRAY_ERROR_needle_not_found                                         \
-  ((c_array_error_t){ 1764, "array: needle not found" })
+  ((c_array_error_t){ 6, "array: needle not found" })
 #define C_ARRAY_ERROR_empty ((c_array_error_t){ 1765, "array: is empty" })
-#define C_ARRAY_ERROR_wrong_range                                              \
-  ((c_array_error_t){ 1766, "array: wrong range" })
+#define C_ARRAY_ERROR_wrong_range ((c_array_error_t){ 7, "array: wrong range" })
+#define C_ARRAY_ERROR_invalid_parameters                                       \
+  ((c_array_error_t){ 8, "array: invalid parameters" })
 
 /// @brief create a new array
 ///        (NOTE: calloc_fn is a calloc like function)
@@ -255,6 +255,14 @@ void c_array_destroy_unmanaged (
 #pragma warning(disable : 4996) // disable warning about unsafe functions
 #endif
 
+#ifndef C_ARR_DONT_CHECK_PARAMS
+#define C_ARR_CHECK_PARAMS(params)                                             \
+  if (!(params))                                                               \
+    return C_ARRAY_ERROR_invalid_parameters;
+#else
+#define C_ARR_CHECK_PARAMS(params) ((void) 0)
+#endif
+
 c_array_error_t
 c_array_create (size_t element_size, CArray* out_c_array)
 {
@@ -293,9 +301,7 @@ c_array_create_with_capacity_unmanaged (
     CArrayUnmanaged* out_c_array
 )
 {
-  assert (element_size > 0);
-  assert (capacity > 0);
-  assert (calloc_fn);
+  C_ARR_CHECK_PARAMS (element_size > 0 || capacity > 0 || calloc_fn);
 
   if (out_c_array)
     {
@@ -309,11 +315,9 @@ c_array_create_with_capacity_unmanaged (
         {
           return C_ARRAY_ERROR_mem_allocation;
         }
-
-      return C_ARRAY_ERROR_none;
     }
 
-  return C_ARRAY_ERROR_out_is_null;
+  return C_ARRAY_ERROR_none;
 }
 
 c_array_error_t
@@ -325,15 +329,14 @@ c_array_is_empty (CArray* self, bool* out_is_empty)
 c_array_error_t
 c_array_is_empty_unmanaged (CArrayUnmanaged* self, bool* out_is_empty)
 {
-  assert (self);
+  C_ARR_CHECK_PARAMS (self);
 
   if (out_is_empty)
     {
       *out_is_empty = self->len;
-      return C_ARRAY_ERROR_none;
     }
 
-  return C_ARRAY_ERROR_out_is_null;
+  return C_ARRAY_ERROR_none;
 }
 
 c_array_error_t
@@ -345,15 +348,14 @@ c_array_len (CArray* self, size_t* out_len)
 c_array_error_t
 c_array_len_unmanaged (CArrayUnmanaged* self, size_t* out_len)
 {
-  assert (self && self->data);
+  C_ARR_CHECK_PARAMS (self && self->data);
 
   if (out_len)
     {
       *out_len = self->len;
-      return C_ARRAY_ERROR_none;
     }
 
-  return C_ARRAY_ERROR_out_is_null;
+  return C_ARRAY_ERROR_none;
 }
 
 c_array_error_t
@@ -367,8 +369,8 @@ c_array_set_len_unmanaged (
     CArrayUnmanaged* self, size_t new_len, void* realloc_fn (void*, size_t)
 )
 {
-  assert (self && self->data);
-  assert (new_len > 0);
+  C_ARR_CHECK_PARAMS (self && self->data);
+  C_ARR_CHECK_PARAMS (new_len > 0);
 
   if (new_len > self->capacity)
     {
@@ -393,15 +395,14 @@ c_array_capacity (CArray* self, size_t* out_capacity)
 c_array_error_t
 c_array_capacity_unmanaged (CArrayUnmanaged* self, size_t* out_capacity)
 {
-  assert (self && self->data);
+  C_ARR_CHECK_PARAMS (self && self->data);
 
   if (out_capacity)
     {
       *out_capacity = self->capacity;
-      return C_ARRAY_ERROR_none;
     }
 
-  return C_ARRAY_ERROR_out_is_null;
+  return C_ARRAY_ERROR_none;
 }
 
 c_array_error_t
@@ -417,9 +418,9 @@ c_array_set_capacity_unmanaged (
     CArrayUnmanaged* self, size_t new_capacity, void* realloc_fn (void*, size_t)
 )
 {
-  assert (self && self->data);
-  assert (new_capacity > 0);
-  assert (realloc_fn);
+  C_ARR_CHECK_PARAMS (self && self->data);
+  C_ARR_CHECK_PARAMS (new_capacity > 0);
+  C_ARR_CHECK_PARAMS (realloc_fn);
 
   void* reallocated_data =
       realloc (self->data, new_capacity * self->element_size);
@@ -444,15 +445,14 @@ c_array_element_size (CArray* self, size_t* out_element_size)
 c_array_error_t
 c_array_element_size_unmanaged (CArrayUnmanaged* self, size_t* out_element_size)
 {
-  assert (self && self->data);
+  C_ARR_CHECK_PARAMS (self && self->data);
 
   if (out_element_size)
     {
       *out_element_size = self->element_size;
-      return C_ARRAY_ERROR_none;
     }
 
-  return C_ARRAY_ERROR_out_is_null;
+  return C_ARRAY_ERROR_none;
 }
 
 c_array_error_t
@@ -466,9 +466,9 @@ c_array_push_unmanaged (
     CArrayUnmanaged* self, void const* element, void* realloc_fn (void*, size_t)
 )
 {
-  assert (self && self->data);
-  assert (element);
-  assert (realloc_fn);
+  C_ARR_CHECK_PARAMS (self && self->data);
+  C_ARR_CHECK_PARAMS (element);
+  C_ARR_CHECK_PARAMS (realloc_fn);
 
   if (self->len == self->capacity)
     {
@@ -503,7 +503,7 @@ c_array_pop_unmanaged (
     CArrayUnmanaged* self, void** out_element, void* realloc_fn (void*, size_t)
 )
 {
-  assert (self && self->data);
+  C_ARR_CHECK_PARAMS (self && self->data);
 
   if (self->len > 0)
     {
@@ -547,7 +547,7 @@ c_array_insert_unmanaged (
     void* realloc_fn (void*, size_t)
 )
 {
-  assert (self && self->data);
+  C_ARR_CHECK_PARAMS (self && self->data);
 
   if (self->len > index)
     {
@@ -606,10 +606,10 @@ c_array_insert_range_unmanaged (
     void* realloc_fn (void*, size_t)
 )
 {
-  assert (self && self->data);
-  assert (data);
-  assert (data_len > 0);
-  assert (realloc_fn);
+  C_ARR_CHECK_PARAMS (self && self->data);
+  C_ARR_CHECK_PARAMS (data);
+  C_ARR_CHECK_PARAMS (data_len > 0);
+  C_ARR_CHECK_PARAMS (realloc_fn);
 
   if (self->len > index)
     {
@@ -658,7 +658,7 @@ c_array_remove (CArray* self, size_t index)
 c_array_error_t
 c_array_remove_unmanaged (CArrayUnmanaged* self, size_t index)
 {
-  assert (self && self->data);
+  C_ARR_CHECK_PARAMS (self && self->data);
 
   if (index > self->len)
     {
@@ -691,7 +691,7 @@ c_array_remove_range_unmanaged (
     CArrayUnmanaged* self, size_t start_index, size_t range_len
 )
 {
-  assert (self && self->data);
+  C_ARR_CHECK_PARAMS (self && self->data);
 
   if (self->len == 0U)
     {
@@ -731,9 +731,6 @@ c_array_destroy (CArray* self)
 void
 c_array_destroy_unmanaged (CArrayUnmanaged* self, void c_array_free (void*))
 {
-  assert (self && self->data);
-  assert (c_array_free);
-
   if (self)
     {
       if (self->data)
@@ -749,6 +746,7 @@ c_array_destroy_unmanaged (CArrayUnmanaged* self, void c_array_free (void*))
 #pragma warning(pop)
 #endif
 
+#undef C_ARR_CHECK_PARAMS
 #undef CSTDLIB_ARRAY_IMPLEMENTATION
 #endif // CSTDLIB_ARRAY_IMPLEMENTATION
 

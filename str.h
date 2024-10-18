@@ -54,20 +54,20 @@ typedef struct c_str_error_t
 
 #define C_STR_ERROR_none ((c_str_error_t){ 0, "" })
 #define C_STR_ERROR_out_is_null                                                \
-  ((c_str_error_t){ 1256, "str: the out pointer is NULL" })
+  ((c_str_error_t){ 1, "str: the out pointer is NULL" })
 #define C_STR_ERROR_mem_allocation                                             \
-  ((c_str_error_t){ 1257, "str: memory allocation error" })
-#define C_STR_ERROR_wrong_len ((c_str_error_t){ 1258, "str: wrong length" })
-#define C_STR_ERROR_wrong_capacity                                             \
-  ((c_str_error_t){ 1259, "str: wrong capactiy" })
-#define C_STR_ERROR_wrong_index ((c_str_error_t){ 1260, "str: wrong index" })
+  ((c_str_error_t){ 2, "str: memory allocation error" })
+#define C_STR_ERROR_wrong_len ((c_str_error_t){ 3, "str: wrong length" })
+#define C_STR_ERROR_wrong_capacity ((c_str_error_t){ 4, "str: wrong capactiy" })
+#define C_STR_ERROR_wrong_index ((c_str_error_t){ 5, "str: wrong index" })
 #define C_STR_ERROR_capacity_full                                              \
-  ((c_str_error_t){ 1261, "str: capacity is full" })
-#define C_STR_ERROR_invalid_utf8 ((c_str_error_t){ 1262, "str: invalid utf-8" })
-#define C_STR_ERROR_invalid_format                                             \
-  ((c_str_error_t){ 1263, "str: invalid format" })
+  ((c_str_error_t){ 6, "str: capacity is full" })
+#define C_STR_ERROR_invalid_utf8 ((c_str_error_t){ 7, "str: invalid utf-8" })
+#define C_STR_ERROR_invalid_format ((c_str_error_t){ 8, "str: invalid format" })
 #define C_STR_ERROR_needle_not_found                                           \
-  ((c_str_error_t){ 1264, "str: needle not found" })
+  ((c_str_error_t){ 9, "str: needle not found" })
+#define C_STR_ERROR_invalid_parameters                                         \
+  ((c_str_error_t){ 10, "str: invalid parameters" })
 
 c_str_error_t c_str_create (char const cstr[], size_t cstr_len, CStr* out_cstr);
 c_str_error_t c_str_create_unmanaged (
@@ -246,9 +246,13 @@ void c_str_destroy_unmanaged (CStrUnmanaged* self);
 #include <string.h>
 #include <wchar.h>
 
-#define MAX_FORMAT_STR_LEN 10000
-#define MAX_FORMAT_BUF_LEN 32
-#define ON_ERROR(error, code) (error && (*error = code))
+#ifndef C_STR_DONT_CHECK_PARAMS
+#define C_STR_CHECK_PARAMS(params)                                             \
+  if (!(params))                                                               \
+    return C_STR_ERROR_invalid_parameters;
+#else
+#define C_STR_CHECK_PARAMS(params) ((void) 0)
+#endif
 
 #if _WIN32 && (!_MSC_VER || !(_MSC_VER >= 1900))
 #error "You need MSVC must be higher that or equal to 1900"
@@ -279,8 +283,7 @@ c_str_create_unmanaged (
     CStrUnmanaged* out_cstr
 )
 {
-  // assert (cstr_len > 0);
-  assert (cstr);
+  C_STR_CHECK_PARAMS (cstr);
 
   if (!out_cstr)
     {
@@ -315,7 +318,7 @@ c_str_create_empty_unmanaged (
     size_t capacity, void* malloc_fn (size_t), CStrUnmanaged* out_cstr
 )
 {
-  assert (capacity > 0);
+  C_STR_CHECK_PARAMS (capacity > 0);
 
   if (!out_cstr)
     {
@@ -352,9 +355,9 @@ c_str_insert_unmanaged (
     void* realloc_fn (void*, size_t)
 )
 {
-  assert (self && self->data);
-  assert (cstr);
-  assert (cstr_len > 0);
+  C_STR_CHECK_PARAMS (self && self->data);
+  C_STR_CHECK_PARAMS (cstr);
+  C_STR_CHECK_PARAMS (cstr_len > 0);
 
   index %= self->len;
 
@@ -396,9 +399,9 @@ c_str_remove_unmanaged (
     void* realloc_fn (void*, size_t)
 )
 {
-  assert (self && self->data);
-  assert (cstr);
-  assert (cstr_len > 0);
+  C_STR_CHECK_PARAMS (self && self->data);
+  C_STR_CHECK_PARAMS (cstr);
+  C_STR_CHECK_PARAMS (cstr_len > 0);
 
   c_str_error_t err = C_STR_ERROR_none;
 
@@ -441,7 +444,7 @@ c_str_remove_at_unmanaged (
     size_t* out_range_size
 )
 {
-  assert (self && self->data);
+  C_STR_CHECK_PARAMS (self && self->data);
 
   if (index >= self->len)
     {
@@ -502,9 +505,9 @@ c_str_find_unmanaged (
     CStrUnmanaged* self, char const cstr[], size_t cstr_len, char* out_result[]
 )
 {
-  assert (self && self->data);
-  assert (cstr);
-  assert (cstr_len > 0);
+  C_STR_CHECK_PARAMS (self && self->data);
+  C_STR_CHECK_PARAMS (cstr);
+  C_STR_CHECK_PARAMS (cstr_len > 0);
 
   if (!out_result)
     {
@@ -571,9 +574,9 @@ c_str_replace_at_unmanaged (
     void* realloc_fn (void*, size_t)
 )
 {
-  assert (self && self->data);
-  assert (with);
-  assert (with_len > 0);
+  C_STR_CHECK_PARAMS (self && self->data);
+  C_STR_CHECK_PARAMS (with);
+  C_STR_CHECK_PARAMS (with_len > 0);
 
   c_str_error_t err = C_STR_ERROR_none;
 
@@ -633,8 +636,8 @@ c_str_append_unmanaged (
     void* realloc_fn (void*, size_t)
 )
 {
-  assert (str1);
-  assert (str2 && str2->data);
+  C_STR_CHECK_PARAMS (str1);
+  C_STR_CHECK_PARAMS (str2 && str2->data);
 
   return c_str_append_with_cstr_unmanaged (
       str1, str2->data, str2->len, realloc_fn
@@ -657,9 +660,9 @@ c_str_append_with_cstr_unmanaged (
     void* realloc_fn (void*, size_t)
 )
 {
-  assert (str1 && str1->data);
-  assert (cstr);
-  assert (cstr_len > 0);
+  C_STR_CHECK_PARAMS (str1 && str1->data);
+  C_STR_CHECK_PARAMS (cstr);
+  C_STR_CHECK_PARAMS (cstr_len > 0);
 
   if ((str1->len + cstr_len + 1) > str1->capacity)
     {
@@ -689,7 +692,7 @@ c_str_utf8_valid (CStr* self, bool* out_is_valid)
 c_str_error_t
 c_str_utf8_valid_unmanaged (CStrUnmanaged* self, bool* out_is_valid)
 {
-  assert (self && self->data);
+  C_STR_CHECK_PARAMS (self && self->data);
 
   if (out_is_valid)
     {
@@ -726,7 +729,7 @@ c_str_utf8_next_codepoint_unmanaged (
     CStrUnmanaged* self, size_t index, size_t* out_next_cp_index
 )
 {
-  assert (self && self->data && self->len > 0);
+  C_STR_CHECK_PARAMS (self && self->data && self->len > 0);
 
   if (index >= self->len)
     {
@@ -852,9 +855,9 @@ c_str_format_va_unmanaged (
     va_list va
 )
 {
-  assert (self && self->data);
-  assert (format);
-  assert (format_len > 0);
+  C_STR_CHECK_PARAMS (self && self->data);
+  C_STR_CHECK_PARAMS (format);
+  C_STR_CHECK_PARAMS (format_len > 0);
 
   if (index > self->len)
     {
@@ -904,7 +907,7 @@ c_str_len (CStr const* self, size_t* out_len)
 c_str_error_t
 c_str_len_unmanaged (CStrUnmanaged const* self, size_t* out_len)
 {
-  assert (self && self->data);
+  C_STR_CHECK_PARAMS (self && self->data);
 
   if (out_len)
     {
@@ -928,7 +931,7 @@ c_str_set_len_unmanaged (
     CStrUnmanaged* self, size_t len, void* realloc_fn (void*, size_t)
 )
 {
-  assert (self);
+  C_STR_CHECK_PARAMS (self);
 
   if (self->len < len)
     {
@@ -948,7 +951,7 @@ c_str_capacity (CStr const* self, size_t* out_capacity)
 c_str_error_t
 c_str_capacity_unmanaged (CStrUnmanaged const* self, size_t* out_capacity)
 {
-  assert (self && self->data);
+  C_STR_CHECK_PARAMS (self && self->data);
 
   if (out_capacity)
     {
@@ -974,7 +977,7 @@ c_str_set_capacity_unmanaged (
     CStrUnmanaged* self, size_t capacity, void* realloc_fn (void*, size_t)
 )
 {
-  assert (self);
+  C_STR_CHECK_PARAMS (self);
 
   char* reallocated_data = realloc_fn (self->data, capacity);
   if (!reallocated_data)
@@ -1011,10 +1014,6 @@ c_str_destroy_unmanaged (CStrUnmanaged* self)
 char*
 internal_c_str_find (CStr* self, char const cstr[], size_t cstr_len)
 {
-  assert (self && self->data);
-  assert (cstr);
-  assert (cstr_len > 0);
-
   if (cstr)
     {
       for (size_t c_str_counter = 0; c_str_counter < self->len; ++c_str_counter)
