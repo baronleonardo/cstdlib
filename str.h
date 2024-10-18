@@ -997,10 +997,14 @@ c_str_destroy (CStr* self)
 void
 c_str_destroy_unmanaged (CStrUnmanaged* self)
 {
-  assert (self && self->data);
-
-  free (self->data);
-  *self = (CStrUnmanaged){ 0 };
+  if (self)
+    {
+      if (self->data)
+        {
+          free (self->data);
+        }
+      *self = (CStrUnmanaged){ 0 };
+    }
 }
 
 /* ------------------------- internal ------------------------- */

@@ -734,9 +734,15 @@ c_array_destroy_unmanaged (CArrayUnmanaged* self, void c_array_free (void*))
   assert (self && self->data);
   assert (c_array_free);
 
-  c_array_free (self->data);
+  if (self)
+    {
+      if (self->data)
+        {
+          c_array_free (self->data);
+        }
 
-  *self = (CArrayUnmanaged){ 0 };
+      *self = (CArrayUnmanaged){ 0 };
+    }
 }
 
 #ifdef _MSC_VER

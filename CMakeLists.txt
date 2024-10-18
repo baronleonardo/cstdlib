@@ -9,15 +9,19 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 if (MSVC)
     # warning level 4
     add_compile_options(
-        /W3
+        /W4
         /WX
+        /guard:cf # control flow guard
+        /sdl # enable security features
+        /analyze # enable static analysis
+        /permissive- # standards conformance mode
         /utf-8
-        /Zi
-        # $<$<CONFIG:DEBUG>:/fsanitize=address>
-        # $<$<CONFIG:DEBUG>:/RTCcsu>
+        $<$<CONFIG:Debug>:/Zi>
+        /wd4200 # C4200 zero-sized array in struct/union
+        /wd4820 # C4200 padding in struct/union
     )
     add_link_options(
-        $<$<CONFIG:DEBUG>:/INCREMENTAL:NO>
+        /guard:cf # control flow guard
     )
 else()
     # additional warnings

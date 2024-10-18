@@ -152,17 +152,21 @@ c_dl_loader_get (
 void
 c_dl_loader_destroy (CDLLoader* self)
 {
-  assert (self && self->raw);
-
+  if (self)
+    {
+      if (self->raw)
+        {
 #ifdef _WIN32
-  BOOL free_status = FreeLibrary (self->raw);
-  assert (free_status);
+          BOOL free_status = FreeLibrary (self->raw);
+          assert (free_status);
 #else
-  int close_status = dlclose (self->raw);
-  assert (close_status == 0);
+          int close_status = dlclose (self->raw);
+          assert (close_status == 0);
 #endif
+        }
 
-  *self = (CDLLoader){ 0 };
+      *self = (CDLLoader){ 0 };
+    }
 }
 
 #ifdef _MSC_VER
