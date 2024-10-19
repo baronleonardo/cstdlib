@@ -18,8 +18,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define C_STR_WHITESPACES " \t\n\v\f\r"
-
 typedef struct CStr
 {
   char* data;
@@ -229,6 +227,8 @@ c_str_error_t c_str_set_capacity_unmanaged (
     CStrUnmanaged* self, size_t capacity, void* realloc_fn (void*, size_t)
 );
 
+char const* c_str_get_whitespaces (void);
+
 void c_str_destroy (CStr* self);
 void c_str_destroy_unmanaged (CStrUnmanaged* self);
 #endif /* CSTDLIB_STR_H */
@@ -262,6 +262,8 @@ void c_str_destroy_unmanaged (CStrUnmanaged* self);
 #pragma warning(push)
 #pragma warning(disable : 4996) // disable warning about unsafe functions
 #endif
+
+#define C_STR_WHITESPACES " \t\n\v\f\r"
 
 static char* internal_c_str_find (
     CStr* self, char const cstr[], size_t cstr_len
@@ -989,6 +991,12 @@ c_str_set_capacity_unmanaged (
   self->capacity = capacity;
 
   return C_STR_ERROR_none;
+}
+
+char const*
+c_str_get_whitespaces (void)
+{
+  return C_STR_WHITESPACES;
 }
 
 void
