@@ -47,5 +47,6 @@ if (${ENABLE_TESTS})
     create_test_target(dl_loader)
     create_test_target(str)
     create_test_target(array)
+    create_test_target(defer)
 endif()
 
