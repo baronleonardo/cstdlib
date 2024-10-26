@@ -39,27 +39,19 @@ typedef struct CArrayUnmanaged
   size_t element_size; /// size of the unit
 } CArrayUnmanaged;
 
-typedef struct c_array_error_t
+typedef enum c_array_error_t
 {
-  int code;
-  char const* msg;
+  C_ARRAY_ERROR_none,
+  C_ARRAY_ERROR_mem_allocation,
+  C_ARRAY_ERROR_wrong_len,
+  C_ARRAY_ERROR_wrong_capacity,
+  C_ARRAY_ERROR_wrong_index,
+  C_ARRAY_ERROR_capacity_full,
+  C_ARRAY_ERROR_needle_not_found,
+  C_ARRAY_ERROR_empty,
+  C_ARRAY_ERROR_wrong_range,
+  C_ARRAY_ERROR_invalid_parameters,
 } c_array_error_t;
-
-#define C_ARRAY_ERROR_none ((c_array_error_t){ 0, "" })
-#define C_ARRAY_ERROR_mem_allocation                                           \
-  ((c_array_error_t){ 1, "array: memory allocation error" })
-#define C_ARRAY_ERROR_wrong_len ((c_array_error_t){ 2, "array: wrong length" })
-#define C_ARRAY_ERROR_wrong_capacity                                           \
-  ((c_array_error_t){ 3, "array: wrong capactiy" })
-#define C_ARRAY_ERROR_wrong_index ((c_array_error_t){ 4, "array: wrong index" })
-#define C_ARRAY_ERROR_capacity_full                                            \
-  ((c_array_error_t){ 5, "array: capacity is full" })
-#define C_ARRAY_ERROR_needle_not_found                                         \
-  ((c_array_error_t){ 6, "array: needle not found" })
-#define C_ARRAY_ERROR_empty ((c_array_error_t){ 1765, "array: is empty" })
-#define C_ARRAY_ERROR_wrong_range ((c_array_error_t){ 7, "array: wrong range" })
-#define C_ARRAY_ERROR_invalid_parameters                                       \
-  ((c_array_error_t){ 8, "array: invalid parameters" })
 
 /// @brief create a new array
 ///        (NOTE: calloc_fn is a calloc like function)
@@ -234,6 +226,11 @@ void c_array_destroy (CArray* self);
 void c_array_destroy_unmanaged (
     CArrayUnmanaged* self, void c_array_free (void*)
 );
+
+/// @brief
+/// @param err
+/// @return
+char const* c_array_get_error_description (c_array_error_t err);
 #endif // CSTDLIB_ARRAY_H
 
 /* ------------------------------------------------------------------------ */
@@ -376,7 +373,7 @@ c_array_set_len_unmanaged (
     {
       c_array_error_t err =
           c_array_set_capacity_unmanaged (self, new_len, realloc_fn);
-      if (err.code != C_ARRAY_ERROR_none.code)
+      if (err != C_ARRAY_ERROR_none)
         {
           return err;
         }
@@ -557,7 +554,7 @@ c_array_insert_unmanaged (
               self, self->capacity * 2, realloc_fn
           );
 
-          if (err.code != C_ARRAY_ERROR_none.code)
+          if (err != C_ARRAY_ERROR_none)
             {
               return err;
             }
@@ -618,7 +615,7 @@ c_array_insert_range_unmanaged (
           c_array_error_t err = c_array_set_capacity_unmanaged (
               self, self->capacity * 2, realloc_fn
           );
-          if (err.code != C_ARRAY_ERROR_none.code)
+          if (err != C_ARRAY_ERROR_none)
             {
               return err;
             }
@@ -738,6 +735,35 @@ c_array_destroy_unmanaged (CArrayUnmanaged* self, void c_array_free (void*))
     }
 }
 
+char const*
+c_array_get_error_description (c_array_error_t err)
+{
+  switch (err)
+    {
+    case C_ARRAY_ERROR_none:
+      return "";
+    case C_ARRAY_ERROR_mem_allocation:
+      return "array: memory allocation error";
+    case C_ARRAY_ERROR_wrong_len:
+      return "array: wrong length";
+    case C_ARRAY_ERROR_wrong_capacity:
+      return "array: wrong capactiy";
+    case C_ARRAY_ERROR_wrong_index:
+      return "array: wrong index";
+    case C_ARRAY_ERROR_capacity_full:
+      return "array: capacity is full";
+    case C_ARRAY_ERROR_needle_not_found:
+      return "array: needle not found";
+    case C_ARRAY_ERROR_empty:
+      return "array: is empty";
+    case C_ARRAY_ERROR_wrong_range:
+      return "array: wrong range";
+    case C_ARRAY_ERROR_invalid_parameters:
+    default:
+      return "array: invalid parameters";
+    }
+}
+
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -766,9 +792,11 @@ c_array_destroy_unmanaged (CArrayUnmanaged* self, void c_array_free (void*))
 
 #define ARRAY_STR(str) str, (sizeof (str) - 1)
 #define ARRAY_TEST_PRINT_ABORT(msg) (fprintf (stderr, "%s\n", msg), abort ())
-#define ARRAY_TEST(cond, err)                                                  \
-  (!(cond) ? ARRAY_TEST_PRINT_ABORT (err.msg) : (void) 0)
-#define ARRAY_TEST_ERR(err) (ARRAY_TEST (err.code == 0, err))
+#define ARRAY_TEST_ECODE(error_code)                                           \
+  (error_code != C_ARRAY_ERROR_none)                                           \
+      ? ARRAY_TEST_PRINT_ABORT (c_array_get_error_description (error_code))    \
+      : (void) 0
+#define ARRAY_TEST(cond) (!(cond)) ? ARRAY_TEST_PRINT_ABORT (#cond) : (void) 0
 
 int
 main (void)
@@ -779,53 +807,53 @@ main (void)
   {
     CArray array;
     err = c_array_create (sizeof (int), &array);
-    ARRAY_TEST_ERR (err);
+    ARRAY_TEST_ECODE (err);
 
     // test_push
     err = c_array_push (&array, &(int){ 12 });
-    ARRAY_TEST_ERR (err);
+    ARRAY_TEST_ECODE (err);
     err = c_array_push (&array, &(int){ 13 });
-    ARRAY_TEST_ERR (err);
+    ARRAY_TEST_ECODE (err);
     err = c_array_push (&array, &(int){ 14 });
-    ARRAY_TEST_ERR (err);
+    ARRAY_TEST_ECODE (err);
     err = c_array_push (&array, &(int){ 15 });
-    ARRAY_TEST_ERR (err);
+    ARRAY_TEST_ECODE (err);
     err = c_array_push (&array, &(int){ 16 });
-    ARRAY_TEST_ERR (err);
+    ARRAY_TEST_ECODE (err);
 
     size_t array_len;
     err = c_array_len (&array, &array_len);
-    ARRAY_TEST_ERR (err);
-    assert (array_len == 5);
+    ARRAY_TEST_ECODE (err);
+    ARRAY_TEST (array_len == 5);
 
     // test c_array_pop
     int const* data;
     err = c_array_pop (&array, (void**) &data);
-    ARRAY_TEST_ERR (err);
-    assert (*data == 16);
+    ARRAY_TEST_ECODE (err);
+    ARRAY_TEST (*data == 16);
 
     // test c_array_remove_range
     err = c_array_remove_range (&array, 1, 3);
-    ARRAY_TEST_ERR (err);
+    ARRAY_TEST_ECODE (err);
     err = c_array_len (&array, &array_len);
-    ARRAY_TEST_ERR (err);
-    assert (array_len == 1);
-    assert (((int*) array.data)[0] == 12);
+    ARRAY_TEST_ECODE (err);
+    ARRAY_TEST (array_len == 1);
+    ARRAY_TEST (((int*) array.data)[0] == 12);
 
     // test c_array_insert
     err = c_array_insert (&array, &(int){ 20 }, 0);
-    ARRAY_TEST_ERR (err);
-    assert (((int*) array.data)[0] == 20);
-    assert (((int*) array.data)[1] == 12);
+    ARRAY_TEST_ECODE (err);
+    ARRAY_TEST (((int*) array.data)[0] == 20);
+    ARRAY_TEST (((int*) array.data)[1] == 12);
 
     // test c_array_insert
     err = c_array_insert_range (&array, 1, &(int[]){ 1, 2, 3 }, 3);
-    ARRAY_TEST_ERR (err);
-    assert (((int*) array.data)[0] == 20);
-    assert (((int*) array.data)[1] == 1);
-    assert (((int*) array.data)[2] == 2);
-    assert (((int*) array.data)[3] == 3);
-    assert (((int*) array.data)[4] == 12);
+    ARRAY_TEST_ECODE (err);
+    ARRAY_TEST (((int*) array.data)[0] == 20);
+    ARRAY_TEST (((int*) array.data)[1] == 1);
+    ARRAY_TEST (((int*) array.data)[2] == 2);
+    ARRAY_TEST (((int*) array.data)[3] == 3);
+    ARRAY_TEST (((int*) array.data)[4] == 12);
 
     c_array_destroy (&array);
   }
@@ -834,13 +862,13 @@ main (void)
   {
     CArray array2;
     err = c_array_create (sizeof (char), &array2);
-    ARRAY_TEST_ERR (err);
+    ARRAY_TEST_ECODE (err);
     err = c_array_push (&array2, &(char){ '\0' });
-    ARRAY_TEST_ERR (err);
+    ARRAY_TEST_ECODE (err);
     err = c_array_insert (&array2, &(char){ 'a' }, 0);
-    ARRAY_TEST_ERR (err);
-    assert (((char*) array2.data)[0] == 'a');
-    assert (((char*) array2.data)[1] == '\0');
+    ARRAY_TEST_ECODE (err);
+    ARRAY_TEST (((char*) array2.data)[0] == 'a');
+    ARRAY_TEST (((char*) array2.data)[1] == '\0');
 
     c_array_destroy (&array2);
   }
@@ -849,11 +877,11 @@ main (void)
   {
     CArray array;
     err = c_array_create (sizeof (char), &array);
-    ARRAY_TEST_ERR (err);
+    ARRAY_TEST_ECODE (err);
     err = c_array_push (&array, &(char){ '\0' });
-    ARRAY_TEST_ERR (err);
+    ARRAY_TEST_ECODE (err);
     err = c_array_insert (&array, &(char){ 'a' }, 1);
-    assert (err.code == C_ARRAY_ERROR_wrong_index.code);
+    ARRAY_TEST (err == C_ARRAY_ERROR_wrong_index);
 
     c_array_destroy (&array);
   }
@@ -868,10 +896,10 @@ main (void)
 #undef NDEBUG_
 #endif
 
-#undef ARRAY_STR
-#undef ARRAY_TEST_PRINT_ABORT
-#undef ARRAY_TEST
-#undef ARRAY_TEST_ERR
+#undef ARARY_STR
+#undef ARARY_TEST_PRINT_ABORT
+#undef ARARY_TEST_ECODE
+#undef ARARY_TEST
 #undef CSTDLIB_ARRAY_UNIT_TESTS
 #endif // CSTDLIB_ARRAY_UNIT_TESTS
 

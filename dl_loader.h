@@ -10,6 +10,10 @@
  * License: MIT (go to the end of this file for details)
  */
 
+/* ------------------------------------------------------------------------ */
+/* -------------------------------- header -------------------------------- */
+/* ------------------------------------------------------------------------ */
+
 #ifndef CSTDLIB_DL_LOADER
 #define CSTDLIB_DL_LOADER
 
@@ -20,23 +24,15 @@ typedef struct CDLLoader
   void* raw;
 } CDLLoader;
 
-typedef struct c_dl_error_t
+typedef enum c_dl_error_t
 {
-  int code;
-  char const* msg;
+  C_DL_ERROR_none,
+  C_DL_ERROR_out_is_null,
+  C_DL_ERROR_loading,
+  C_DL_ERROR_mem_allocation,
+  C_DL_ERROR_finding_symbol,
+  C_DL_LOADER_error_invalid_parameters,
 } c_dl_error_t;
-
-#define C_DL_ERROR_NONE ((c_dl_error_t){ 0, "" })
-#define C_DL_ERROR_OUT_IS_NULL                                                 \
-  ((c_dl_error_t){ 1, "ld_loader: the out pointer is NULL" })
-#define C_DL_ERROR_LOADING                                                     \
-  ((c_dl_error_t){ 2, "ld_loader: failed to load the dynamic library" })
-#define C_DL_ERROR_MEM_ALLOCATION                                              \
-  ((c_dl_error_t){ 3, "memory allocation error" })
-#define C_DL_ERROR_FINDING_SYMBOL                                              \
-  ((c_dl_error_t){ 4, "ld_loader: failed to find this symbol" })
-#define C_DL_LOADER_ERROR_invalid_parameters                                   \
-  ((c_dl_error_t){ 5, "ld_loader: invalid parameters" })
 
 /// @brief create a loader
 /// @param file_path the dynamic library path
@@ -64,7 +60,16 @@ c_dl_error_t c_dl_loader_get (
 /// @param self the loader object
 void c_dl_loader_destroy (CDLLoader* self);
 
+/// @brief
+/// @param err
+/// @return
+char const* c_dl_get_error_description (c_dl_error_t err);
+
 #endif // CSTDLIB_DL_LOADER
+
+/* ------------------------------------------------------------------------ */
+/* ---------------------------- implementation ---------------------------- */
+/* ------------------------------------------------------------------------ */
 
 #ifdef CSTDLIB_DL_LOADER_IMPLEMENTATION
 #include <assert.h>
@@ -90,7 +95,7 @@ void c_dl_loader_destroy (CDLLoader* self);
 #ifndef C_DL_LOADER_DONT_CHECK_PARAMS
 #define C_DL_LOADER_CHECK_PARAMS(params)                                       \
   if (!(params))                                                               \
-    return C_DL_LOADER_ERROR_invalid_parameters;
+    return C_DL_LOADER_error_invalid_parameters;
 #else
 #define C_DL_LOADER_CHECK_PARAMS(params) ((void) 0)
 #endif
@@ -100,32 +105,24 @@ c_dl_loader_create (
     char const file_path[], size_t file_path_len, CDLLoader* out_dl_loader
 )
 {
-  assert (file_path && file_path_len > 0);
-  assert (file_path[file_path_len] == '\0');
+  C_DL_LOADER_CHECK_PARAMS (file_path && file_path_len > 0);
+  C_DL_LOADER_CHECK_PARAMS (file_path[file_path_len] == '\0');
   (void) file_path_len;
 
-  if (out_dl_loader)
+  if (!out_dl_loader)
     {
-      *out_dl_loader = (CDLLoader){ 0 };
-
-#ifdef _WIN32
-      SetLastError (0);
-      out_dl_loader->raw = (void*) LoadLibraryA (file_path);
-
-      return out_dl_loader->raw
-                 ? C_DL_ERROR_NONE
-                 : (c_dl_error_t){ GetLastError (), C_DL_ERROR_LOADING.msg };
-#else
-      dlerror ();
-      out_dl_loader->raw = dlopen (file_path, RTLD_LAZY);
-
-      return out_dl_loader->raw
-                 ? C_DL_ERROR_NONE
-                 : (c_dl_error_t){ C_DL_ERROR_LOADING.code, dlerror () };
-#endif
+      return C_DL_ERROR_none;
     }
 
-  return C_DL_ERROR_OUT_IS_NULL;
+  *out_dl_loader = (CDLLoader){ 0 };
+
+#ifdef _WIN32
+  out_dl_loader->raw = (void*) LoadLibraryA (file_path);
+  return out_dl_loader->raw ? C_DL_ERROR_none : C_DL_ERROR_loading;
+#else
+  out_dl_loader->raw = dlopen (file_path, RTLD_LAZY);
+  return out_dl_loader->raw ? C_DL_ERROR_none : C_DL_ERROR_loading;
+#endif
 }
 
 c_dl_error_t
@@ -136,30 +133,21 @@ c_dl_loader_get (
     void** out_result
 )
 {
-  assert (self && self->raw);
-  assert (symbol_name && symbol_name_len > 0);
+  C_DL_LOADER_CHECK_PARAMS (self && self->raw);
+  C_DL_LOADER_CHECK_PARAMS (symbol_name && symbol_name_len > 0);
   (void) symbol_name_len;
 
-  if (out_result)
+  if (!out_result)
     {
-#ifdef _WIN32
-      SetLastError (0);
-      *out_result = GetProcAddress (self->raw, symbol_name);
-
-      return *out_result ? C_DL_ERROR_NONE
-                         : (c_dl_error_t){ GetLastError (),
-                                           C_DL_ERROR_FINDING_SYMBOL.msg };
-#else
-      dlerror ();
-      *out_result = dlsym (self->raw, symbol_name);
-
-      return *out_result
-                 ? C_DL_ERROR_NONE
-                 : (c_dl_error_t){ C_DL_ERROR_FINDING_SYMBOL.code, dlerror () };
-#endif
+      return C_DL_ERROR_none;
     }
-
-  return C_DL_ERROR_OUT_IS_NULL;
+#ifdef _WIN32
+  *out_result = GetProcAddress (self->raw, symbol_name);
+  return *out_result ? C_DL_ERROR_none : C_DL_ERROR_finding_symbol;
+#else
+  *out_result = dlsym (self->raw, symbol_name);
+  return *out_result ? C_DL_ERROR_none : C_DL_ERROR_finding_symbol;
+#endif
 }
 
 void
@@ -169,13 +157,36 @@ c_dl_loader_destroy (CDLLoader* self)
     {
 #ifdef _WIN32
       BOOL free_status = FreeLibrary (self->raw);
-      assert (free_status);
+      C_DL_LOADER_CHECK_PARAMS (free_status);
 #else
       int close_status = dlclose (self->raw);
-      assert (close_status == 0);
+      /// FIXME:
+      (void) close_status;
+      // C_DL_LOADER_CHECK_PARAMS (close_status == 0);
 #endif
 
       *self = (CDLLoader){ 0 };
+    }
+}
+
+char const*
+c_dl_get_error_description (c_dl_error_t err)
+{
+  switch (err)
+    {
+    case C_DL_ERROR_none:
+      return "";
+    case C_DL_ERROR_out_is_null:
+      return "ld_loader: the out pointer is NULL";
+    case C_DL_ERROR_loading:
+      return "ld_loader: failed to load the dynamic library";
+    case C_DL_ERROR_mem_allocation:
+      return "memory allocation error";
+    case C_DL_ERROR_finding_symbol:
+      return "ld_loader: failed to find this symbol";
+    case C_DL_LOADER_error_invalid_parameters:
+    default:
+      return "ld_loader: invalid parameters";
     }
 }
 
@@ -186,6 +197,10 @@ c_dl_loader_destroy (CDLLoader* self)
 #undef C_DL_LOADER_DONT_CHECK_PARAMS
 #undef CSTDLIB_DL_LOADER_IMPLEMENTATION
 #endif // CSTDLIB_DL_LOADER_IMPLEMENTATION
+
+/* ------------------------------------------------------------------------ */
+/* -------------------------------- tests --------------------------------- */
+/* ------------------------------------------------------------------------ */
 
 #ifdef CSTDLIB_DL_LOADER_UNIT_TESTS
 #ifdef NDEBUG
@@ -203,13 +218,16 @@ c_dl_loader_destroy (CDLLoader* self)
 
 #define DL_STR(str) str, (sizeof (str) - 1)
 #define DL_TEST_PRINT_ABORT(msg) (fprintf (stderr, "%s\n", msg), abort ())
-#define DL_TEST(cond, err) (!(cond) ? DL_TEST_PRINT_ABORT (err.msg) : (void) 0)
-#define DL_TEST_ERR(err) (DL_TEST (err.code == 0, err))
+#define DL_TEST_ECODE(error_code)                                              \
+  (error_code != C_DL_ERROR_none)                                              \
+      ? DL_TEST_PRINT_ABORT (c_dl_get_error_description (error_code))          \
+      : (void) 0
+#define DL_TEST(cond) (!(cond)) ? DL_TEST_PRINT_ABORT (#cond) : (void) 0
 
 int
 main (void)
 {
-  c_dl_error_t err = C_DL_ERROR_NONE;
+  c_dl_error_t err = C_DL_ERROR_none;
   (void) err;
 
   {
@@ -220,11 +238,11 @@ main (void)
 #endif
     CDLLoader loader;
     err = c_dl_loader_create (DL_STR (lib_path), &loader);
-    DL_TEST_ERR (err);
+    DL_TEST_ECODE (err);
 
     int (*add) (int, int) = NULL;
     err = c_dl_loader_get (&loader, DL_STR ("add"), (void**) &add);
-    DL_TEST (add (1, 2) == 3, err);
+    DL_TEST (add (1, 2) == 3);
 
     c_dl_loader_destroy (&loader);
   }
@@ -241,8 +259,8 @@ main (void)
 
 #undef DL_STR
 #undef DL_TEST_PRINT_ABORT
+#undef DL_TEST_ECODE
 #undef DL_TEST
-#undef DL_TEST_ERR
 #undef CSTDLIB_DL_LOADER_UNIT_TESTS
 #endif // CSTDLIB_DL_LOADER_UNIT_TESTS
 
