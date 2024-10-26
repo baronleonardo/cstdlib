@@ -30,7 +30,7 @@
 
 typedef struct CDeferNode
 {
-  void (*destructor) (void*);
+  void (*destructor)(void*);
   void* param;
 } CDeferNode;
 
@@ -49,34 +49,28 @@ typedef struct CDefer
 } CDefer;
 
 #define c_guard                                                                \
-  for (__c_defer_init (                                                        \
-           C_DEFER_MAX_DEFER_NODES, C_DEFER_MAX_ERROR_DEFER_NODES              \
-       );                                                                      \
+  for (__c_defer_init(C_DEFER_MAX_DEFER_NODES, C_DEFER_MAX_ERROR_DEFER_NODES); \
        c_defer_var.defer_stack.capacity &&                                     \
        c_defer_var.defer_error_stack.capacity;                                 \
-       __c_defer_deinit (&c_defer_var))
+       __c_defer_deinit(&c_defer_var))
 
 #define c_defer(fn, param)                                                     \
-  if (c_defer_var.defer_stack.len < c_defer_var.defer_stack.capacity)          \
-    {                                                                          \
-      c_defer_var.defer_stack.nodes[c_defer_var.defer_stack.len++] =           \
-          (CDeferNode){ fn, param };                                           \
-    }
+  if (c_defer_var.defer_stack.len < c_defer_var.defer_stack.capacity) {        \
+    c_defer_var.defer_stack.nodes[c_defer_var.defer_stack.len++] =             \
+      (CDeferNode){ fn, param };                                               \
+  }
 
 #define c_defer_err(cond, destructor, destructor_param, on_error)              \
   if (c_defer_var.defer_error_stack.len <                                      \
-      c_defer_var.defer_error_stack.capacity)                                  \
-    {                                                                          \
-      c_defer_var.defer_error_stack                                            \
-          .nodes[c_defer_var.defer_error_stack.len++] =                        \
-          (CDeferNode){ destructor, destructor_param };                        \
-      if (!(cond))                                                             \
-        {                                                                      \
-          c_defer_var.has_error = true;                                        \
-          (on_error);                                                          \
-          continue;                                                            \
-        }                                                                      \
-    }
+      c_defer_var.defer_error_stack.capacity) {                                \
+    c_defer_var.defer_error_stack.nodes[c_defer_var.defer_error_stack.len++] = \
+      (CDeferNode){ destructor, destructor_param };                            \
+    if (!(cond)) {                                                             \
+      c_defer_var.has_error = true;                                            \
+      (on_error);                                                              \
+      continue;                                                                \
+    }                                                                          \
+  }
 
 /// internal - don't use them directly
 
@@ -84,33 +78,29 @@ typedef struct CDefer
   CDefer c_defer_var = {                                                       \
     .defer_stack = { .nodes = (CDeferNode[defer_stack_capacity]){ { 0 } },     \
                      .capacity = defer_stack_capacity },                       \
-    .defer_error_stack = { .nodes = (CDeferNode[defer_error_stack_capacity]    \
-                           ){ { 0 } },                                         \
+    .defer_error_stack = { .nodes =                                            \
+                             (CDeferNode[defer_error_stack_capacity]){         \
+                               { 0 } },                                        \
                            .capacity = defer_error_stack_capacity }            \
   }
 
 static inline void
-__c_defer_deinit (CDefer* c_defer_var)
+__c_defer_deinit(CDefer* c_defer_var)
 {
   for (size_t i = c_defer_var->defer_stack.len - 1;
        i < c_defer_var->defer_stack.len;
-       --i)
-    {
-      c_defer_var->defer_stack.nodes[i].destructor (
-          c_defer_var->defer_stack.nodes[i].param
-      );
+       --i) {
+    c_defer_var->defer_stack.nodes[i].destructor(
+      c_defer_var->defer_stack.nodes[i].param);
+  }
+  if (c_defer_var->has_error) {
+    for (size_t i = c_defer_var->defer_error_stack.len - 1;
+         i < c_defer_var->defer_error_stack.len;
+         --i) {
+      c_defer_var->defer_error_stack.nodes[i].destructor(
+        c_defer_var->defer_error_stack.nodes[i].param);
     }
-  if (c_defer_var->has_error)
-    {
-      for (size_t i = c_defer_var->defer_error_stack.len - 1;
-           i < c_defer_var->defer_error_stack.len;
-           --i)
-        {
-          c_defer_var->defer_error_stack.nodes[i].destructor (
-              c_defer_var->defer_error_stack.nodes[i].param
-          );
-        }
-    }
+  }
 
   *c_defer_var = (CDefer){ 0 };
 }
@@ -135,36 +125,36 @@ __c_defer_deinit (CDefer* c_defer_var)
 #include <stdio.h>
 #include <stdlib.h>
 
-#define DEFER_STR(str) str, (sizeof (str) - 1)
-#define DEFER_TEST_PRINT_ABORT(msg) (fprintf (stderr, "%s\n", msg), abort ())
-#define DEFER_TEST(cond) (!(cond)) ? DEFER_TEST_PRINT_ABORT (#cond) : (void) 0
+#define DEFER_STR(str) str, (sizeof(str) - 1)
+#define DEFER_TEST_PRINT_ABORT(msg) (fprintf(stderr, "%s\n", msg), abort())
+#define DEFER_TEST(cond) (!(cond)) ? DEFER_TEST_PRINT_ABORT(#cond) : (void)0
 
 int
-fn (void)
+fn(void)
 {
   int error_code = 0;
   c_guard
   {
-    int* arr1 = calloc (10, sizeof (int));
-    c_defer (free, arr1);
+    int* arr1 = calloc(10, sizeof(int));
+    c_defer(free, arr1);
 
     int err = 10;
-    int* arr2 = calloc (10, sizeof (int));
+    int* arr2 = calloc(10, sizeof(int));
     // this will fail and the defer_err sequence will start
-    c_defer_err (err != 10, free, arr2, error_code = -1);
+    c_defer_err(err != 10, free, arr2, error_code = -1);
 
-    int* arr3 = calloc (10, sizeof (int));
-    c_defer (free, arr3);
+    int* arr3 = calloc(10, sizeof(int));
+    c_defer(free, arr3);
   }
 
   return error_code;
 }
 
 int
-main (void)
+main(void)
 {
-  int err = fn ();
-  DEFER_TEST (err != 0); // this will fail on defer
+  int err = fn();
+  DEFER_TEST(err != 0); // this will fail on defer
 }
 
 #ifdef _MSC_VER

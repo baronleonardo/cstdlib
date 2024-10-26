@@ -39,9 +39,10 @@ typedef enum c_dl_error_t
 /// @param file_path_len the dynamic library path string length
 /// @param out_dl_loader the result loader object
 /// @return error
-c_dl_error_t c_dl_loader_create (
-    char const file_path[], size_t file_path_len, CDLLoader* out_dl_loader
-);
+c_dl_error_t
+c_dl_loader_create(char const file_path[],
+                   size_t file_path_len,
+                   CDLLoader* out_dl_loader);
 
 /// @brief load a symbol from the loaded dynamic library
 /// @param self the loader object
@@ -49,21 +50,22 @@ c_dl_error_t c_dl_loader_create (
 /// @param symbol_name_len
 /// @param out_result the result symbole (function, variable, ...)
 /// @return error
-c_dl_error_t c_dl_loader_get (
-    CDLLoader* self,
-    char const symbol_name[],
-    size_t symbol_name_len,
-    void** out_result
-);
+c_dl_error_t
+c_dl_loader_get(CDLLoader* self,
+                char const symbol_name[],
+                size_t symbol_name_len,
+                void** out_result);
 
 /// @brief destroy the loader object
 /// @param self the loader object
-void c_dl_loader_destroy (CDLLoader* self);
+void
+c_dl_loader_destroy(CDLLoader* self);
 
 /// @brief
 /// @param err
 /// @return
-char const* c_dl_get_error_description (c_dl_error_t err);
+char const*
+c_dl_get_error_description(c_dl_error_t err);
 
 #endif // CSTDLIB_DL_LOADER
 
@@ -97,83 +99,77 @@ char const* c_dl_get_error_description (c_dl_error_t err);
   if (!(params))                                                               \
     return C_DL_LOADER_error_invalid_parameters;
 #else
-#define C_DL_LOADER_CHECK_PARAMS(params) ((void) 0)
+#define C_DL_LOADER_CHECK_PARAMS(params) ((void)0)
 #endif
 
 c_dl_error_t
-c_dl_loader_create (
-    char const file_path[], size_t file_path_len, CDLLoader* out_dl_loader
-)
+c_dl_loader_create(char const file_path[],
+                   size_t file_path_len,
+                   CDLLoader* out_dl_loader)
 {
-  C_DL_LOADER_CHECK_PARAMS (file_path && file_path_len > 0);
-  C_DL_LOADER_CHECK_PARAMS (file_path[file_path_len] == '\0');
-  (void) file_path_len;
+  C_DL_LOADER_CHECK_PARAMS(file_path && file_path_len > 0);
+  C_DL_LOADER_CHECK_PARAMS(file_path[file_path_len] == '\0');
+  (void)file_path_len;
 
-  if (!out_dl_loader)
-    {
-      return C_DL_ERROR_none;
-    }
+  if (!out_dl_loader) {
+    return C_DL_ERROR_none;
+  }
 
   *out_dl_loader = (CDLLoader){ 0 };
 
 #ifdef _WIN32
-  out_dl_loader->raw = (void*) LoadLibraryA (file_path);
+  out_dl_loader->raw = (void*)LoadLibraryA(file_path);
   return out_dl_loader->raw ? C_DL_ERROR_none : C_DL_ERROR_loading;
 #else
-  out_dl_loader->raw = dlopen (file_path, RTLD_LAZY);
+  out_dl_loader->raw = dlopen(file_path, RTLD_LAZY);
   return out_dl_loader->raw ? C_DL_ERROR_none : C_DL_ERROR_loading;
 #endif
 }
 
 c_dl_error_t
-c_dl_loader_get (
-    CDLLoader* self,
-    char const symbol_name[],
-    size_t symbol_name_len,
-    void** out_result
-)
+c_dl_loader_get(CDLLoader* self,
+                char const symbol_name[],
+                size_t symbol_name_len,
+                void** out_result)
 {
-  C_DL_LOADER_CHECK_PARAMS (self && self->raw);
-  C_DL_LOADER_CHECK_PARAMS (symbol_name && symbol_name_len > 0);
-  (void) symbol_name_len;
+  C_DL_LOADER_CHECK_PARAMS(self && self->raw);
+  C_DL_LOADER_CHECK_PARAMS(symbol_name && symbol_name_len > 0);
+  (void)symbol_name_len;
 
-  if (!out_result)
-    {
-      return C_DL_ERROR_none;
-    }
+  if (!out_result) {
+    return C_DL_ERROR_none;
+  }
 #ifdef _WIN32
-  *out_result = GetProcAddress (self->raw, symbol_name);
+  *out_result = GetProcAddress(self->raw, symbol_name);
   return *out_result ? C_DL_ERROR_none : C_DL_ERROR_finding_symbol;
 #else
-  *out_result = dlsym (self->raw, symbol_name);
+  *out_result = dlsym(self->raw, symbol_name);
   return *out_result ? C_DL_ERROR_none : C_DL_ERROR_finding_symbol;
 #endif
 }
 
 void
-c_dl_loader_destroy (CDLLoader* self)
+c_dl_loader_destroy(CDLLoader* self)
 {
-  if (self && self->raw)
-    {
+  if (self && self->raw) {
 #ifdef _WIN32
-      BOOL free_status = FreeLibrary (self->raw);
-      C_DL_LOADER_CHECK_PARAMS (free_status);
+    BOOL free_status = FreeLibrary(self->raw);
+    C_DL_LOADER_CHECK_PARAMS(free_status);
 #else
-      int close_status = dlclose (self->raw);
-      /// FIXME:
-      (void) close_status;
-      // C_DL_LOADER_CHECK_PARAMS (close_status == 0);
+    int close_status = dlclose(self->raw);
+    /// FIXME:
+    (void)close_status;
+    // C_DL_LOADER_CHECK_PARAMS (close_status == 0);
 #endif
 
-      *self = (CDLLoader){ 0 };
-    }
+    *self = (CDLLoader){ 0 };
+  }
 }
 
 char const*
-c_dl_get_error_description (c_dl_error_t err)
+c_dl_get_error_description(c_dl_error_t err)
 {
-  switch (err)
-    {
+  switch (err) {
     case C_DL_ERROR_none:
       return "";
     case C_DL_ERROR_out_is_null:
@@ -187,7 +183,7 @@ c_dl_get_error_description (c_dl_error_t err)
     case C_DL_LOADER_error_invalid_parameters:
     default:
       return "ld_loader: invalid parameters";
-    }
+  }
 }
 
 #ifdef _MSC_VER
@@ -216,19 +212,19 @@ c_dl_get_error_description (c_dl_error_t err)
 #include <stdio.h>
 #include <stdlib.h>
 
-#define DL_STR(str) str, (sizeof (str) - 1)
-#define DL_TEST_PRINT_ABORT(msg) (fprintf (stderr, "%s\n", msg), abort ())
+#define DL_STR(str) str, (sizeof(str) - 1)
+#define DL_TEST_PRINT_ABORT(msg) (fprintf(stderr, "%s\n", msg), abort())
 #define DL_TEST_ECODE(error_code)                                              \
   (error_code != C_DL_ERROR_none)                                              \
-      ? DL_TEST_PRINT_ABORT (c_dl_get_error_description (error_code))          \
-      : (void) 0
-#define DL_TEST(cond) (!(cond)) ? DL_TEST_PRINT_ABORT (#cond) : (void) 0
+    ? DL_TEST_PRINT_ABORT(c_dl_get_error_description(error_code))              \
+    : (void)0
+#define DL_TEST(cond) (!(cond)) ? DL_TEST_PRINT_ABORT(#cond) : (void)0
 
 int
-main (void)
+main(void)
 {
   c_dl_error_t err = C_DL_ERROR_none;
-  (void) err;
+  (void)err;
 
   {
 #ifdef _WIN32
@@ -237,14 +233,14 @@ main (void)
     char const lib_path[] = "test_assets/libmylib.so";
 #endif
     CDLLoader loader;
-    err = c_dl_loader_create (DL_STR (lib_path), &loader);
-    DL_TEST_ECODE (err);
+    err = c_dl_loader_create(DL_STR(lib_path), &loader);
+    DL_TEST_ECODE(err);
 
-    int (*add) (int, int) = NULL;
-    err = c_dl_loader_get (&loader, DL_STR ("add"), (void**) &add);
-    DL_TEST (add (1, 2) == 3);
+    int (*add)(int, int) = NULL;
+    err = c_dl_loader_get(&loader, DL_STR("add"), (void**)&add);
+    DL_TEST(add(1, 2) == 3);
 
-    c_dl_loader_destroy (&loader);
+    c_dl_loader_destroy(&loader);
   }
 }
 
