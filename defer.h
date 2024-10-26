@@ -54,17 +54,17 @@ typedef struct CDefer
        c_defer_var.defer_error_stack.capacity;                                 \
        __c_defer_deinit(&c_defer_var))
 
-#define c_defer(fn, param)                                                     \
+#define c_defer(destructor, destructor_param)                                  \
   if (c_defer_var.defer_stack.len < c_defer_var.defer_stack.capacity) {        \
     c_defer_var.defer_stack.nodes[c_defer_var.defer_stack.len++] =             \
-      (CDeferNode){ fn, param };                                               \
+      (CDeferNode){ (void (*)(void*))destructor, destructor_param };           \
   }
 
 #define c_defer_err(cond, destructor, destructor_param, on_error)              \
   if (c_defer_var.defer_error_stack.len <                                      \
       c_defer_var.defer_error_stack.capacity) {                                \
     c_defer_var.defer_error_stack.nodes[c_defer_var.defer_error_stack.len++] = \
-      (CDeferNode){ destructor, destructor_param };                            \
+      (CDeferNode){ (void (*)(void*))destructor, destructor_param };           \
     if (!(cond)) {                                                             \
       c_defer_var.has_error = true;                                            \
       (on_error);                                                              \
