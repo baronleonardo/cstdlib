@@ -54,7 +54,7 @@ typedef struct CDefer
   if (!c_defer_is_done)                                                        \
     for (__c_defer_init(C_DEFER_MAX_DEFER_NODES,                               \
                         C_DEFER_MAX_ERROR_DEFER_NODES);                        \
-         !c_defer_is_done;                                                     \
+         c_defer_var.defer_stack.capacity && !c_defer_is_done;                 \
          __c_defer_deinit(&c_defer_var))
 
 /// @brief this pushes a destructor and it parameter to stack
@@ -92,9 +92,10 @@ typedef struct CDefer
 ///                 called before the destructor in failure of `cond`
 #define c_defer_check(cond, destructor, destructor_param, on_error)            \
   if (!(cond)) {                                                               \
+    c_defer_is_done = true;                                                    \
     (on_error);                                                                \
-    if (destructor) {                                                          \
-      void (*destructor_fn)(void*) = (void (*)(void*))destructor;              \
+    void (*destructor_fn)(void*) = (void (*)(void*))destructor;                \
+    if (destructor_fn) {                                                       \
       destructor_fn(destructor_param);                                         \
     }                                                                          \
     __c_defer_deinit(&c_defer_var);                                            \
