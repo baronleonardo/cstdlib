@@ -59,7 +59,7 @@ typedef struct CDefer
 
 /// @brief this pushes a destructor and it parameter to stack
 ///        and call each one in LIFO style ad the end of `c_guard` scope
-/// @param destructor a function with void(*)(void*) signature
+/// @param destructor a function with void(*)(void*) signature (could be NULL)
 /// @param destructor_param the destructor parameter
 #define c_defer(destructor, destructor_param)                                  \
   if (c_defer_var.defer_stack.len < c_defer_var.defer_stack.capacity) {        \
@@ -69,7 +69,7 @@ typedef struct CDefer
 
 /// @brief same as c_defer but the guard will be terminated on `cond` failure
 /// @param cond a test condition
-/// @param destructor a function with void(*)(void*) signature
+/// @param destructor a function with void(*)(void*) signature (could be NULL)
 /// @param destructor_param the destructor parameter
 /// @param on_error a code that will be called on failed `cond`
 #define c_defer_err(cond, destructor, destructor_param, on_error)              \
@@ -86,14 +86,17 @@ typedef struct CDefer
 
 /// @brief same as c_defer_err but in `cond` failure, it fails immediately
 /// @param cond a test condition
-/// @param destructor a function with void(*)(void*) signature
+/// @param destructor a function with void(*)(void*) signature (could be NULL)
 /// @param destructor_param the destructor parameter
 /// @param on_error a code that will be called on failed `cond`, this will be
 ///                 called before the destructor in failure of `cond`
 #define c_defer_check(cond, destructor, destructor_param, on_error)            \
   if (!(cond)) {                                                               \
     (on_error);                                                                \
-    destructor(destructor_param);                                              \
+    if (destructor) {                                                          \
+      void (*destructor_fn)(void*) = (void (*)(void*))destructor;              \
+      destructor_fn(destructor_param);                                         \
+    }                                                                          \
     __c_defer_deinit(&c_defer_var);                                            \
     goto C_GUARD_LABEL;                                                        \
   }
@@ -114,8 +117,10 @@ __c_defer_deinit(CDefer* c_defer_var)
   for (size_t i = c_defer_var->defer_stack.len - 1;
        i < c_defer_var->defer_stack.len;
        --i) {
-    c_defer_var->defer_stack.nodes[i].destructor(
-      c_defer_var->defer_stack.nodes[i].param);
+    if (c_defer_var->defer_stack.nodes[i].destructor) {
+      c_defer_var->defer_stack.nodes[i].destructor(
+        c_defer_var->defer_stack.nodes[i].param);
+    }
   }
 
   *c_defer_var = (CDefer){ 0 };
