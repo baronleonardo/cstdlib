@@ -78,7 +78,9 @@ typedef struct CDefer
       (CDeferNode){ (void (*)(void*))destructor, destructor_param };           \
     if (!(cond)) {                                                             \
       c_defer_is_done = true;                                                  \
-      (on_error);                                                              \
+      do {                                                                     \
+        on_error;                                                              \
+      } while (0);                                                             \
       __c_defer_deinit(&c_defer_var);                                          \
       goto C_GUARD_LABEL;                                                      \
     }                                                                          \
@@ -93,7 +95,9 @@ typedef struct CDefer
 #define c_defer_check(cond, destructor, destructor_param, on_error)            \
   if (!(cond)) {                                                               \
     c_defer_is_done = true;                                                    \
-    (on_error);                                                                \
+    do {                                                                       \
+      on_error;                                                                \
+    } while (0);                                                               \
     void (*destructor_fn)(void*) = (void (*)(void*))destructor;                \
     if (destructor_fn) {                                                       \
       destructor_fn(destructor_param);                                         \
