@@ -24,15 +24,24 @@ typedef struct CDLLoader
   void* raw;
 } CDLLoader;
 
-typedef enum c_dl_error_t
+typedef struct c_dl_error_t
 {
-  C_DL_ERROR_none,
-  C_DL_ERROR_out_is_null,
-  C_DL_ERROR_loading,
-  C_DL_ERROR_mem_allocation,
-  C_DL_ERROR_finding_symbol,
-  C_DL_LOADER_error_invalid_parameters,
+  int code;
+  char const* desc;
 } c_dl_error_t;
+
+#define C_DL_ERROR_none ((c_dl_error_t){ .code = 0, .desc = "" })
+#define C_DL_ERROR_out_is_null                                                 \
+  ((c_dl_error_t){ .code = 1, .desc = "ld_loader: the out pointer is NULL" })
+#define C_DL_ERROR_loading                                                     \
+  ((c_dl_error_t){ .code = 2,                                                  \
+                   .desc = "ld_loader: failed to load the dynamic library" })
+#define C_DL_ERROR_mem_allocation                                              \
+  ((c_dl_error_t){ .code = 3, .desc = "memory allocation error" })
+#define C_DL_ERROR_finding_symbol                                              \
+  ((c_dl_error_t){ .code = 4, .desc = "ld_loader: failed to find this symbol" })
+#define C_DL_LOADER_error_invalid_parameters                                   \
+  ((c_dl_error_t){ .code = 5, .desc = "ld_loader: invalid parameters" })
 
 /// @brief create a loader
 /// @param file_path the dynamic library path
@@ -60,12 +69,6 @@ c_dl_loader_get(CDLLoader* self,
 /// @param self the loader object
 void
 c_dl_loader_destroy(CDLLoader* self);
-
-/// @brief
-/// @param err
-/// @return
-char const*
-c_dl_get_error_description(c_dl_error_t err);
 
 #endif // CSTDLIB_DL_LOADER
 
@@ -166,26 +169,6 @@ c_dl_loader_destroy(CDLLoader* self)
   }
 }
 
-char const*
-c_dl_get_error_description(c_dl_error_t err)
-{
-  switch (err) {
-    case C_DL_ERROR_none:
-      return "";
-    case C_DL_ERROR_out_is_null:
-      return "ld_loader: the out pointer is NULL";
-    case C_DL_ERROR_loading:
-      return "ld_loader: failed to load the dynamic library";
-    case C_DL_ERROR_mem_allocation:
-      return "memory allocation error";
-    case C_DL_ERROR_finding_symbol:
-      return "ld_loader: failed to find this symbol";
-    case C_DL_LOADER_error_invalid_parameters:
-    default:
-      return "ld_loader: invalid parameters";
-  }
-}
-
 #ifdef _MSC_VER
 #pragma warning(pop)
 #endif
@@ -214,11 +197,9 @@ c_dl_get_error_description(c_dl_error_t err)
 
 #define DL_STR(str) str, (sizeof(str) - 1)
 #define DL_TEST_PRINT_ABORT(msg) (fprintf(stderr, "%s\n", msg), abort())
-#define DL_TEST_ECODE(error_code)                                              \
-  (error_code != C_DL_ERROR_none)                                              \
-    ? DL_TEST_PRINT_ABORT(c_dl_get_error_description(error_code))              \
-    : (void)0
-#define DL_TEST(cond) (!(cond)) ? DL_TEST_PRINT_ABORT(#cond) : (void)0
+#define DL_TEST(err)                                                           \
+  (err.code != C_DL_ERROR_none.code) ? DL_TEST_PRINT_ABORT(err.desc) : (void)0
+#define DL_ASSERT(cond) (!(cond)) ? DL_TEST_PRINT_ABORT(#cond) : (void)0
 
 int
 main(void)
@@ -234,11 +215,11 @@ main(void)
 #endif
     CDLLoader loader;
     err = c_dl_loader_create(DL_STR(lib_path), &loader);
-    DL_TEST_ECODE(err);
+    DL_TEST(err);
 
     int (*add)(int, int) = NULL;
     err = c_dl_loader_get(&loader, DL_STR("add"), (void**)&add);
-    DL_TEST(add(1, 2) == 3);
+    DL_ASSERT(add(1, 2) == 3);
 
     c_dl_loader_destroy(&loader);
   }
@@ -255,7 +236,7 @@ main(void)
 
 #undef DL_STR
 #undef DL_TEST_PRINT_ABORT
-#undef DL_TEST_ECODE
+#undef DL_TEST
 #undef DL_TEST
 #undef CSTDLIB_DL_LOADER_UNIT_TESTS
 #endif // CSTDLIB_DL_LOADER_UNIT_TESTS

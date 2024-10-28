@@ -25,17 +25,27 @@ typedef struct CFile
   FILE* raw;
 } CFile;
 
-typedef enum c_fs_error_t
+typedef struct c_fs_error_t
 {
-  C_FS_ERROR_none,
-  C_FS_ERROR_wrong_str_len,
-  C_FS_ERROR_mem_allocation,
-  C_FS_ERROR_path_buffer_full,
-  C_FS_ERROR_small_buffer,
-  C_FS_ERROR_path_capacity_small,
-  C_FS_ERROR_invalid_path,
-  C_FS_ERROR_invalid_parameters,
+  int code;
+  char const* desc;
 } c_fs_error_t;
+
+#define C_FS_ERROR_none ((c_fs_error_t){ .code = 0, .desc = "" })
+#define C_FS_ERROR_wrong_str_len                                               \
+  ((c_fs_error_t){ .code = 1, .desc = "fs: invalid string (wrong length)" })
+#define C_FS_ERROR_mem_allocation                                              \
+  ((c_fs_error_t){ .code = 2, .desc = "fs: memory allocation error" })
+#define C_FS_ERROR_path_buffer_full                                            \
+  ((c_fs_error_t){ .code = 3, .desc = "fs: CPath is full" })
+#define C_FS_ERROR_small_buffer                                                \
+  ((c_fs_error_t){ .code = 4, .desc = "fs: buffer is small" })
+#define C_FS_ERROR_path_capacity_small                                         \
+  ((c_fs_error_t){ .code = 5, .desc = "fs: path capacity is small" })
+#define C_FS_ERROR_invalid_path                                                \
+  ((c_fs_error_t){ .code = 6, .desc = "fs: invalid path" })
+#define C_FS_ERROR_invalid_parameters                                          \
+  ((c_fs_error_t){ .code = 7, .desc = "array: invalid parameters" })
 
 /// @brief
 /// @param path
@@ -220,12 +230,6 @@ c_fs_foreach(char path_buf[],
                                   size_t path_len,
                                   void* extra_data),
              void* extra_data);
-
-/// @brief
-/// @param err
-/// @return
-char const*
-c_fs_get_error_description(c_fs_error_t err);
 #endif // CSTDLIB_FS_H
 
 /* ------------------------------------------------------------------------ */
@@ -328,9 +332,9 @@ c_fs_file_open(char const path[],
 
   if (!out_cfile->raw) {
 #ifdef _WIN32
-    return GetLastError();
+    return (c_fs_error_t){ GetLastError(), "" };
 #else
-    return errno;
+    return (c_fs_error_t){ errno, "" };
 #endif
   }
 
@@ -347,16 +351,19 @@ c_fs_file_size(CFile* self, size_t* out_size)
   }
 
   clearerr(self->raw);
+  errno = 0;
   int fseek_state = fseek(self->raw, 0, SEEK_END);
   if (fseek_state != 0) {
     *out_size = 0;
-    return ferror(self->raw);
+    return (c_fs_error_t){ ferror(self->raw), strerror(errno) };
   }
+
   *out_size = ftell(self->raw);
+  errno = 0;
   fseek_state = fseek(self->raw, 0, SEEK_SET); /* same as rewind(f); */
   if (fseek_state != 0) {
     *out_size = 0;
-    return ferror(self->raw);
+    return (c_fs_error_t){ ferror(self->raw), strerror(errno) };
   }
 
   return C_FS_ERROR_none;
@@ -375,7 +382,8 @@ c_fs_file_read(CFile* self, char buf[], size_t buf_size, size_t* out_size)
   if (out_size)
     *out_size = read_size;
 
-  return read_size > 0 ? C_FS_ERROR_none : ferror(self->raw);
+  return read_size > 0 ? C_FS_ERROR_none
+                       : (c_fs_error_t){ ferror(self->raw), strerror(errno) };
 }
 
 c_fs_error_t
@@ -391,7 +399,8 @@ c_fs_file_write(CFile* self, char buf[], size_t buf_size, size_t* out_size)
   if (out_size)
     *out_size = write_size;
 
-  return write_size > 0 ? C_FS_ERROR_none : ferror(self->raw);
+  return write_size > 0 ? C_FS_ERROR_none
+                        : (c_fs_error_t){ ferror(self->raw), strerror(errno) };
 }
 
 c_fs_error_t
@@ -401,8 +410,9 @@ c_fs_file_close(CFile* self)
 
   if (self && self->raw) {
     clearerr(self->raw);
+    errno = 0;
     int close_state = fclose(self->raw);
-    c_fs_error_t err = ferror(self->raw);
+    c_fs_error_t err = (c_fs_error_t){ ferror(self->raw), strerror(errno) };
 
     return close_state == 0 ? C_FS_ERROR_none : err;
     *self = (CFile){ 0 };
@@ -453,14 +463,16 @@ c_fs_path_to_absolute(char const path[],
     path, (DWORD)out_absolute_path_capacity, out_absolute_path, NULL);
   if (out_absolute_path_len)
     *out_absolute_path_len = abs_path_len;
-  return abs_path_len > 0 ? C_FS_ERROR_none : GetLastError();
+  return abs_path_len > 0 ? C_FS_ERROR_none
+                          : (c_fs_error_t){ GetLastError(), "" };
 #else
   errno = 0;
   char* path_status = realpath(path, out_absolute_path);
   size_t abs_path_len = path_status ? strlen(out_absolute_path) : 0;
   if (out_absolute_path_len)
     *out_absolute_path_len = abs_path_len;
-  return path_status ? C_FS_ERROR_none : errno;
+  return path_status ? C_FS_ERROR_none
+                     : (c_fs_error_t){ errno, strerror(errno) };
 #endif
 }
 
@@ -545,7 +557,7 @@ c_fs_get_current_exe_path(char path_buf[],
   if (out_path_buf_len) {
     *out_path_buf_len = len;
   }
-  return len == 0 ? C_FS_ERROR_none : GetLastError();
+  return len == 0 ? C_FS_ERROR_none : (c_fs_error_t){ GetLastError(), "" };
 #else
   errno = 0;
   ssize_t len = readlink("/proc/self/exe", path_buf, path_buf_capacity);
@@ -554,7 +566,7 @@ c_fs_get_current_exe_path(char path_buf[],
   }
 
   if (len == -1) {
-    return errno;
+    return (c_fs_error_t){ errno, "" };
   } else {
     path_buf[len] = '\0';
     return C_FS_ERROR_none;
@@ -572,11 +584,12 @@ c_fs_dir_create(char const dir_path[], size_t path_len)
 #if defined(_WIN32)
   SetLastError(0);
   BOOL dir_created = CreateDirectoryA(dir_path, NULL);
-  return dir_created ? C_FS_ERROR_none : GetLastError();
+  return dir_created ? C_FS_ERROR_none : (c_fs_error_t){ GetLastError(), "" };
 #else
   errno = 0;
   int dir_status = mkdir(dir_path, ~umask(0));
-  return dir_status == 0 ? C_FS_ERROR_none : errno;
+  return dir_status == 0 ? C_FS_ERROR_none
+                         : (c_fs_error_t){ errno, strerror(errno) };
 #endif
 }
 
@@ -596,7 +609,7 @@ c_fs_dir_exists(char const dir_path[], size_t path_len, bool* out_exists)
   size_t path_attributes = GetFileAttributesA(dir_path);
   if (path_attributes == INVALID_FILE_ATTRIBUTES) {
     *out_exists = false;
-    return GetLastError();
+    return (c_fs_error_t){ GetLastError(), "" };
   }
 
   else if ((path_attributes & FILE_ATTRIBUTE_DIRECTORY) ==
@@ -605,6 +618,7 @@ c_fs_dir_exists(char const dir_path[], size_t path_len, bool* out_exists)
     return C_FS_ERROR_none;
   } else {
     *out_exists = false;
+    return (c_fs_error_t){ ERROR_DIRECTORY, "" };
     return ERROR_DIRECTORY;
   }
 #else
@@ -613,12 +627,12 @@ c_fs_dir_exists(char const dir_path[], size_t path_len, bool* out_exists)
   int path_attributes = stat(dir_path, &sb);
   if (path_attributes != 0) {
     *out_exists = false;
-    return errno;
+    return (c_fs_error_t){ errno, "" };
   }
 
   if (S_ISDIR(sb.st_mode) == 0) {
     *out_exists = false;
-    return ENOTDIR;
+    return (c_fs_error_t){ ENOTDIR, strerror(ENOTDIR) };
   }
 
   *out_exists = true;
@@ -636,7 +650,8 @@ c_fs_dir_get_current(char path_buf[], size_t path_buf_len, size_t* out_size)
   DWORD result_path_len = GetCurrentDirectoryA((DWORD)path_buf_len, path_buf);
   if (out_size)
     *out_size = result_path_len;
-  return result_path_len > 0 ? C_FS_ERROR_none : GetLastError();
+  return result_path_len > 0 ? C_FS_ERROR_none
+                             : (c_fs_error_t){ GetLastError(), "" };
 #else
   errno = 0;
   char* state = getcwd(path_buf, path_buf_len);
@@ -656,11 +671,12 @@ c_fs_dir_change_current(char const path[], size_t path_len)
 #ifdef _WIN32
   SetLastError(0);
   BOOL status = SetCurrentDirectory(path);
-  return status ? C_FS_ERROR_none : GetLastError();
+  return status ? C_FS_ERROR_none : (c_fs_error_t){ GetLastError(), "" };
 #else
   errno = 0;
   int status = chdir(path);
-  return status == 0 ? C_FS_ERROR_none : errno;
+  return status == 0 ? C_FS_ERROR_none
+                     : (c_fs_error_t){ errno, strerror(errno) };
 #endif
 }
 
@@ -730,7 +746,7 @@ c_fs_exists(char const path[], size_t path_len, bool* out_exists)
     return C_FS_ERROR_none;
   } else {
     *out_exists = false;
-    return errno;
+    return (c_fs_error_t){ errno, "" };
   }
 #endif
 }
@@ -758,7 +774,7 @@ c_fs_delete(char const path[], size_t path_len)
   errno = 0;
   int remove_status = remove(path);
   if (remove_status != 0) {
-    return errno;
+    return (c_fs_error_t){ errno, "" };
   }
 
   return C_FS_ERROR_none;
@@ -816,7 +832,7 @@ c_fs_foreach(char path_buf[],
   do {
     if (find_handler == INVALID_HANDLE_VALUE) {
       path_buf[path_buf_len - 2] = '\0';
-      err = GetLastError();
+      err = (c_fs_error_t){ GetLastError(), "" };
       goto Error;
     }
 
@@ -831,7 +847,7 @@ c_fs_foreach(char path_buf[],
       path_buf[path_buf_len] = '\0';
       c_fs_error_t err = handler(path_buf, path_buf_len, extra_data);
       path_buf_len = old_len;
-      if (err != C_FS_ERROR_none) {
+      if (err.code != C_FS_ERROR_none.code) {
         break;
       }
     }
@@ -840,7 +856,7 @@ c_fs_foreach(char path_buf[],
   SetLastError(0);
   if (!FindClose(find_handler)) {
     path_buf[orig_path_len] = '\0';
-    err = GetLastError();
+    err = (c_fs_error_t){ GetLastError(), "" };
     goto Error;
   }
 #else
@@ -864,7 +880,7 @@ c_fs_foreach(char path_buf[],
         path_buf[path_buf_len] = '\0';
         c_fs_error_t handler_err = handler(path_buf, path_buf_len, extra_data);
         path_buf_len = old_len;
-        if (handler_err != C_FS_ERROR_none) {
+        if (handler_err.code != C_FS_ERROR_none.code) {
           break;
         }
       }
@@ -874,7 +890,7 @@ c_fs_foreach(char path_buf[],
 
     if (closedir(cur_dir) != 0) {
       path_buf[orig_path_len] = '\0';
-      err = errno;
+      err = (c_fs_error_t){ errno, strerror(errno) };
       goto Error;
     }
   }
@@ -884,30 +900,6 @@ c_fs_foreach(char path_buf[],
 
 Error:
   return err;
-}
-
-char const*
-c_fs_get_error_description(c_fs_error_t err)
-{
-  switch (err) {
-    case C_FS_ERROR_none:
-      return "";
-    case C_FS_ERROR_wrong_str_len:
-      return "fs: invalid string (wrong length)";
-    case C_FS_ERROR_mem_allocation:
-      return "fs: memory allocation error";
-    case C_FS_ERROR_path_buffer_full:
-      return "fs: CPath is full";
-    case C_FS_ERROR_small_buffer:
-      return "fs: buffer is small";
-    case C_FS_ERROR_path_capacity_small:
-      return "fs: path capacity is small";
-    case C_FS_ERROR_invalid_path:
-      return "fs: invalid path";
-    case C_FS_ERROR_invalid_parameters:
-    default:
-      return "array: invalid parameters";
-  }
 }
 
 // ------------------------- internal ------------------------- //
@@ -923,12 +915,12 @@ internal_c_fs_delete_recursively_handler(char path[],
 
   if (is_dir) {
     c_fs_error_t err = internal_c_fs_delete_recursively(path, path_len);
-    if (err != C_FS_ERROR_none) {
+    if (err.code != C_FS_ERROR_none.code) {
       return err;
     }
   } else {
     c_fs_error_t delete_err = c_fs_delete(path, path_len);
-    if (delete_err != C_FS_ERROR_none) {
+    if (delete_err.code != C_FS_ERROR_none.code) {
       return delete_err;
     }
   }
@@ -958,7 +950,7 @@ internal_c_fs_delete_recursively(char path_buf[], size_t path_buf_len)
                                   internal_c_fs_delete_recursively_handler,
                                   NULL);
 
-  if (err != C_FS_ERROR_none) {
+  if (err.code != C_FS_ERROR_none.code) {
     return err;
   }
 
@@ -997,11 +989,9 @@ internal_c_fs_delete_recursively(char path_buf[], size_t path_buf_len)
 
 #define FS_STR(str) str, (sizeof(str) - 1)
 #define FS_TEST_PRINT_ABORT(msg) (fprintf(stderr, "%s\n", msg), abort())
-#define FS_TEST_ECODE(error_code)                                              \
-  (error_code != C_FS_ERROR_none)                                              \
-    ? FS_TEST_PRINT_ABORT(c_fs_get_error_description(error_code))              \
-    : (void)0
-#define FS_TEST(cond) (!(cond)) ? FS_TEST_PRINT_ABORT(#cond) : (void)0
+#define FS_TEST(err)                                                           \
+  (err.code != C_FS_ERROR_none.code) ? FS_TEST_PRINT_ABORT(err.desc) : (void)0
+#define FS_ASSERT(cond) (!(cond)) ? FS_TEST_PRINT_ABORT(#cond) : (void)0
 #define fs_test_playground "test_playground"
 
 int
@@ -1017,11 +1007,11 @@ main(void)
   c_fs_error_t err = C_FS_ERROR_none;
 
   char* path_buf = malloc(MAX_PATH_LEN);
-  FS_TEST(path_buf);
+  FS_ASSERT(path_buf);
   size_t path_buf_len = 0;
 
   err = c_fs_dir_create(FS_STR(fs_test_playground));
-  FS_TEST_ECODE(err);
+  FS_TEST(err);
 
   // test: c_fs_file_write
   {
@@ -1029,20 +1019,20 @@ main(void)
     size_t file_size = 0;
 
     err = c_fs_file_open(FS_STR(fs_test_playground "/file_ara.txt"), "w", &f);
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
     err = c_fs_file_write(&f, FS_STR("بسم الله الرحمن الرحيم\n"), &file_size);
-    FS_TEST(file_size > 0);
-    FS_TEST_ECODE(err);
+    FS_ASSERT(file_size > 0);
+    FS_TEST(err);
     err = c_fs_file_close(&f);
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
 
     err = c_fs_file_open(FS_STR(fs_test_playground "/file_eng.txt"), "w", &f);
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
     err = c_fs_file_write(&f, FS_STR("May peace be upon you\n"), &file_size);
-    FS_TEST(file_size > 0);
-    FS_TEST_ECODE(err);
+    FS_ASSERT(file_size > 0);
+    FS_TEST(err);
     err = c_fs_file_close(&f);
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
   }
 
   // test: c_fs_file_read
@@ -1051,18 +1041,18 @@ main(void)
     size_t read_size = 0;
 
     err = c_fs_file_open(FS_STR(fs_test_playground "/file_eng.txt"), "r", &f);
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
 
     err = c_fs_file_read(&f, buf, buf_len, &read_size);
-    FS_TEST(read_size > 0);
-    FS_TEST_ECODE(err);
+    FS_ASSERT(read_size > 0);
+    FS_TEST(err);
     buf[read_size] = '\0';
-    FS_TEST(strncmp(buf, "May peace be upon you\n", read_size) == 0);
+    FS_ASSERT(strncmp(buf, "May peace be upon you\n", read_size) == 0);
 
     err = c_fs_file_close(&f);
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
     err = c_fs_delete(FS_STR(fs_test_playground "/file_eng.txt"));
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
   }
 
   // test: c_fs_file_read - utf8
@@ -1071,58 +1061,58 @@ main(void)
     size_t read_size = 0;
 
     err = c_fs_file_open(FS_STR(fs_test_playground "/file_ara.txt"), "r", &f);
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
 
     err = c_fs_file_read(&f, buf, buf_len, &read_size);
-    FS_TEST(read_size > 0);
-    FS_TEST_ECODE(err);
+    FS_ASSERT(read_size > 0);
+    FS_TEST(err);
     buf[read_size] = '\0';
-    FS_TEST(strncmp(buf, "بسم الله الرحمن الرحيم\n", read_size) == 0);
+    FS_ASSERT(strncmp(buf, "بسم الله الرحمن الرحيم\n", read_size) == 0);
 
     err = c_fs_file_close(&f);
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
     err = c_fs_delete(FS_STR(fs_test_playground "/file_ara.txt"));
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
   }
 
   // test: c_fs_delete_recursively
   {
     err = c_fs_dir_create(FS_STR(fs_test_playground "/folder"));
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
     CFile file1;
     err =
       c_fs_file_open(FS_STR(fs_test_playground "/folder/1.txt"), "w", &file1);
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
     err = c_fs_file_close(&file1);
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
 
     err = c_fs_dir_create(FS_STR(fs_test_playground "/folder/folder2"));
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
     CFile file2;
     err = c_fs_file_open(
       FS_STR(fs_test_playground "/folder/folder2/.2.txt"), "w", &file2);
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
     err = c_fs_file_close(&file2);
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
 
     memcpy(path_buf, FS_STR(fs_test_playground "/folder") + 1);
     path_buf_len = sizeof(fs_test_playground "/folder") - 1;
     err = c_fs_delete_recursively(path_buf, path_buf_len);
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
   }
 
   // test: c_fs_dir_is_empty
   {
     err = c_fs_dir_create(FS_STR(fs_test_playground "/folder"));
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
 
     bool is_empty = false;
     err = c_fs_dir_is_empty(path_buf, path_buf_len, &is_empty);
-    FS_TEST(!is_empty);
-    FS_TEST_ECODE(err);
+    FS_ASSERT(!is_empty);
+    FS_TEST(err);
 
     err = c_fs_delete(FS_STR(fs_test_playground "/folder"));
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
   }
 
   // test: c_fs_foreach
@@ -1130,39 +1120,39 @@ main(void)
     // this will create a file
     CFile file1;
     err = c_fs_file_open(FS_STR(fs_test_playground "/1.txt"), "w", &file1);
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
     err = c_fs_file_close(&file1);
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
 
     bool file_found = false;
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
 
     strcpy(path_buf, fs_test_playground);
     path_buf_len = strlen(path_buf);
-    // FS_TEST_ECODE(err);
+    // FS_TEST(err);
     // FS_TEST (out_path_len > 0);
 
     c_fs_error_t c_fs_handler(char path[], size_t path_len, void* extra_data);
     err = c_fs_foreach(
       path_buf, path_buf_len, MAX_PATH_LEN, c_fs_handler, &file_found);
-    FS_TEST_ECODE(err);
-    FS_TEST(file_found);
+    FS_TEST(err);
+    FS_ASSERT(file_found);
 
     err = c_fs_delete(FS_STR(fs_test_playground "/1.txt"));
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
   }
 
   // test: c_fs_delete
   {
     err = c_fs_dir_create(FS_STR(fs_test_playground "/folder2"));
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
 
     bool is_exists = false;
     err = c_fs_exists(FS_STR(fs_test_playground "/folder2"), &is_exists);
-    FS_TEST(is_exists);
-    FS_TEST_ECODE(err);
+    FS_ASSERT(is_exists);
+    FS_TEST(err);
     err = c_fs_delete(FS_STR(fs_test_playground "/folder2"));
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
   }
 
   // test: negative results
@@ -1171,18 +1161,18 @@ main(void)
     bool is_exists;
 
     err = c_fs_file_open(FS_STR("/ymp/file1"), "r", &file);
-    FS_TEST(err != C_FS_ERROR_none);
+    FS_ASSERT(err.code != C_FS_ERROR_none.code);
 
     err = c_fs_dir_create(FS_STR("/ymp/file1"));
-    FS_TEST(err != C_FS_ERROR_none);
+    FS_ASSERT(err.code != C_FS_ERROR_none.code);
 
     err = c_fs_dir_exists(FS_STR("/ymp/file1"), &is_exists);
-    FS_TEST(err != C_FS_ERROR_none);
-    FS_TEST(!is_exists);
+    FS_ASSERT(err.code != C_FS_ERROR_none.code);
+    FS_ASSERT(!is_exists);
 
     err = c_fs_exists(FS_STR("/ymp/file1"), &is_exists);
-    FS_TEST_ECODE(err);
-    FS_TEST(!is_exists);
+    FS_TEST(err);
+    FS_ASSERT(!is_exists);
   }
 
   // test: absolute path
@@ -1193,9 +1183,9 @@ main(void)
     size_t out_path_len = 0;
     err = c_fs_path_to_absolute(
       path_buf, path_buf_len, path_buf, MAX_PATH_LEN, &out_path_len);
-    FS_TEST_ECODE(err);
-    FS_TEST(path_buf);
-    FS_TEST(out_path_len > 0);
+    FS_TEST(err);
+    FS_ASSERT(path_buf);
+    FS_ASSERT(out_path_len > 0);
   }
 
   // test: change current dir
@@ -1204,15 +1194,15 @@ main(void)
     size_t tmp_buf_len = 0;
 
     err = c_fs_dir_get_current(tmp_buf, MAX_PATH_LEN, &tmp_buf_len);
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
 
     err = c_fs_path_append(
       path_buf, path_buf_len, MAX_PATH_LEN, FS_STR(".."), &path_buf_len);
-    FS_TEST_ECODE(err);
-    FS_TEST(path_buf_len > 0);
+    FS_TEST(err);
+    FS_ASSERT(path_buf_len > 0);
 
     err = c_fs_dir_change_current(tmp_buf, tmp_buf_len);
-    FS_TEST_ECODE(err);
+    FS_TEST(err);
   }
 
   // test: get parent
@@ -1230,7 +1220,7 @@ main(void)
 #endif
 
       err = c_fs_path_get_parent(FS_STR(path), &new_len);
-      FS_TEST_ECODE(err);
+      FS_TEST(err);
       assert(strncmp(path, gt_path, new_len) == 0);
     }
 
@@ -1245,7 +1235,7 @@ main(void)
 #endif
 
       err = c_fs_path_get_parent(FS_STR(path), &new_len);
-      FS_TEST_ECODE(err);
+      FS_TEST(err);
       assert(strncmp(path, gt_path, new_len) == 0);
     }
 
@@ -1260,13 +1250,13 @@ main(void)
 #endif
 
       err = c_fs_path_get_parent(FS_STR(path), &new_len);
-      FS_TEST_ECODE(err);
+      FS_TEST(err);
       assert(strncmp(path, gt_path, new_len) == 0);
     }
   }
 
   err = c_fs_delete(FS_STR(fs_test_playground));
-  FS_TEST_ECODE(err);
+  FS_TEST(err);
   free(path_buf);
 }
 
@@ -1294,7 +1284,7 @@ c_fs_handler(char path[], size_t path_len, void* extra_data)
 #undef FS_STR
 #undef FS_TEST_PRINT_ABORT
 #undef FS_TEST
-#undef FS_TEST_ECODE
+#undef FS_TEST
 #undef fs_test_playground
 #undef CSTDLIB_FS_UNIT_TESTS
 #endif // CSTDLIB_FS_UNIT_TESTS
@@ -1303,14 +1293,14 @@ c_fs_handler(char path[], size_t path_len, void* extra_data)
  * MIT License
  *
  * Copyright (c) 2024 Mohamed A. Elmeligy
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to
- * deal in the Software without ion, including without limitation the
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without ion, including without limitation the
  * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
  * sell copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions: The above copyright
- * notice and this permission notice shall be included in all copies or
- * substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS",
+ * furnished to do so, subject to the following conditions: The above
+ * copyright notice and this permission notice shall be included in all copies
+ * or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS",
  * WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
  * TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
  * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE

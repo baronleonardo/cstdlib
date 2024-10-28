@@ -44,20 +44,31 @@ typedef struct CStrUnmanaged
 //   size_t size;
 // } CCodePoint;
 
-typedef enum c_str_error_t
+typedef struct c_str_error_t
 {
-  C_STR_ERROR_none,
-  C_STR_ERROR_out_is_null,
-  C_STR_ERROR_mem_allocation,
-  C_STR_ERROR_wrong_len,
-  C_STR_ERROR_wrong_capacity,
-  C_STR_ERROR_wrong_index,
-  C_STR_ERROR_capacity_full,
-  C_STR_ERROR_invalid_utf8,
-  C_STR_ERROR_invalid_format,
-  C_STR_ERROR_needle_not_found,
-  C_STR_ERROR_invalid_parameters,
+  int code;
+  char const* desc;
 } c_str_error_t;
+
+#define C_STR_ERROR_none ((c_str_error_t){ .code = 0, .desc = "" })
+#define C_STR_ERROR_mem_allocation                                             \
+  ((c_str_error_t){ .code = 1, .desc = "str: memory allocation error" })
+#define C_STR_ERROR_wrong_len                                                  \
+  ((c_str_error_t){ .code = 2, .desc = "str: wrong length" })
+#define C_STR_ERROR_wrong_capacity                                             \
+  ((c_str_error_t){ .code = 3, .desc = "str: wrong capactiy" })
+#define C_STR_ERROR_wrong_index                                                \
+  ((c_str_error_t){ .code = 4, .desc = "str: wrong index" })
+#define C_STR_ERROR_capacity_full                                              \
+  ((c_str_error_t){ .code = 5, .desc = "str: capacity is full" })
+#define C_STR_ERROR_invalid_utf8                                               \
+  ((c_str_error_t){ .code = 6, .desc = "str: invalid utf-8" })
+#define C_STR_ERROR_invalid_format                                             \
+  ((c_str_error_t){ .code = 7, .desc = "str: invalid format" })
+#define C_STR_ERROR_needle_not_found                                           \
+  ((c_str_error_t){ .code = 8, .desc = "str: needle not found" })
+#define C_STR_ERROR_invalid_parameters                                         \
+  ((c_str_error_t){ .code = 19, .desc = "str: invalid parameters" })
 
 c_str_error_t
 c_str_create(char const cstr[], size_t cstr_len, CStr* out_cstr);
@@ -235,9 +246,6 @@ void
 c_str_destroy(CStr* self);
 void
 c_str_destroy_unmanaged(CStrUnmanaged* self);
-
-char const*
-c_str_get_error_description(c_str_error_t err);
 #endif /* CSTDLIB_STR_H */
 
 /* ------------------------------------------------------------------------ */
@@ -291,12 +299,12 @@ c_str_create_unmanaged(char const cstr[],
   C_STR_CHECK_PARAMS(cstr);
 
   if (!out_cstr) {
-    return C_STR_ERROR_out_is_null;
+    return C_STR_ERROR_none;
   }
 
   c_str_error_t err =
     c_str_create_empty_unmanaged(cstr_len + 1, malloc_fn, out_cstr);
-  if (err != C_STR_ERROR_none) {
+  if (err.code != C_STR_ERROR_none.code) {
     return C_STR_ERROR_mem_allocation;
   }
 
@@ -323,7 +331,7 @@ c_str_create_empty_unmanaged(size_t capacity,
   C_STR_CHECK_PARAMS(capacity > 0);
 
   if (!out_cstr) {
-    return C_STR_ERROR_out_is_null;
+    return C_STR_ERROR_none;
   }
 
   *out_cstr = (CStrUnmanaged){ 0 };
@@ -483,7 +491,7 @@ c_str_find_unmanaged(CStrUnmanaged* self,
   C_STR_CHECK_PARAMS(cstr_len > 0);
 
   if (!out_result) {
-    return C_STR_ERROR_out_is_null;
+    return C_STR_ERROR_none;
   }
 
   *out_result = internal_c_str_find((CStr*)self, cstr, cstr_len);
@@ -644,7 +652,7 @@ c_str_utf8_valid_unmanaged(CStrUnmanaged* self, bool* out_is_valid)
     for (size_t iii = 0; iii < self->len; iii += codepoint_len) {
       c_str_error_t err = c_str_utf8_next_codepoint_unmanaged(
         self, codepoint_len, &codepoint_len);
-      if (err != 0) {
+      if (err.code != 0) {
         *out_is_valid = false;
         return C_STR_ERROR_none;
       }
@@ -654,7 +662,7 @@ c_str_utf8_valid_unmanaged(CStrUnmanaged* self, bool* out_is_valid)
     return C_STR_ERROR_none;
   }
 
-  return C_STR_ERROR_out_is_null;
+  return C_STR_ERROR_none;
 }
 
 c_str_error_t
@@ -791,13 +799,13 @@ c_str_format_va_unmanaged(CStrUnmanaged* self,
   va_copy(va_tmp, va);
   int needed_len = vsnprintf(NULL, 0, format, va_tmp);
   if (needed_len < 0) {
-    return errno;
+    return (c_str_error_t){ errno, strerror(errno) };
   }
 
   if ((size_t)needed_len >= self->capacity - index) {
     c_str_error_t err = c_str_set_capacity_unmanaged(
       self, self->capacity + needed_len + 1, realloc_fn);
-    if (err != C_STR_ERROR_none) {
+    if (err.code != C_STR_ERROR_none.code) {
       return err;
     }
   }
@@ -806,7 +814,7 @@ c_str_format_va_unmanaged(CStrUnmanaged* self,
   needed_len =
     vsnprintf(self->data + index, self->capacity - index, format, va);
   if (needed_len < 0) {
-    return errno;
+    return (c_str_error_t){ errno, strerror(errno) };
   }
 
   self->len += needed_len;
@@ -830,7 +838,7 @@ c_str_len_unmanaged(CStrUnmanaged const* self, size_t* out_len)
     *out_len = self->len;
     return C_STR_ERROR_none;
   } else {
-    return C_STR_ERROR_out_is_null;
+    return C_STR_ERROR_none;
   }
 }
 
@@ -870,7 +878,7 @@ c_str_capacity_unmanaged(CStrUnmanaged const* self, size_t* out_capacity)
     *out_capacity = self->capacity;
     return C_STR_ERROR_none;
   } else {
-    return C_STR_ERROR_out_is_null;
+    return C_STR_ERROR_none;
   }
 }
 
@@ -919,36 +927,6 @@ c_str_destroy_unmanaged(CStrUnmanaged* self)
   }
 }
 
-char const*
-c_str_get_error_description(c_str_error_t err)
-{
-  switch (err) {
-    case C_STR_ERROR_none:
-      return "";
-    case C_STR_ERROR_out_is_null:
-      return "str: the out pointer is NULL";
-    case C_STR_ERROR_mem_allocation:
-      return "str: memory allocation error";
-    case C_STR_ERROR_wrong_len:
-      return "str: wrong length";
-    case C_STR_ERROR_wrong_capacity:
-      return "str: wrong capactiy";
-    case C_STR_ERROR_wrong_index:
-      return "str: wrong index";
-    case C_STR_ERROR_capacity_full:
-      return "str: capacity is full";
-    case C_STR_ERROR_invalid_utf8:
-      return "str: invalid utf-8";
-    case C_STR_ERROR_invalid_format:
-      return "str: invalid format";
-    case C_STR_ERROR_needle_not_found:
-      return "str: needle not found";
-    case C_STR_ERROR_invalid_parameters:
-    default:
-      return "str: invalid parameters";
-  }
-}
-
 /* ------------------------- internal ------------------------- */
 char*
 internal_c_str_find(CStr* self, char const cstr[], size_t cstr_len)
@@ -994,11 +972,9 @@ internal_c_str_find(CStr* self, char const cstr[], size_t cstr_len)
 #define STR(str) str, (sizeof(str) - 1)
 #define STR_INV(str) (sizeof(str) - 1), str
 #define STR_TEST_PRINT_ABORT(msg) (fprintf(stderr, "%s\n", msg), abort())
-#define STR_TEST_ECODE(error_code)                                             \
-  (error_code != C_STR_ERROR_none)                                             \
-    ? STR_TEST_PRINT_ABORT(c_str_get_error_description(error_code))            \
-    : (void)0
-#define STR_TEST(cond) (!(cond)) ? STR_TEST_PRINT_ABORT(#cond) : (void)0
+#define STR_TEST(err)                                                          \
+  (err.code != C_STR_ERROR_none.code) ? STR_TEST_PRINT_ABORT(err.desc) : (void)0
+#define STR_ASSERT(cond) (!(cond)) ? STR_TEST_PRINT_ABORT(#cond) : (void)0
 
 int
 main(void)
@@ -1009,16 +985,16 @@ main(void)
   {
     CStr str;
     err = c_str_create(STR("Ahmed is here"), &str);
-    STR_TEST_ECODE(err);
+    STR_TEST(err);
 
     err = c_str_remove(&str, STR("here"));
-    STR_TEST_ECODE(err);
+    STR_TEST(err);
 
-    STR_TEST(strncmp(str.data, STR("Ahmed is ")) == 0);
+    STR_ASSERT(strncmp(str.data, STR("Ahmed is ")) == 0);
 
     err = c_str_append_with_cstr(&str, STR("here"));
-    STR_TEST_ECODE(err);
-    STR_TEST(strncmp(str.data, STR("Ahmed is here")) == 0);
+    STR_TEST(err);
+    STR_ASSERT(strncmp(str.data, STR("Ahmed is here")) == 0);
 
     c_str_destroy(&str);
   }
@@ -1028,8 +1004,8 @@ main(void)
     CStr str;
     err = c_str_create(STR(""), &str);
 
-    STR_TEST_ECODE(err);
-    STR_TEST(str.data[0] == "\0"[0]);
+    STR_TEST(err);
+    STR_ASSERT(str.data[0] == "\0"[0]);
 
     c_str_destroy(&str);
   }
@@ -1038,11 +1014,11 @@ main(void)
   {
     CStr str;
     err = c_str_create(STR("My is Mohamed"), &str);
-    STR_TEST_ECODE(err);
+    STR_TEST(err);
 
     err = c_str_insert(&str, STR("name "), 3);
-    STR_TEST_ECODE(err);
-    STR_TEST(strcmp(str.data, "My name is Mohamed") == 0);
+    STR_TEST(err);
+    STR_ASSERT(strcmp(str.data, "My name is Mohamed") == 0);
 
     c_str_destroy(&str);
   }
@@ -1051,19 +1027,19 @@ main(void)
   {
     CStr str;
     err = c_str_create(STR("My name is Mohamed"), &str);
-    STR_TEST_ECODE(err);
+    STR_TEST(err);
 
     err = c_str_replace(&str, STR("name"), STR("game"));
-    STR_TEST_ECODE(err);
-    STR_TEST(strcmp(str.data, "My game is Mohamed") == 0);
+    STR_TEST(err);
+    STR_ASSERT(strcmp(str.data, "My game is Mohamed") == 0);
 
     err = c_str_replace(&str, STR("is"), STR("is not"));
-    STR_TEST_ECODE(err);
-    STR_TEST(strcmp(str.data, "My game is not Mohamed") == 0);
+    STR_TEST(err);
+    STR_ASSERT(strcmp(str.data, "My game is not Mohamed") == 0);
 
     err = c_str_replace(&str, STR("is not"), STR("is"));
-    STR_TEST_ECODE(err);
-    STR_TEST(strcmp(str.data, "My game is Mohamed") == 0);
+    STR_TEST(err);
+    STR_ASSERT(strcmp(str.data, "My game is Mohamed") == 0);
 
     c_str_destroy(&str);
   }
@@ -1072,19 +1048,19 @@ main(void)
   {
     CStr str;
     err = c_str_create(STR("My name is Mohamed"), &str);
-    STR_TEST_ECODE(err);
+    STR_TEST(err);
 
     err = c_str_replace_at(&str, 3, 4, STR("game"));
-    STR_TEST_ECODE(err);
-    STR_TEST(strcmp(str.data, "My game is Mohamed") == 0);
+    STR_TEST(err);
+    STR_ASSERT(strcmp(str.data, "My game is Mohamed") == 0);
 
     err = c_str_replace_at(&str, 8, 2, STR("is not"));
-    STR_TEST_ECODE(err);
-    STR_TEST(strcmp(str.data, "My game is not Mohamed") == 0);
+    STR_TEST(err);
+    STR_ASSERT(strcmp(str.data, "My game is not Mohamed") == 0);
 
     err = c_str_replace_at(&str, 8, 6, STR("is"));
-    STR_TEST_ECODE(err);
-    STR_TEST(strcmp(str.data, "My game is Mohamed") == 0);
+    STR_TEST(err);
+    STR_ASSERT(strcmp(str.data, "My game is Mohamed") == 0);
 
     c_str_destroy(&str);
   }
@@ -1093,14 +1069,14 @@ main(void)
   {
     CStr str1;
     err = c_str_create(STR("Hello, "), &str1);
-    STR_TEST_ECODE(err);
+    STR_TEST(err);
     CStr str2;
     err = c_str_create(STR("world!"), &str2);
-    STR_TEST_ECODE(err);
+    STR_TEST(err);
 
     err = c_str_append(&str1, &str2);
-    STR_TEST_ECODE(err);
-    STR_TEST(strcmp(str1.data, "Hello, world!") == 0);
+    STR_TEST(err);
+    STR_ASSERT(strcmp(str1.data, "Hello, world!") == 0);
 
     c_str_destroy(&str1);
     c_str_destroy(&str2);
@@ -1110,16 +1086,16 @@ main(void)
   {
     CStr str;
     err = c_str_create_empty(100, &str);
-    STR_TEST_ECODE(err);
+    STR_TEST(err);
 
     err = c_str_format(&str,
                        0,
                        STR_INV("smile, smile, smile, %s :), @ %d street"),
                        "Mohamed",
                        32);
-    STR_TEST_ECODE(err);
-    STR_TEST(strcmp(str.data, "smile, smile, smile, Mohamed :), @ 32 street") ==
-             0);
+    STR_TEST(err);
+    STR_ASSERT(
+      strcmp(str.data, "smile, smile, smile, Mohamed :), @ 32 street") == 0);
 
     c_str_destroy(&str);
   }
@@ -1128,12 +1104,12 @@ main(void)
   {
     CStr str;
     err = c_str_create_empty(100, &str);
-    STR_TEST_ECODE(err);
+    STR_TEST(err);
 
     c_str_format(
       &str, 0, STR_INV("%d %s %d, %02d:%02d"), 22, "Mar", 2024, 8, 23);
-    STR_TEST_ECODE(err);
-    STR_TEST(strcmp(str.data, "22 Mar 2024, 08:23") == 0);
+    STR_TEST(err);
+    STR_ASSERT(strcmp(str.data, "22 Mar 2024, 08:23") == 0);
 
     c_str_destroy(&str);
   }
@@ -1142,17 +1118,17 @@ main(void)
   {
     CStr str;
     err = c_str_create(STR("🤦🏼‍♂️"), &str);
-    STR_TEST_ECODE(err);
+    STR_TEST(err);
 
     size_t next_index = 0;
     size_t const ground_truth_size[] = { 4, 4, 3, 3, 3 };
     size_t gt_index = 0;
     size_t codepoint_size;
     for (err = c_str_utf8_next_codepoint(&str, next_index, &codepoint_size);
-         err == 0;
+         err.code == 0;
          err = c_str_utf8_next_codepoint(&str, next_index, &codepoint_size)) {
-      STR_TEST_ECODE(err);
-      STR_TEST(codepoint_size == ground_truth_size[gt_index]);
+      STR_TEST(err);
+      STR_ASSERT(codepoint_size == ground_truth_size[gt_index]);
       gt_index++;
 
       next_index += codepoint_size;
@@ -1165,11 +1141,11 @@ main(void)
   {
     CStr str;
     err = c_str_create(STR("🤦🏼‍♂️"), &str);
-    STR_TEST_ECODE(err);
+    STR_TEST(err);
 
     bool is_valid;
     err = c_str_utf8_valid(&str, &is_valid);
-    STR_TEST(is_valid);
+    STR_ASSERT(is_valid);
 
     c_str_destroy(&str);
   }
@@ -1178,11 +1154,11 @@ main(void)
   {
     CStr str;
     err = c_str_create(STR("\xe2\x80\x8d\x99\x82\xef\xb8"), &str);
-    STR_TEST_ECODE(err);
+    STR_TEST(err);
 
     bool is_valid;
     err = c_str_utf8_valid(&str, &is_valid);
-    STR_TEST(!is_valid);
+    STR_ASSERT(!is_valid);
 
     c_str_destroy(&str);
   }
@@ -1191,18 +1167,18 @@ main(void)
   {
     CStr str;
     err = c_str_create(STR("This is a good place!"), &str);
-    STR_TEST_ECODE(err);
+    STR_TEST(err);
 
     size_t removed_size;
     err = c_str_remove_at(&str, 10, 5, &removed_size);
-    STR_TEST_ECODE(err);
-    STR_TEST(removed_size == 5);
-    STR_TEST(strcmp(str.data, "This is a place!") == 0);
+    STR_TEST(err);
+    STR_ASSERT(removed_size == 5);
+    STR_ASSERT(strcmp(str.data, "This is a place!") == 0);
 
     err = c_str_remove_at(&str, 7, 100, &removed_size);
-    STR_TEST_ECODE(err);
-    STR_TEST(removed_size == 9);
-    STR_TEST(strcmp(str.data, "This is") == 0);
+    STR_TEST(err);
+    STR_ASSERT(removed_size == 9);
+    STR_ASSERT(strcmp(str.data, "This is") == 0);
 
     c_str_destroy(&str);
   }
@@ -1219,7 +1195,7 @@ main(void)
 
 #undef STR
 #undef STR_TEST_PRINT_ABORT
-#undef STR_TEST_ECODE
+#undef STR_TEST
 #undef STR_TEST_PRINT_ABORT
 #undef STR_TEST
 #undef CSTDLIB_STR_UNIT_TESTS
