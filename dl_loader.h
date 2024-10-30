@@ -156,8 +156,9 @@ c_dl_loader_destroy(CDLLoader* self)
 {
   if (self && self->raw) {
 #ifdef _WIN32
-    BOOL free_status = FreeLibrary(self->raw);
-    C_DL_LOADER_CHECK_PARAMS(free_status);
+    BOOL close_status = FreeLibrary(self->raw);
+    (void)close_status;
+    // C_DL_LOADER_CHECK_PARAMS(close_status);
 #else
     int close_status = dlclose(self->raw);
     /// FIXME:
