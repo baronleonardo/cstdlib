@@ -1284,7 +1284,7 @@ c_fs_handler(char path[], size_t path_len, void* extra_data)
 #undef FS_STR
 #undef FS_TEST_PRINT_ABORT
 #undef FS_TEST
-#undef FS_TEST
+#undef FS_ASSERT
 #undef fs_test_playground
 #undef CSTDLIB_FS_UNIT_TESTS
 #endif // CSTDLIB_FS_UNIT_TESTS

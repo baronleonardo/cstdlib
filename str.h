@@ -1196,8 +1196,7 @@ main(void)
 #undef STR
 #undef STR_TEST_PRINT_ABORT
 #undef STR_TEST
-#undef STR_TEST_PRINT_ABORT
-#undef STR_TEST
+#undef STR_ASSERT
 #undef CSTDLIB_STR_UNIT_TESTS
 #endif /* CSTDLIB_STR_UNIT_TESTS */
 

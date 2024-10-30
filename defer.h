@@ -4,9 +4,8 @@
  *              #include "defer.h"
  * Options :
  *           - C_DEFER_MAX_DEFER_NODES: maximum defer nodes count
- *           - C_DEFER_MAX_ERROR_DEFER_NODES: maximum defer error nodes count
- * Note    : Never return from within c_guard or it will leaks (this is also
- *           true for `exit()`)
+ * Note    : Never return from between c_defer_init() and c_defer_deinit() or it
+ *           will leaks (this is also true for `exit()`)
  * License : MIT (go to the end of this file for details)
  */
 
@@ -24,9 +23,6 @@
 #ifndef C_DEFER_MAX_DEFER_NODES
 #define C_DEFER_MAX_DEFER_NODES C_DEFER_DEFAULT_MAX_NODES
 #endif
-#ifndef C_DEFER_MAX_ERROR_DEFER_NODES
-#define C_DEFER_MAX_ERROR_DEFER_NODES C_DEFER_DEFAULT_MAX_NODES
-#endif
 
 typedef struct CDeferNode
 {
@@ -34,56 +30,28 @@ typedef struct CDeferNode
   void* param;
 } CDeferNode;
 
-typedef struct CDeferStack
+typedef struct CDefer
 {
   size_t capacity;
   size_t len;
   CDeferNode* nodes;
-} CDeferStack;
-
-typedef struct CDefer
-{
-  CDeferStack defer_stack;
 } CDefer;
 
-/// @brief this will create a scope, ready to be used by defer, defer_with_cond,
-///        defer_err
-#define c_guard                                                                \
-  bool c_defer_is_done = false;                                                \
-  C_GUARD_LABEL:                                                               \
-  if (!c_defer_is_done)                                                        \
-    for (__c_defer_init(C_DEFER_MAX_DEFER_NODES,                               \
-                        C_DEFER_MAX_ERROR_DEFER_NODES);                        \
-         c_defer_var.defer_stack.capacity && !c_defer_is_done;                 \
-         __c_defer_deinit(&c_defer_var))
+/// @brief between this and `c_defer_deinit` you can call any `c_defer` method
+/// @param defer_stack_capacity the capacity of the stack that will hold the
+///                             destructors
+#define c_defer_init(defer_stack_capacity)                                     \
+  CDefer c_defer_var = { .nodes = (CDeferNode[defer_stack_capacity]){ { 0 } }, \
+                         .capacity = defer_stack_capacity }
 
 /// @brief this pushes a destructor and it parameter to stack
-///        and call each one in LIFO style ad the end of `c_guard` scope
+///        and call each one in LIFO style at when c_defer_deinit get called
 /// @param destructor a function with void(*)(void*) signature (could be NULL)
 /// @param destructor_param the destructor parameter
 #define c_defer(destructor, destructor_param)                                  \
-  if (c_defer_var.defer_stack.len < c_defer_var.defer_stack.capacity) {        \
-    c_defer_var.defer_stack.nodes[c_defer_var.defer_stack.len++] =             \
+  if (c_defer_var.len < c_defer_var.capacity) {                                \
+    c_defer_var.nodes[c_defer_var.len++] =                                     \
       (CDeferNode){ (void (*)(void*))destructor, destructor_param };           \
-  }
-
-/// @brief same as c_defer but the guard will be terminated on `cond` failure
-/// @param cond a test condition
-/// @param destructor a function with void(*)(void*) signature (could be NULL)
-/// @param destructor_param the destructor parameter
-/// @param on_error a code that will be called on failed `cond`
-#define c_defer_err(cond, destructor, destructor_param, on_error)              \
-  if (c_defer_var.defer_stack.len < c_defer_var.defer_stack.capacity) {        \
-    c_defer_var.defer_stack.nodes[c_defer_var.defer_stack.len++] =             \
-      (CDeferNode){ (void (*)(void*))destructor, destructor_param };           \
-    if (!(cond)) {                                                             \
-      c_defer_is_done = true;                                                  \
-      do {                                                                     \
-        on_error;                                                              \
-      } while (0);                                                             \
-      __c_defer_deinit(&c_defer_var);                                          \
-      goto C_GUARD_LABEL;                                                      \
-    }                                                                          \
   }
 
 /// @brief same as c_defer_err but in `cond` failure, it fails immediately
@@ -92,44 +60,47 @@ typedef struct CDefer
 /// @param destructor_param the destructor parameter
 /// @param on_error a code that will be called on failed `cond`, this will be
 ///                 called before the destructor in failure of `cond`
-#define c_defer_check(cond, destructor, destructor_param, on_error)            \
-  if (!(cond)) {                                                               \
-    c_defer_is_done = true;                                                    \
-    do {                                                                       \
-      on_error;                                                                \
-    } while (0);                                                               \
-    void (*destructor_fn)(void*) = (void (*)(void*))destructor;                \
-    if (destructor_fn) {                                                       \
-      destructor_fn(destructor_param);                                         \
+#define c_defer_err(cond, destructor, destructor_param, on_error)              \
+  do {                                                                         \
+    if (c_defer_var.len < c_defer_var.capacity) {                              \
+      c_defer_var.nodes[c_defer_var.len++] =                                   \
+        (CDeferNode){ (void (*)(void*))destructor, destructor_param };         \
+      if (!(cond)) {                                                           \
+        do {                                                                   \
+          on_error;                                                            \
+        } while (0);                                                           \
+        goto c_defer_deinit_label;                                             \
+      }                                                                        \
     }                                                                          \
-    __c_defer_deinit(&c_defer_var);                                            \
-    goto C_GUARD_LABEL;                                                        \
-  }
+  } while (0)
 
-/// internal - don't use them directly
+/// @brief same as c_defer_err but if `cond` is false, it fails immediately
+/// @param cond a test condition
+/// @param destructor a function with void(*)(void*) signature (could be NULL)
+/// @param destructor_param the destructor parameter
+/// @param on_error a code that will be called on failed `cond`, this will be
+///                 called before the destructor in failure of `cond`
+#define c_defer_check(cond, destructor, destructor_param, on_error)            \
+  do {                                                                         \
+    if (!(cond)) {                                                             \
+      do {                                                                     \
+        on_error;                                                              \
+      } while (0);                                                             \
+      goto c_defer_deinit_label;                                               \
+    }                                                                          \
+  } while (0)
 
-#define __c_defer_init(defer_stack_capacity, defer_error_stack_capacity)       \
-  CDefer c_defer_var = {                                                       \
-    .defer_stack = { .nodes = (CDeferNode[defer_stack_capacity]){ { 0 } },     \
-                     .capacity = defer_stack_capacity }                        \
-  }
-
-/// @brief
-/// @param c_defer_var
-static inline void
-__c_defer_deinit(CDefer* c_defer_var)
-{
-  for (size_t i = c_defer_var->defer_stack.len - 1;
-       i < c_defer_var->defer_stack.len;
-       --i) {
-    if (c_defer_var->defer_stack.nodes[i].destructor) {
-      c_defer_var->defer_stack.nodes[i].destructor(
-        c_defer_var->defer_stack.nodes[i].param);
-    }
-  }
-
-  *c_defer_var = (CDefer){ 0 };
-}
+/// @brief this will deinitiate the c_defer and will call all destructors
+#define c_defer_deinit()                                                       \
+  do {                                                                         \
+  c_defer_deinit_label:                                                        \
+    for (size_t i = c_defer_var.len - 1; i < c_defer_var.len; --i) {           \
+      if (c_defer_var.nodes[i].destructor) {                                   \
+        c_defer_var.nodes[i].destructor(c_defer_var.nodes[i].param);           \
+      }                                                                        \
+    }                                                                          \
+    c_defer_var = (CDefer){ 0 };                                               \
+  } while (0)
 
 #endif // CSTDLIB_DEFER_H
 
@@ -161,29 +132,44 @@ destructor(void* called)
   *(bool*)called = true;
 }
 
+typedef struct S
+{
+  size_t len;
+  int* data;
+} S;
+
+void
+s_free(S* self)
+{
+
+  self->len = 0;
+  free(self->data);
+  *self = (S){ 0 };
+}
+
 int
 fn(void)
 {
   int error_code = 0;
-  c_guard
-  {
-    // c_defer_err_force_cleanup();
 
-    int* arr1 = calloc(10, sizeof(int));
-    c_defer(free, arr1);
+  c_defer_init(10);
 
-    int err = 10;
-    bool is_called = false;
-    c_defer_check(err == 10, destructor, &is_called, (void)0);
-    DEFER_TEST(!is_called);
+  int* arr1 = calloc(10, sizeof(int));
+  c_defer(free, arr1);
 
-    int* arr2 = calloc(10, sizeof(int));
-    // this will fail and the defer_err sequence will start
-    c_defer_err(err != 10, free, arr2, error_code = -1);
+  S s = { 0 };
+  s.data = calloc(10, sizeof(*s.data));
+  c_defer_err(true, s_free, &s, NULL);
 
-    int* arr3 = calloc(10, sizeof(int)); // this will never get called
-    c_defer(free, arr3);
-  }
+  int err = 10;
+  bool is_called = false;
+  c_defer_check(err != 10, destructor, &is_called, error_code = -1);
+  DEFER_TEST(!is_called);
+
+  int* arr3 = calloc(10, sizeof(int)); // this will never get called
+  c_defer(free, arr3);
+
+  c_defer_deinit();
 
   return error_code;
 }
@@ -192,7 +178,7 @@ int
 main(void)
 {
   int err = fn();
-  DEFER_TEST(err != 0); // this will fail on defer
+  DEFER_TEST(err != 0);
 }
 
 #ifdef _MSC_VER
