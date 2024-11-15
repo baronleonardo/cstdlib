@@ -24,16 +24,14 @@
 #define C_DEFER_MAX_DEFER_NODES C_DEFER_DEFAULT_MAX_NODES
 #endif
 
-typedef struct CDeferNode
-{
+typedef struct CDeferNode {
   void (*destructor)(void*);
   void* param;
 } CDeferNode;
 
-typedef struct CDefer
-{
-  size_t capacity;
-  size_t len;
+typedef struct CDefer {
+  size_t      capacity;
+  size_t      len;
   CDeferNode* nodes;
 } CDefer;
 
@@ -41,8 +39,8 @@ typedef struct CDefer
 /// @param defer_stack_capacity the capacity of the stack that will hold the
 ///                             destructors
 #define c_defer_init(defer_stack_capacity)                                     \
-  CDefer c_defer_var = { .nodes = (CDeferNode[defer_stack_capacity]){ { 0 } }, \
-                         .capacity = defer_stack_capacity }
+  CDefer c_defer_var = {.nodes    = (CDeferNode[defer_stack_capacity]){{0}},   \
+                        .capacity = defer_stack_capacity}
 
 /// @brief this pushes a destructor and it parameter to stack
 ///        and call each one in LIFO style at when c_defer_deinit get called
@@ -50,8 +48,8 @@ typedef struct CDefer
 /// @param destructor_param the destructor parameter
 #define c_defer(destructor, destructor_param)                                  \
   if (c_defer_var.len < c_defer_var.capacity) {                                \
-    c_defer_var.nodes[c_defer_var.len++] =                                     \
-      (CDeferNode){ (void (*)(void*))destructor, destructor_param };           \
+    c_defer_var.nodes[c_defer_var.len++]                                       \
+        = (CDeferNode){(void (*)(void*))destructor, destructor_param};         \
   }
 
 /// @brief same as c_defer_err but in `cond` failure, it fails immediately
@@ -63,8 +61,8 @@ typedef struct CDefer
 #define c_defer_err(cond, destructor, destructor_param, on_error)              \
   do {                                                                         \
     if (c_defer_var.len < c_defer_var.capacity) {                              \
-      c_defer_var.nodes[c_defer_var.len++] =                                   \
-        (CDeferNode){ (void (*)(void*))destructor, destructor_param };         \
+      c_defer_var.nodes[c_defer_var.len++]                                     \
+          = (CDeferNode){(void (*)(void*))destructor, destructor_param};       \
       if (!(cond)) {                                                           \
         do {                                                                   \
           on_error;                                                            \
@@ -99,7 +97,7 @@ typedef struct CDefer
         c_defer_var.nodes[i].destructor(c_defer_var.nodes[i].param);           \
       }                                                                        \
     }                                                                          \
-    c_defer_var = (CDefer){ 0 };                                               \
+    c_defer_var = (CDefer){0};                                                 \
   } while (0)
 
 #endif // CSTDLIB_DEFER_H
@@ -132,10 +130,9 @@ destructor(void* called)
   *(bool*)called = true;
 }
 
-typedef struct S
-{
+typedef struct S {
   size_t len;
-  int* data;
+  int*   data;
 } S;
 
 void
@@ -144,7 +141,7 @@ s_free(S* self)
 
   self->len = 0;
   free(self->data);
-  *self = (S){ 0 };
+  *self = (S){0};
 }
 
 int
@@ -157,11 +154,11 @@ fn(void)
   int* arr1 = calloc(10, sizeof(int));
   c_defer(free, arr1);
 
-  S s = { 0 };
+  S s    = {0};
   s.data = calloc(10, sizeof(*s.data));
   c_defer_err(true, s_free, &s, NULL);
 
-  int err = 10;
+  int  err       = 10;
   bool is_called = false;
   c_defer_check(err != 10, destructor, &is_called, error_code = -1);
   DEFER_TEST(!is_called);
