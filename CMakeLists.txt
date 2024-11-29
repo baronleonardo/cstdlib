@@ -31,13 +31,13 @@ else()
         -Wpedantic
         -Werror
         $<$<CONFIG:RELEASE>:-D_FORTIFY_SOURCE=2>
-        $<$<CONFIG:DEBUG>:-fsanitize=address,undefined>
+        $<$<CONFIG:DEBUG>:-fsanitize=address,undefined,leak>
         $<$<CONFIG:DEBUG>:-fstack-protector-strong>
         $<$<CONFIG:DEBUG>:--param=ssp-buffer-size=4>
         $<$<CONFIG:DEBUG>:-fno-omit-frame-pointer>
         $<$<AND:$<CONFIG:DEBUG>,$<PLATFORM_ID:Linux>>:-fstack-clash-protection>
     )
-    add_link_options($<$<CONFIG:DEBUG>:-fsanitize=address,undefined>)
+    add_link_options($<$<CONFIG:DEBUG>:-fsanitize=address,undefined,leak>)
 endif()
 
 option(ENABLE_TESTS "Enable tests" OFF)
@@ -48,5 +48,6 @@ if (${ENABLE_TESTS})
     create_test_target(str)
     create_test_target(array)
     create_test_target(defer)
+    create_test_target(map)
 endif()
 
